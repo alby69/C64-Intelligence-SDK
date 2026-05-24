@@ -1,0 +1,1550 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>C64C — Documentazione del Linguaggio</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Exo+2:wght@300;400;600;700&display=swap');
+:root {
+  --c64-bg:#3435AC;--c64-border:#7B7BFF;--c64-text:#7B7BFF;--c64-bright:#FFFFFF;
+  --c64-cyan:#70DCFF;--c64-yellow:#F5F560;--c64-green:#55FF55;--c64-red:#FF5555;
+  --c64-orange:#FF8844;--c64-dark:#1A1A6A;--c64-panel:#28288A;
+  --tok-keyword:#F5F560;--tok-type:#70DCFF;--tok-builtin:#55FF55;
+  --tok-comment:#8888CC;--tok-string:#FF8844;--tok-number:#FF5555;
+  --tok-hex:#FF7777;--tok-float:#FF99CC;--tok-variable:#C0C0FF;
+  --font-mono:'Share Tech Mono','Courier New',monospace;
+  --font-ui:'Exo 2','Segoe UI',sans-serif;
+  --sidebar-w:262px;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{background:var(--c64-dark);color:var(--c64-text);font-family:var(--font-ui);font-size:14px;line-height:1.6;min-height:100vh}
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(to bottom,transparent 0px,transparent 3px,rgba(0,0,10,.08) 3px,rgba(0,0,10,.08) 4px);pointer-events:none;z-index:9999}
+/* TOPBAR */
+#topbar{position:fixed;top:0;left:0;right:0;height:52px;z-index:200;background:var(--c64-dark);border-bottom:2px solid var(--c64-border);display:flex;align-items:center;gap:16px;padding:0 20px;box-shadow:0 2px 20px rgba(0,0,60,.6)}
+#topbar-badge{background:var(--c64-border);color:var(--c64-dark);font-family:var(--font-mono);font-size:10px;font-weight:bold;padding:2px 7px;border-radius:2px;letter-spacing:1px;flex-shrink:0}
+#topbar-title{font-family:var(--font-mono);font-size:18px;color:var(--c64-bright);letter-spacing:3px;text-shadow:0 0 12px var(--c64-border)}
+#topbar-sub{font-family:var(--font-mono);font-size:10px;color:var(--c64-border);letter-spacing:2px}
+#topbar-back{margin-left:auto;font-family:var(--font-mono);font-size:11px;color:var(--c64-cyan);border:1px solid var(--c64-cyan);padding:4px 12px;cursor:pointer;letter-spacing:1px;border-radius:2px;text-decoration:none;transition:all .1s}
+#topbar-back:hover{background:rgba(112,220,255,.12);box-shadow:0 0 8px rgba(112,220,255,.4)}
+/* LAYOUT */
+#layout{display:flex;margin-top:52px;min-height:calc(100vh - 52px)}
+/* SIDEBAR */
+#sidebar{width:var(--sidebar-w);flex-shrink:0;position:fixed;top:52px;left:0;bottom:0;overflow-y:auto;background:var(--c64-dark);border-right:2px solid rgba(123,123,255,.3);padding:16px 0}
+#sidebar::-webkit-scrollbar{width:4px}
+#sidebar::-webkit-scrollbar-thumb{background:rgba(123,123,255,.3)}
+.nav-group{margin-bottom:2px}
+.nav-group-title{font-family:var(--font-mono);font-size:9px;color:var(--c64-border);letter-spacing:2px;text-transform:uppercase;padding:8px 16px 4px;opacity:.5;border-top:1px solid rgba(123,123,255,.1);margin-top:4px}
+.nav-group-title:first-child{border-top:none;margin-top:0}
+.nav-link{display:block;padding:4px 16px 4px 22px;font-family:var(--font-mono);font-size:11px;color:var(--c64-border);text-decoration:none;letter-spacing:.5px;transition:all .1s;border-left:2px solid transparent}
+.nav-link:hover{color:var(--c64-bright);background:rgba(123,123,255,.08)}
+.nav-link.active{color:var(--c64-yellow);border-left-color:var(--c64-yellow);background:rgba(245,245,96,.05)}
+/* CONTENT */
+#content{margin-left:var(--sidebar-w);flex:1;padding:40px 48px 80px;max-width:920px}
+/* HEADINGS */
+h1{font-family:var(--font-mono);font-size:26px;color:var(--c64-bright);letter-spacing:3px;text-transform:uppercase;margin-bottom:8px;text-shadow:0 0 20px rgba(123,123,255,.5);border-bottom:2px solid var(--c64-border);padding-bottom:10px}
+h2{font-family:var(--font-mono);font-size:17px;color:var(--c64-cyan);letter-spacing:2px;text-transform:uppercase;margin:48px 0 18px;padding-top:16px;border-bottom:1px solid rgba(112,220,255,.25);padding-bottom:8px}
+h3{font-family:var(--font-mono);font-size:13px;color:var(--c64-yellow);letter-spacing:1.5px;text-transform:uppercase;margin:28px 0 12px}
+h4{font-family:var(--font-mono);font-size:12px;color:var(--c64-green);letter-spacing:1px;margin:20px 0 8px}
+/* PROSE */
+p{color:rgba(195,195,255,.85);margin-bottom:12px;line-height:1.75;font-size:14px}
+.lead{font-size:16px;color:var(--c64-bright);margin-bottom:20px}
+strong{color:var(--c64-bright)}
+em{color:var(--c64-yellow);font-style:normal}
+ul{color:rgba(195,195,255,.85);margin:8px 0 12px 22px;line-height:2}
+/* CALLOUTS */
+.callout{border-left:3px solid var(--c64-border);background:rgba(123,123,255,.06);padding:10px 14px;margin:16px 0;border-radius:0 3px 3px 0}
+.callout-warn{border-color:var(--c64-yellow);background:rgba(245,245,96,.05)}
+.callout-error{border-color:var(--c64-red);background:rgba(255,85,85,.05)}
+.callout-ok{border-color:var(--c64-green);background:rgba(85,255,85,.05)}
+.callout-tag{font-family:var(--font-mono);font-size:9px;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;color:var(--c64-cyan)}
+.callout-warn .callout-tag{color:var(--c64-yellow)}
+.callout-error .callout-tag{color:var(--c64-red)}
+.callout-ok .callout-tag{color:var(--c64-green)}
+/* CODE */
+pre{background:var(--c64-bg);border:1px solid rgba(123,123,255,.3);border-left:3px solid var(--c64-border);padding:14px 16px;margin:14px 0;overflow-x:auto;border-radius:0 3px 3px 0;font-family:var(--font-mono);font-size:13px;line-height:1.65}
+code{font-family:var(--font-mono);font-size:12px;background:rgba(123,123,255,.12);color:var(--c64-cyan);padding:1px 5px;border-radius:2px}
+pre code{background:none;padding:0;font-size:13px}
+/* SYNTAX */
+.kw{color:var(--tok-keyword);font-weight:bold}.ty{color:var(--tok-type)}.bi{color:var(--tok-builtin)}
+.cm{color:var(--tok-comment);font-style:italic}.st{color:var(--tok-string)}.nm{color:var(--tok-number)}
+.hx{color:var(--tok-hex);font-weight:bold}.op{color:#fff}.vr{color:var(--tok-variable)}.fl{color:var(--tok-float)}
+/* TABLES */
+.tbl-wrap{overflow-x:auto;margin:14px 0}
+table{width:100%;border-collapse:collapse;font-family:var(--font-mono);font-size:12px}
+thead th{background:var(--c64-panel);color:var(--c64-cyan);padding:7px 12px;text-align:left;letter-spacing:1px;border-bottom:2px solid var(--c64-border);text-transform:uppercase;font-size:10px}
+tbody td{padding:6px 12px;border-bottom:1px solid rgba(123,123,255,.1);color:rgba(195,195,255,.85);vertical-align:top}
+tbody tr:hover td{background:rgba(123,123,255,.05)}
+td.mono{font-family:var(--font-mono);color:var(--c64-bright)}
+td.kw-c{color:var(--tok-keyword)}td.ty-c{color:var(--tok-type)}td.bi-c{color:var(--tok-builtin)}
+td.ok-c{color:var(--c64-green)}td.warn-c{color:var(--c64-yellow)}
+/* BADGES */
+.badge{display:inline-block;font-family:var(--font-mono);font-size:9px;padding:1px 5px;border-radius:2px;letter-spacing:1px;border:1px solid;vertical-align:middle;margin-left:4px}
+.badge-rom{color:var(--c64-orange);border-color:rgba(255,136,68,.4);background:rgba(255,136,68,.06)}
+.badge-irq{color:var(--c64-red);border-color:rgba(255,85,85,.4);background:rgba(255,85,85,.06)}
+.badge-kw{color:var(--tok-keyword);border-color:rgba(245,245,96,.4);background:rgba(245,245,96,.06)}
+/* SIG BOX */
+.sig-box{background:var(--c64-panel);border:1px solid rgba(123,123,255,.35);border-left:3px solid var(--c64-green);padding:10px 14px;margin:8px 0 6px;font-family:var(--font-mono);font-size:13px;border-radius:0 3px 3px 0}
+.addr{color:var(--tok-hex);font-family:var(--font-mono)}
+.section-sep{border:none;border-top:1px solid rgba(123,123,255,.15);margin:32px 0}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:var(--c64-dark)}
+::-webkit-scrollbar-thumb{background:rgba(123,123,255,.35);border-radius:3px}
+:target{scroll-margin-top:70px}
+@media(max-width:900px){#sidebar{display:none}#content{margin-left:0;padding:24px 20px 60px}}
+</style>
+</head>
+<body>
+<div id="topbar">
+  <span id="topbar-badge">CBM</span>
+  <div><div id="topbar-title">C64C IDE</div><div id="topbar-sub">DOCUMENTAZIONE DEL LINGUAGGIO</div></div>
+  <a id="topbar-back" href="#">← TORNA ALL'IDE</a>
+</div>
+<div id="layout">
+<nav id="sidebar">
+  <div class="nav-group">
+    <div class="nav-group-title">Introduzione</div>
+    <a class="nav-link" href="#intro">Cos'è C64C</a>
+    <a class="nav-link" href="#quickstart">Quick Start</a>
+    <a class="nav-link" href="#pipeline">Pipeline compilazione</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Sintassi di base</div>
+    <a class="nav-link" href="#comments">Commenti</a>
+    <a class="nav-link" href="#literals">Letterali</a>
+    <a class="nav-link" href="#identifiers">Identificatori</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Tipi di dato</div>
+    <a class="nav-link" href="#types">Panoramica tipi</a>
+    <a class="nav-link" href="#type-byte">byte</a>
+    <a class="nav-link" href="#type-word">word</a>
+    <a class="nav-link" href="#type-int">int / uint</a>
+    <a class="nav-link" href="#type-long">long / ulong / dword</a>
+    <a class="nav-link" href="#type-bool">bool</a>
+    <a class="nav-link" href="#type-string">string</a>
+    <a class="nav-link" href="#type-float">float</a>
+    <a class="nav-link" href="#type-fixedpoint">Fixed-Point (Q/SQ)</a>
+    <a class="nav-link" href="#casting">Casting</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Variabili</div>
+    <a class="nav-link" href="#vars-global">Globali</a>
+    <a class="nav-link" href="#vars-local">Locali</a>
+    <a class="nav-link" href="#arrays">Array</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Operatori</div>
+    <a class="nav-link" href="#operators">Tabella operatori</a>
+    <a class="nav-link" href="#precedence">Precedenza</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Controllo del flusso</div>
+    <a class="nav-link" href="#if">if / else</a>
+    <a class="nav-link" href="#while">while</a>
+    <a class="nav-link" href="#dowhile">do…while</a>
+    <a class="nav-link" href="#for">for</a>
+    <a class="nav-link" href="#break">break / continue</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Funzioni</div>
+    <a class="nav-link" href="#func">func</a>
+    <a class="nav-link" href="#func-inline">inline</a>
+    <a class="nav-link" href="#func-irq">irq / raw irq</a>
+    <a class="nav-link" href="#return">return</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Builtin — I/O</div>
+    <a class="nav-link" href="#io-print">print / println</a>
+    <a class="nav-link" href="#io-print_at">print_at</a>
+    <a class="nav-link" href="#io-kernal">kernal_chrout / chrin</a>
+    <a class="nav-link" href="#io-input">input</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Builtin — Memoria</div>
+    <a class="nav-link" href="#mem-poke">poke / peek</a>
+    <a class="nav-link" href="#mem-memset">memset / memcpy</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Builtin — VIC-II</div>
+    <a class="nav-link" href="#vic-screen">Schermo e colori</a>
+    <a class="nav-link" href="#vic-sprites">Sprite</a>
+    <a class="nav-link" href="#vic-draw">plot / draw_line / box</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Builtin — Timing</div>
+    <a class="nav-link" href="#timing">wait / wait_frames</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Builtin — Sistema</div>
+    <a class="nav-link" href="#sys">sys / jsr</a>
+    <a class="nav-link" href="#cpu">sei / cli</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Builtin — Matematica</div>
+    <a class="nav-link" href="#math-int">Intera</a>
+    <a class="nav-link" href="#math-float">Float KERNAL</a>
+    <a class="nav-link" href="#math-fixedpoint">Fixed-Point</a>
+    <a class="nav-link" href="#givayf">GIVAYF / FAC1</a>
+    <a class="nav-link" href="#math-fphelpers">fp_int / fp_frac</a>
+    <a class="nav-link" href="#math-floatfuncs">fadd / fsub / fmul / fdiv / fpow / float_to_str</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Builtin — SID</div>
+    <a class="nav-link" href="#sid">Audio SID</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">IRQ</div>
+    <a class="nav-link" href="#irq-intro">Introduzione IRQ</a>
+    <a class="nav-link" href="#irq-raster">Raster IRQ</a>
+    <a class="nav-link" href="#irq-builtins">Builtin IRQ</a>
+    <a class="nav-link" href="#irq-pattern">Pattern consigliati</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Modello di memoria</div>
+    <a class="nav-link" href="#memmodel">Layout PRG</a>
+    <a class="nav-link" href="#memmap">Registri hardware</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">IDE</div>
+    <a class="nav-link" href="#ide-shortcuts">Shortcuts</a>
+    <a class="nav-link" href="#ide-files">Gestione file</a>
+    <a class="nav-link" href="#ide-tabs">Tab pannello</a>
+  </div>
+  <div class="nav-group">
+    <div class="nav-group-title">Riferimento</div>
+    <a class="nav-link" href="#kernal-addrs">Indirizzi KERNAL</a>
+    <a class="nav-link" href="#c64-colors">Palette colori</a>
+    <a class="nav-link" href="#limits-full">Limiti e note</a>
+    <a class="nav-link" href="#ide-examples">Esempi IDE</a>
+    <a class="nav-link" href="#examples-fixedpoint">Esempi Fixed-Point</a>
+  </div>
+</nav>
+
+<main id="content">
+<h1>C64C — Linguaggio di Programmazione</h1>
+<p class="lead">Documentazione completa del compilatore C64C: sintassi, tipi, builtin, IRQ, modello di memoria e IDE.</p>
+
+<section id="intro">
+<h2>Cos'è C64C</h2>
+<p>C64C è un linguaggio di alto livello ispirato al C, progettato per compilare direttamente in codice macchina <strong>MOS 6510</strong> per il <strong>Commodore 64</strong>. Il compilatore produce file <strong>.PRG</strong> eseguibili con <code>LOAD "file",8,1</code> + <code>RUN</code>, oppure caricabili in emulatori come VICE.</p>
+<div class="callout callout-ok">
+  <div class="callout-tag">◈ Caratteristiche principali</div>
+  Sintassi C-like · Tipi statici · Generazione PRG nativa · Accesso diretto all'hardware · Float via KERNAL ROM · Raster IRQ · SID · Sprite VIC-II · IDE integrato con syntax highlighting, AST viewer, hex dump
+</div>
+<p>Il compilatore gira interamente nel browser come JavaScript — nessuna dipendenza esterna richiesta.</p>
+</section>
+
+<section id="quickstart">
+<h2>Quick Start</h2>
+<p>Il programma minimo richiede la funzione <code>main()</code>:</p>
+<pre><span class="cm">// Il mio primo programma C64C</span>
+<span class="kw">func</span> <span class="vr">main</span>() {
+    <span class="bi">clear_screen</span>();
+    <span class="bi">border_color</span>(<span class="nm">0</span>);
+    <span class="bi">print_at</span>(<span class="nm">10</span>, <span class="nm">12</span>, <span class="st">"CIAO, MONDO!"</span>);
+    <span class="bi">wait</span>(<span class="nm">120</span>);
+}</pre>
+<p>Premi <em>F5</em> per compilare, poi <em>↓ PRG</em> per scaricare il binario.</p>
+</section>
+
+<section id="pipeline">
+<h2>Pipeline di compilazione</h2>
+<div class="tbl-wrap"><table>
+<thead><tr><th>#</th><th>Componente</th><th>Descrizione</th></tr></thead>
+<tbody>
+<tr><td class="mono">1</td><td class="mono">Lexer</td><td>Tokenizzazione: parole chiave, operatori, letterali, commenti</td></tr>
+<tr><td class="mono">2</td><td class="mono">Parser</td><td>Costruzione AST — grammatica ricorsiva discendente</td></tr>
+<tr><td class="mono">3</td><td class="mono">SemanticAnalyzer</td><td>Tabella simboli, verifica tipi, annotazione nodi</td></tr>
+<tr><td class="mono">4</td><td class="mono">MemoryPlanner</td><td>Assegnamento indirizzi ZP e BSS a variabili e array</td></tr>
+<tr><td class="mono">5</td><td class="mono">PRGBuilder</td><td>Emissione opcode 6510, risoluzione label, intestazione BASIC stub</td></tr>
+</tbody>
+</table></div>
+<p>Il PRG generato include un <strong>BASIC stub</strong> (<code>0 SYS 2061</code>) a <code>$0801</code> che avvia il codice compilato a <code>$080D</code>.</p>
+</section>
+
+<hr class="section-sep">
+<section id="comments">
+<h2>Commenti</h2>
+<pre><span class="cm">// Commento su singola riga</span>
+<span class="cm">/* Commento
+   su più righe */</span></pre>
+</section>
+
+<section id="literals">
+<h2>Letterali</h2>
+<div class="tbl-wrap"><table>
+<thead><tr><th>Tipo</th><th>Sintassi</th><th>Esempi</th></tr></thead>
+<tbody>
+<tr><td>Intero decimale</td><td class="mono">cifre</td><td class="mono"><span class="nm">0  42  255  1000</span></td></tr>
+<tr><td>Esadecimale</td><td class="mono">$HH  0xHH</td><td class="mono"><span class="hx">$FF  $D020  0x3C</span></td></tr>
+<tr><td>Binario</td><td class="mono">%bbbb</td><td class="mono"><span class="nm">%10110011  %01111111</span></td></tr>
+<tr><td>Float</td><td class="mono">d.d  d.dEn</td><td class="mono"><span class="fl">3.14  1.5E-2</span></td></tr>
+<tr><td>Stringa</td><td class="mono">"testo"  'c'</td><td class="mono"><span class="st">"HELLO"  'A'</span></td></tr>
+</tbody>
+</table></div>
+<div class="callout callout-warn">
+  <div class="callout-tag">⚠ PETSCII</div>
+  Le stringhe usano la codifica PETSCII. I caratteri maiuscoli nel sorgente producono i caratteri corretti sullo schermo del C64 in modalità uppercase/graphics.
+</div>
+</section>
+
+<section id="identifiers">
+<h2>Identificatori</h2>
+<p>Lettere, cifre e <code>_</code>, devono iniziare con lettera o <code>_</code>. Sono <strong>case-sensitive</strong>.</p>
+<pre><span class="ty">byte</span> <span class="vr">contatore</span> <span class="op">=</span> <span class="nm">0</span>;
+<span class="ty">word</span> <span class="vr">SCREEN_RAM</span> <span class="op">=</span> <span class="hx">$0400</span>;
+<span class="ty">float</span> <span class="vr">x_pos</span> <span class="op">=</span> <span class="fl">0.0</span>;</pre>
+</section>
+
+<hr class="section-sep">
+<section id="types">
+<h2>Tipi di dato — Panoramica</h2>
+<div class="tbl-wrap"><table>
+<thead><tr><th>Tipo</th><th>Dim.</th><th>Range</th><th>Note</th></tr></thead>
+<tbody>
+<tr><td class="mono ty-c">byte</td><td>1B</td><td>0…255</td><td>Intero senza segno 8-bit. Tipo nativo del 6510.</td></tr>
+<tr><td class="mono ty-c">word</td><td>2B</td><td>0…65535</td><td>Intero senza segno 16-bit. Lo/Hi in memoria.</td></tr>
+<tr><td class="mono ty-c">int</td><td>2B</td><td>−32768…32767</td><td>Intero con segno 16-bit.</td></tr>
+<tr><td class="mono ty-c">uint</td><td>2B</td><td>0…65535</td><td>Alias di word.</td></tr>
+<tr><td class="mono ty-c">long</td><td>4B</td><td>−2 147 483 648…2 147 483 647</td><td>Intero con segno 32-bit. 4 byte contigui in BSS.</td></tr>
+<tr><td class="mono ty-c">ulong</td><td>4B</td><td>0…4 294 967 295</td><td>Intero senza segno 32-bit.</td></tr>
+<tr><td class="mono ty-c">dword</td><td>4B</td><td>0…4 294 967 295</td><td>Alias di ulong. «Double word» (2 × 16-bit).</td></tr>
+<tr><td class="mono ty-c">bool</td><td>1B</td><td>0 / !=0</td><td>0=falso, qualsiasi valore ≠0=vero.</td></tr>
+<tr><td class="mono ty-c">string</td><td>var.</td><td>—</td><td>Letterale PETSCII null-terminated. Solo come argomento.</td></tr>
+<tr><td class="mono ty-c">float</td><td>5B</td><td>~±1.7×10³⁸</td><td>Float CBM a 5 byte (~9 cifre). Richiede BASIC ROM.</td></tr>
+<tr><td class="mono ty-c" style="color:var(--c64-orange)">q8_8</td><td>2B</td><td>0…255.996</td><td>Fixed-point senza segno. 8 bit interi + 8 bit frazionari. Risoluzione: 1/256.</td></tr>
+<tr><td class="mono ty-c" style="color:var(--c64-orange)">q16_8</td><td>3B</td><td>0…65535.996</td><td>Fixed-point senza segno. 16 bit interi + 8 bit frazionari.</td></tr>
+<tr><td class="mono ty-c" style="color:var(--c64-orange)">q8_16</td><td>3B</td><td>0…255.99999</td><td>Fixed-point senza segno. 8 bit interi + 16 bit frazionari. Alta precisione.</td></tr>
+<tr><td class="mono ty-c" style="color:var(--c64-orange)">q16_16</td><td>4B</td><td>0…65535.999</td><td>Fixed-point senza segno. 16 bit interi + 16 bit frazionari.</td></tr>
+<tr><td class="mono ty-c" style="color:var(--c64-yellow)">sq8_8</td><td>2B</td><td>−128…127.996</td><td>Fixed-point con segno. 8+8 bit. Ideale per coordinate e velocità.</td></tr>
+<tr><td class="mono ty-c" style="color:var(--c64-yellow)">sq16_8</td><td>3B</td><td>−32768…32767.996</td><td>Fixed-point con segno. 16+8 bit. Per valori signed a grande range.</td></tr>
+<tr><td class="mono ty-c" style="color:var(--c64-yellow)">sq8_16</td><td>3B</td><td>−128…127.99999</td><td>Fixed-point con segno. 8+16 bit. Massima precisione frazionaria.</td></tr>
+<tr><td class="mono ty-c" style="color:var(--c64-yellow)">sq16_16</td><td>4B</td><td>−32768…32767.999</td><td>Fixed-point con segno. 16+16 bit. Il più capiente.</td></tr>
+</tbody>
+</table></div>
+</section>
+
+<section id="type-byte">
+<h3>byte</h3>
+<p>Tipo nativo del 6510. Overflow silenzioso mod 256. Le operazioni emettono istruzioni su registro A.</p>
+<pre><span class="ty">byte</span> <span class="vr">c</span> <span class="op">=</span> <span class="nm">0</span>;
+<span class="vr">c</span> <span class="op">=</span> (<span class="vr">c</span> <span class="op">+</span> <span class="nm">1</span>) <span class="op">%</span> <span class="nm">16</span>;       <span class="cm">// ciclo 0..15</span>
+<span class="bi">poke</span>(<span class="hx">$D020</span>, <span class="vr">c</span>);          <span class="cm">// colore bordo VIC-II</span></pre>
+</section>
+
+<section id="type-word">
+<h3>word</h3>
+<p>Intero 16-bit senza segno. Indispensabile per indirizzi e contatori &gt;255. Occupa 2 byte contigui in ZP o BSS.</p>
+<pre><span class="ty">word</span> <span class="vr">ptr</span> <span class="op">=</span> <span class="hx">$0400</span>;
+<span class="ty">word</span> <span class="vr">i</span>   <span class="op">=</span> <span class="nm">0</span>;
+<span class="kw">while</span> (<span class="vr">i</span> <span class="op">&lt;</span> <span class="nm">1000</span>) {
+    <span class="bi">poke</span>(<span class="vr">ptr</span> <span class="op">+</span> <span class="vr">i</span>, <span class="nm">32</span>);
+    <span class="vr">i</span><span class="op">++</span>;
+}</pre>
+</section>
+
+<section id="type-int">
+<h3>int / uint</h3>
+<p><code>int</code> è un intero con segno a 16-bit. <code>uint</code> è un alias di <code>word</code>. Utili per coordinate o delta che possono essere negativi.</p>
+</section>
+
+<section id="type-long">
+<h3>long / ulong / dword</h3>
+<p>Interi a <strong>32-bit</strong> (4 byte contigui in BSS o zero-page). Indispensabili per contatori grandi, accumulatori, prodotti di moltiplicazioni 16×16, o indirizzi oltre i 64 KB.</p>
+<div class="tbl-wrap"><table>
+<thead><tr><th>Tipo</th><th>Dim.</th><th>Segno</th><th>Range</th><th>Note</th></tr></thead>
+<tbody>
+<tr><td class="mono ty-c">long</td><td>4B</td><td>Sì</td><td>−2 147 483 648 … 2 147 483 647</td><td>Intero con segno 32-bit.</td></tr>
+<tr><td class="mono ty-c">ulong</td><td>4B</td><td>No</td><td>0 … 4 294 967 295</td><td>Intero senza segno 32-bit.</td></tr>
+<tr><td class="mono ty-c">dword</td><td>4B</td><td>No</td><td>0 … 4 294 967 295</td><td>Alias di <code>ulong</code>. «Double Word».</td></tr>
+</tbody>
+</table></div>
+<h4>Layout in memoria</h4>
+<p>I 4 byte sono allocati in ordine <em>little-endian</em>, coerente con l'architettura 6510: il byte meno significativo (b0) occupa l'indirizzo più basso, il più significativo (b3) quello più alto.</p>
+<pre><span class="ty">ulong</span> <span class="vr">n</span> <span class="op">=</span> <span class="hx">$12345678</span>;
+<span class="cm">// in memoria:  [addr+0]=$78  [addr+1]=$56  [addr+2]=$34  [addr+3]=$12</span></pre>
+<h4>Promozione di tipo</h4>
+<p>Nelle espressioni miste, un tipo a 32-bit «vince» su <code>word</code>/<code>int</code>. Se uno degli operandi è <code>long</code> il risultato è <code>long</code> (con segno); altrimenti è <code>ulong</code>. I tipi a 16-bit vengono automaticamente estesi: <code>word</code>/<code>uint</code> con zero-extend, <code>int</code> con sign-extend.</p>
+<h4>Letterali e assegnamento</h4>
+<pre><span class="ty">long</span>  <span class="vr">score</span>  <span class="op">=</span> <span class="nm">0</span>;
+<span class="ty">ulong</span> <span class="vr">ticks</span>  <span class="op">=</span> <span class="nm">0</span>;
+<span class="ty">dword</span> <span class="vr">addr32</span> <span class="op">=</span> <span class="hx">$00010000</span>;   <span class="cm">// 65536</span>
+
+<span class="cm">// I letterali > 65535 sono inferiti automaticamente come long</span>
+<span class="ty">long</span> <span class="vr">big</span> <span class="op">=</span> <span class="nm">100000</span>;           <span class="cm">// ok</span>
+
+<span class="cm">// Assegnamento da word (zero-extend)</span>
+<span class="ty">word</span>  <span class="vr">w</span> <span class="op">=</span> <span class="hx">$FFFF</span>;
+<span class="ty">ulong</span> <span class="vr">u</span> <span class="op">=</span> <span class="vr">w</span>;                  <span class="cm">// u = 65535 — zero-extend automatico</span>
+
+<span class="cm">// Assegnamento da int (sign-extend)</span>
+<span class="ty">int</span>  <span class="vr">delta</span> <span class="op">=</span> <span class="op">-</span><span class="nm">1</span>;
+<span class="ty">long</span> <span class="vr">big2</span>  <span class="op">=</span> <span class="vr">delta</span>;            <span class="cm">// big2 = -1 — sign-extend a 32-bit</span></pre>
+<h4>Operazioni supportate</h4>
+<p>Addizione, sottrazione, confronto (<code>&lt;</code> <code>&gt;</code> <code>==</code> <code>!=</code>), shift e operazioni bit a bit. La moltiplicazione 32×32 genera codice multi-byte inline; per operandi piccoli preferire <code>word</code> e promuovere il risultato a 32-bit.</p>
+<div class="callout callout-warn">
+  <div class="callout-tag">⚠ Costo su 6510</div>
+  Ogni operazione a 32-bit richiede 4 sequenze di istruzioni (una per byte). Usare <code>long</code>/<code>ulong</code>/<code>dword</code> solo dove il range di <code>word</code> (0…65535) non è sufficiente — ad esempio per punteggi cumulativi, timer a lunga durata o prodotti di moltiplicazione 16×16.
+</div>
+</section>
+
+<section id="type-bool">
+<h3>bool</h3>
+<pre><span class="ty">bool</span> <span class="vr">attivo</span> <span class="op">=</span> <span class="nm">1</span>;
+<span class="kw">if</span> (<span class="vr">attivo</span>) { <span class="bi">border_color</span>(<span class="nm">2</span>); }</pre>
+</section>
+
+<section id="type-string">
+<h3>string</h3>
+<p>Letterali null-terminated in PETSCII. Usabili solo come argomenti a <code>print</code>, <code>print_at</code> ecc. Non esiste un tipo stringa dinamico.</p>
+</section>
+
+<section id="type-float">
+<h3>float <span class="badge badge-rom">BASIC ROM</span></h3>
+<p>Formato a 5 byte del KERNAL CBM (compatibile BASIC V2). Il compilatore imposta automaticamente <code>$01=$37</code> all'avvio per rendere visibile la BASIC ROM quando si usano funzioni float.</p>
+<div class="callout callout-warn">
+  <div class="callout-tag">⚠ BASIC ROM</div>
+  Tutte le funzioni float richiedono BASIC ROM a <code>$A000–$BFFF</code>. Questo blocco di RAM non è disponibile per i programmi con float.
+</div>
+<pre><span class="bi">print</span>(<span class="bi">sin</span>(<span class="fl">1.5708</span>));  <span class="cm">// sin(π/2) ≈ 1.0</span></pre>
+</section>
+
+
+<section id="type-fixedpoint">
+<h3>Fixed-Point — Q e SQ</h3>
+<p>I tipi fixed-point permettono di rappresentare numeri con parte frazionaria usando solo aritmetica intera — senza richiedere la BASIC ROM. La notazione è <em>Q&lt;int&gt;_&lt;frac&gt;</em> per i tipi senza segno e <em>SQ&lt;int&gt;_&lt;frac&gt;</em> per quelli con segno, dove <code>int</code> è il numero di bit per la parte intera e <code>frac</code> per la parte frazionaria.</p>
+<div class="callout callout-ok">
+  <div class="callout-tag">◈ Vantaggi rispetto al float</div>
+  <strong>Velocità</strong>: operazioni in puro 6510 senza JSR al KERNAL. <strong>8 KB liberi</strong>: nessuna BASIC ROM ($A000–$BFFF disponibile). <strong>Precisione prevedibile</strong>: la risoluzione è esattamente 1/2^frac, non approssimata.
+</div>
+<h4>Concetto: il punto binario</h4>
+<p>Un valore <code>q8_8</code> è un intero a 16-bit il cui valore reale è <em>raw / 256</em>. Il «punto binario» divide i bit interi (alti) da quelli frazionari (bassi). Le costanti si scrivono come hex raw o come letterale intero moltiplicato per la scala:</p>
+<pre><span class="cm">// q8_8: scala = 256 (2^8).  valore_reale = raw / 256</span>
+<span class="cm">//   raw = $0100 → 1.0      raw = $0180 → 1.5</span>
+<span class="cm">//   raw = $00C0 → 0.75     raw = $6400 → 100.0</span>
+
+<span class="ty">q8_8</span>  <span class="vr">a</span> <span class="op">=</span> <span class="hx">$0100</span>;    <span class="cm">// 1.0</span>
+<span class="ty">q8_8</span>  <span class="vr">b</span> <span class="op">=</span> <span class="hx">$0180</span>;    <span class="cm">// 1.5</span>
+<span class="ty">q8_8</span>  <span class="vr">c</span> <span class="op">=</span> <span class="hx">$6480</span>;    <span class="cm">// 100.5</span>
+<span class="ty">sq8_8</span> <span class="vr">v</span> <span class="op">=</span> <span class="hx">$FF80</span>;    <span class="cm">// -0.5  (complemento a due)</span>
+<span class="ty">sq8_8</span> <span class="vr">w</span> <span class="op">=</span> <span class="hx">$FE00</span>;    <span class="cm">// -2.0</span></pre>
+<h4>Tabella dei tipi fixed-point</h4>
+<div class="tbl-wrap"><table>
+<thead><tr><th>Tipo</th><th>Bit</th><th>Segno</th><th>Scala</th><th>Risoluzione</th><th>Range interi</th></tr></thead>
+<tbody>
+<tr><td class="mono" style="color:var(--c64-orange)">q8_8</td><td>16</td><td class="ok-c">No</td><td>256</td><td>1/256 ≈ 0.004</td><td>0…255</td></tr>
+<tr><td class="mono" style="color:var(--c64-orange)">q16_8</td><td>24</td><td class="ok-c">No</td><td>256</td><td>1/256 ≈ 0.004</td><td>0…65535</td></tr>
+<tr><td class="mono" style="color:var(--c64-orange)">q8_16</td><td>24</td><td class="ok-c">No</td><td>65536</td><td>1/65536 ≈ 0.000015</td><td>0…255</td></tr>
+<tr><td class="mono" style="color:var(--c64-orange)">q16_16</td><td>32</td><td class="ok-c">No</td><td>65536</td><td>1/65536 ≈ 0.000015</td><td>0…65535</td></tr>
+<tr><td class="mono" style="color:var(--c64-yellow)">sq8_8</td><td>16</td><td class="warn-c">Sì</td><td>256</td><td>1/256 ≈ 0.004</td><td>−128…127</td></tr>
+<tr><td class="mono" style="color:var(--c64-yellow)">sq16_8</td><td>24</td><td class="warn-c">Sì</td><td>256</td><td>1/256 ≈ 0.004</td><td>−32768…32767</td></tr>
+<tr><td class="mono" style="color:var(--c64-yellow)">sq8_16</td><td>24</td><td class="warn-c">Sì</td><td>65536</td><td>1/65536 ≈ 0.000015</td><td>−128…127</td></tr>
+<tr><td class="mono" style="color:var(--c64-yellow)">sq16_16</td><td>32</td><td class="warn-c">Sì</td><td>65536</td><td>1/65536 ≈ 0.000015</td><td>−32768…32767</td></tr>
+</tbody>
+</table></div>
+<h4>Operazioni fondamentali</h4>
+<p><strong>Addizione e sottrazione</strong> tra due tipi fp: i raw integer si sommano direttamente — i punti binari si allineano automaticamente. Nessun aggiustamento necessario. <strong>Moltiplicazione fp × fp</strong>: il rescaling (shift a destra di <code>frac</code> bit) è <strong>automatico</strong> — il compilatore lo emette implicitamente. <strong>Moltiplicazione fp × intero</strong>: l'intero è trattato come coefficiente puro, nessun rescaling — il risultato rimane nella scala corretta. <strong>Da intero a Q</strong>: shift a sinistra di <code>frac</code> bit (equivale a moltiplicare per la scala).</p>
+<div class="tbl-wrap"><table>
+<thead><tr><th>Operazione</th><th>Codice (q8_8, scala=256)</th><th>Note</th></tr></thead>
+<tbody>
+<tr><td>Intero n → Q8.8</td><td class="mono"><span class="ty">word</span>(<span class="vr">n</span>) <span class="op">&lt;&lt;</span> <span class="nm">8</span></td><td>n=3 → $0300 = 3.0</td></tr>
+<tr><td>Q8.8 → intero (floor)</td><td class="mono"><span class="ty">byte</span>(<span class="vr">v</span> <span class="op">&gt;&gt;</span> <span class="nm">8</span>)</td><td>alto byte = parte intera</td></tr>
+<tr><td>Q8.8 → parte fraz. (0…1)</td><td class="mono"><span class="ty">byte</span>(<span class="vr">v</span> <span class="op">&amp;</span> <span class="hx">$FF</span>)</td><td>basso byte / 256</td></tr>
+<tr><td>Somma a + b</td><td class="mono"><span class="vr">c</span> <span class="op">=</span> <span class="vr">a</span> <span class="op">+</span> <span class="vr">b</span></td><td>diretta — nessun aggiustamento</td></tr>
+<tr><td>Prodotto a × b <em>(fp×fp)</em></td><td class="mono"><span class="vr">c</span> <span class="op">=</span> <span class="vr">a</span> <span class="op">*</span> <span class="vr">b</span></td><td>rescaling automatico</td></tr>
+<tr><td>Prodotto v × k <em>(fp×int)</em></td><td class="mono"><span class="vr">c</span> <span class="op">=</span> <span class="vr">v</span> <span class="op">*</span> <span class="vr">k</span></td><td>nessun shift — k è coefficiente</td></tr>
+<tr><td>Costante 3.5 in Q8.8</td><td class="mono"><span class="ty">q8_8</span> <span class="vr">k</span> <span class="op">=</span> <span class="hx">$0380</span></td><td>3×256 + 128 = 896 = $0380</td></tr>
+<tr><td>Costante 0.25 in Q8.8</td><td class="mono"><span class="ty">q8_8</span> <span class="vr">q</span> <span class="op">=</span> <span class="hx">$0040</span></td><td>0×256 + 64 = 64 = $0040</td></tr>
+</tbody>
+</table></div>
+<div class="callout callout-warn">
+  <div class="callout-tag">⚠ Overflow nella moltiplicazione</div>
+  Il prodotto di due <code>q8_8</code> genera temporaneamente un valore a 32-bit. Con le word a 16-bit del 6510, limitare i fattori a valori piccoli (parte intera &lt; 16) o usare <code>q16_8</code> che ha range intero più ampio.
+</div>
+<div class="callout callout-warn">
+  <div class="callout-tag">⚠ Scelta del tipo</div>
+  Per coordinate schermo (0…255) usare <code>sq8_8</code> se servono valori negativi (velocità, delta), o <code>q8_8</code> se solo positivi. Per coordinate pixel del VIC-II (0…319) preferire <code>q16_8</code>. La risoluzione di 1/256 (≈0.004) è più che sufficiente per la fisica di gioco a 50 Hz.
+</div>
+</section>
+
+<section id="casting">
+<h2>Casting di tipo</h2>
+<p>Sintassi: <em>tipo</em><code>(</code><em>espressione</em><code>)</code></p>
+<pre><span class="ty">float</span> <span class="vr">x</span> <span class="op">=</span> <span class="fl">3.7</span>;
+<span class="ty">byte</span>  <span class="vr">n</span> <span class="op">=</span> <span class="ty">byte</span>(<span class="vr">x</span>);   <span class="cm">// troncamento → 3</span>
+<span class="ty">float</span> <span class="vr">y</span> <span class="op">=</span> <span class="ty">float</span>(<span class="vr">n</span>);  <span class="cm">// promozione byte→float</span>
+<span class="ty">word</span>  <span class="vr">w</span> <span class="op">=</span> <span class="ty">word</span>(<span class="vr">n</span>);   <span class="cm">// zero-extend byte→word</span></pre>
+<h4>Casting con tipi fixed-point</h4>
+<p>Il cast a fixed-point non inserisce automaticamente lo shift — è responsabilità del programmatore mantenere la scala corretta usando gli operatori <code>&lt;&lt;</code> e <code>&gt;&gt;</code>:</p>
+<pre><span class="ty">byte</span>  <span class="vr">n</span>  <span class="op">=</span> <span class="nm">42</span>;
+<span class="cm">// byte → q8_8: moltiplica per 256 (shift left di 8)</span>
+<span class="ty">q8_8</span>  <span class="vr">qv</span> <span class="op">=</span> <span class="ty">word</span>(<span class="vr">n</span>) <span class="op">&lt;&lt;</span> <span class="nm">8</span>;    <span class="cm">// 42.0 in Q8.8 → $2A00</span>
+
+<span class="cm">// q8_8 → byte: estrai la parte intera (shift right di 8)</span>
+<span class="ty">byte</span>  <span class="vr">i</span>  <span class="op">=</span> <span class="ty">byte</span>(<span class="vr">qv</span> <span class="op">&gt;&gt;</span> <span class="nm">8</span>);    <span class="cm">// 42</span>
+
+<span class="cm">// q8_8 → byte: estrai la parte frazionaria (maschera basso byte)</span>
+<span class="ty">byte</span>  <span class="vr">f</span>  <span class="op">=</span> <span class="ty">byte</span>(<span class="vr">qv</span> <span class="op">&amp;</span> <span class="hx">$FF</span>);   <span class="cm">// 0 (nessuna frazione in questo caso)</span>
+
+<span class="cm">// byte → sq8_8: stessa operazione ma con segno</span>
+<span class="ty">sq8_8</span> <span class="vr">sv</span> <span class="op">=</span> <span class="ty">int</span>(<span class="vr">n</span>) <span class="op">&lt;&lt;</span> <span class="nm">8</span>;     <span class="cm">// +42.0 in SQ8.8</span>
+
+<span class="cm">// Costante frazionaria diretta via raw hex</span>
+<span class="ty">q8_8</span>  <span class="vr">pi_approx</span> <span class="op">=</span> <span class="hx">$0324</span>;     <span class="cm">// 3.14  (3*256+36=804)</span>
+<span class="ty">q8_8</span>  <span class="vr">half</span>      <span class="op">=</span> <span class="hx">$0080</span>;     <span class="cm">// 0.5   (128/256)</span></pre>
+</section>
+
+<hr class="section-sep">
+<section id="vars-global">
+<h2>Variabili globali</h2>
+<p>Dichiarate a livello di file, fuori da qualsiasi funzione. Allocate nella BSS del PRG, accessibili da tutte le funzioni.</p>
+<pre><span class="ty">word</span> <span class="vr">SCREEN_RAM</span> <span class="op">=</span> <span class="hx">$0400</span>;
+<span class="ty">byte</span> <span class="vr">contatore</span>  <span class="op">=</span> <span class="nm">0</span>;
+<span class="ty">byte</span> <span class="vr">palette</span>[<span class="nm">16</span>] <span class="op">=</span> [<span class="nm">0</span>,<span class="nm">1</span>,<span class="nm">2</span>,<span class="nm">3</span>,<span class="nm">4</span>,<span class="nm">5</span>,<span class="nm">6</span>,<span class="nm">7</span>,<span class="nm">8</span>,<span class="nm">9</span>,<span class="nm">10</span>,<span class="nm">11</span>,<span class="nm">12</span>,<span class="nm">13</span>,<span class="nm">14</span>,<span class="nm">15</span>];</pre>
+</section>
+
+<section id="vars-local">
+<h2>Variabili locali</h2>
+<p>Dichiarate dentro una funzione o un blocco. Allocate in Zero Page (<code>$02–$FF</code>) dal Memory Planner. Visibili dal punto di dichiarazione fino alla fine del blocco.</p>
+<pre><span class="kw">func</span> <span class="vr">main</span>() {
+    <span class="ty">byte</span> <span class="vr">i</span>   <span class="op">=</span> <span class="nm">0</span>;       <span class="cm">// ZP → $02</span>
+    <span class="ty">word</span> <span class="vr">ptr</span> <span class="op">=</span> <span class="hx">$0400</span>; <span class="cm">// ZP → $03/$04</span>
+    <span class="kw">while</span> (<span class="vr">i</span> <span class="op">&lt;</span> <span class="nm">10</span>) {
+        <span class="ty">byte</span> <span class="vr">j</span> <span class="op">=</span> <span class="vr">i</span> <span class="op">*</span> <span class="nm">2</span>;   <span class="cm">// scoped al while</span>
+        <span class="vr">i</span><span class="op">++</span>;
+    }
+}</pre>
+</section>
+
+<section id="arrays">
+<h2>Array</h2>
+<p>Sequenze contigue di <code>byte</code> in memoria. Dimensione costante, indice a base 0.</p>
+<pre><span class="ty">byte</span> <span class="vr">COLORI</span>[<span class="nm">8</span>] <span class="op">=</span> [<span class="nm">2</span>,<span class="nm">10</span>,<span class="nm">7</span>,<span class="nm">1</span>,<span class="nm">7</span>,<span class="nm">10</span>,<span class="nm">2</span>,<span class="nm">0</span>];
+
+<span class="kw">func</span> <span class="vr">main</span>() {
+    <span class="bi">border_color</span>(<span class="vr">COLORI</span>[<span class="nm">3</span>]);  <span class="cm">// legge elemento 3 → 1</span>
+    <span class="vr">COLORI</span>[<span class="nm">0</span>] <span class="op">=</span> <span class="nm">15</span>;             <span class="cm">// scrive elemento 0</span>
+}</pre>
+<div class="callout callout-warn">
+  <div class="callout-tag">⚠ Limiti array</div>
+  Solo tipo <code>byte</code>. Inizializzatori solo letterali. Nessun controllo bounds a runtime.
+</div>
+</section>
+
+<hr class="section-sep">
+<section id="operators">
+<h2>Operatori</h2>
+<div class="tbl-wrap"><table>
+<thead><tr><th>Categoria</th><th>Operatori</th><th>Descrizione</th></tr></thead>
+<tbody>
+<tr><td>Aritmetici</td><td class="mono"><span class="op">+  -  *  /  %</span></td><td>Addizione, sottrazione, moltiplicazione, divisione intera, modulo</td></tr>
+<tr><td>Bitwise</td><td class="mono"><span class="op">&amp;  |  ^  ~  &lt;&lt;  &gt;&gt;</span></td><td>AND, OR, XOR, NOT, shift sinistro, shift destro</td></tr>
+<tr><td>Confronto</td><td class="mono"><span class="op">==  !=  &lt;  &gt;  &lt;=  &gt;=</span></td><td>Restituiscono 1 (vero) o 0 (falso)</td></tr>
+<tr><td>Logici</td><td class="mono"><span class="op">&amp;&amp;  ||  !</span></td><td>AND logico, OR logico, NOT logico</td></tr>
+<tr><td>Assegnamento</td><td class="mono"><span class="op">=</span></td><td>Assegnamento semplice (associativo a destra)</td></tr>
+<tr><td>Incremento</td><td class="mono"><span class="op">++  --</span></td><td>Pre/post incremento e decremento</td></tr>
+<tr><td>Unari</td><td class="mono"><span class="op">-  ~  !</span></td><td>Negazione, complemento bitwise, NOT logico</td></tr>
+</tbody>
+</table></div>
+</section>
+
+<section id="precedence">
+<h3>Precedenza (bassa → alta)</h3>
+<div class="tbl-wrap"><table>
+<thead><tr><th>#</th><th>Livello</th><th>Operatori</th><th>Assoc.</th></tr></thead>
+<tbody>
+<tr><td>1</td><td>Assegnamento</td><td class="mono"><span class="op">=</span></td><td>Destra</td></tr>
+<tr><td>2</td><td>OR logico</td><td class="mono"><span class="op">||</span></td><td>Sinistra</td></tr>
+<tr><td>3</td><td>AND logico</td><td class="mono"><span class="op">&amp;&amp;</span></td><td>Sinistra</td></tr>
+<tr><td>4</td><td>Confronto</td><td class="mono"><span class="op">==  !=  &lt;  &gt;  &lt;=  &gt;=</span></td><td>Sinistra</td></tr>
+<tr><td>5</td><td>OR bitwise</td><td class="mono"><span class="op">|</span></td><td>Sinistra</td></tr>
+<tr><td>6</td><td>XOR bitwise</td><td class="mono"><span class="op">^</span></td><td>Sinistra</td></tr>
+<tr><td>7</td><td>AND bitwise</td><td class="mono"><span class="op">&amp;</span></td><td>Sinistra</td></tr>
+<tr><td>8</td><td>Shift</td><td class="mono"><span class="op">&lt;&lt;  &gt;&gt;</span></td><td>Sinistra</td></tr>
+<tr><td>9</td><td>Additivi</td><td class="mono"><span class="op">+  -</span></td><td>Sinistra</td></tr>
+<tr><td>10</td><td>Moltiplicativi</td><td class="mono"><span class="op">*  /  %</span></td><td>Sinistra</td></tr>
+<tr><td>11</td><td>Unari prefisso</td><td class="mono"><span class="op">-  ~  !  ++  --</span></td><td>Destra</td></tr>
+<tr><td>12</td><td>Postfisso</td><td class="mono"><span class="op">++  --  []</span></td><td>Sinistra</td></tr>
+</tbody>
+</table></div>
+</section>
+
+<hr class="section-sep">
+<section id="if">
+<h2>if / else</h2>
+<pre><span class="kw">if</span> (<span class="vr">c</span> <span class="op">==</span> <span class="nm">0</span>) {
+    <span class="bi">border_color</span>(<span class="nm">1</span>);
+} <span class="kw">else</span> <span class="kw">if</span> (<span class="vr">c</span> <span class="op">&lt;</span> <span class="nm">8</span>) {
+    <span class="bi">border_color</span>(<span class="nm">2</span>);
+} <span class="kw">else</span> {
+    <span class="bi">border_color</span>(<span class="nm">0</span>);
+}</pre>
+<p>I blocchi <code>{ }</code> sono obbligatori anche per statement singoli.</p>
+</section>
+
+<section id="while">
+<h2>while</h2>
+<pre><span class="ty">byte</span> <span class="vr">i</span> <span class="op">=</span> <span class="nm">0</span>;
+<span class="kw">while</span> (<span class="vr">i</span> <span class="op">&lt;</span> <span class="nm">16</span>) {
+    <span class="bi">border_color</span>(<span class="vr">i</span>);
+    <span class="bi">wait</span>(<span class="nm">6</span>);
+    <span class="vr">i</span><span class="op">++</span>;
+}
+<span class="kw">while</span> (<span class="nm">1</span>) { <span class="bi">wait_frames</span>(<span class="nm">1</span>); }   <span class="cm">// loop infinito</span></pre>
+</section>
+
+<section id="dowhile">
+<h2>do…while</h2>
+<p>Il corpo viene eseguito almeno una volta.</p>
+<pre><span class="ty">byte</span> <span class="vr">n</span> <span class="op">=</span> <span class="nm">0</span>;
+<span class="kw">do</span> {
+    <span class="bi">poke</span>(<span class="hx">$0400</span> <span class="op">+</span> <span class="vr">n</span>, <span class="nm">32</span>);
+    <span class="vr">n</span><span class="op">++</span>;
+} <span class="kw">while</span> (<span class="vr">n</span> <span class="op">&lt;</span> <span class="nm">40</span>);</pre>
+</section>
+
+<section id="for">
+<h2>for</h2>
+<pre><span class="kw">for</span> (<span class="ty">byte</span> <span class="vr">i</span> <span class="op">=</span> <span class="nm">0</span>; <span class="vr">i</span> <span class="op">&lt;</span> <span class="nm">40</span>; <span class="vr">i</span><span class="op">++</span>) {
+    <span class="bi">poke</span>(<span class="hx">$0400</span> <span class="op">+</span> <span class="vr">i</span>, <span class="nm">160</span>);
+}</pre>
+<p>Le tre parti (init, condizione, incremento) sono opzionali. La variabile di init può essere dichiarata inline.</p>
+</section>
+
+<section id="break">
+<h2>break / continue</h2>
+<pre><span class="kw">while</span> (<span class="nm">1</span>) {
+    <span class="ty">byte</span> <span class="vr">k</span> <span class="op">=</span> <span class="bi">peek</span>(<span class="hx">$DC01</span>);
+    <span class="kw">if</span> (<span class="vr">k</span> <span class="op">==</span> <span class="hx">$FF</span>) { <span class="kw">break</span>; }     <span class="cm">// esce dal loop</span>
+    <span class="kw">if</span> (<span class="vr">k</span> <span class="op">&gt;</span> <span class="nm">128</span>)  { <span class="kw">continue</span>; }  <span class="cm">// salta al prossimo ciclo</span>
+    <span class="bi">border_color</span>(<span class="vr">k</span> <span class="op">%</span> <span class="nm">16</span>);
+}</pre>
+</section>
+
+<hr class="section-sep">
+<section id="func">
+<h2>Dichiarazione func</h2>
+<pre><span class="kw">func</span> <span class="vr">saluta</span>() {                              <span class="cm">// void</span>
+    <span class="bi">print_at</span>(<span class="nm">0</span>, <span class="nm">0</span>, <span class="st">"CIAO"</span>);
+}
+
+<span class="kw">func</span> <span class="ty">byte</span> <span class="vr">somma</span>(<span class="ty">byte</span> <span class="vr">a</span>, <span class="ty">byte</span> <span class="vr">b</span>) {           <span class="cm">// con ritorno</span>
+    <span class="kw">return</span> <span class="vr">a</span> <span class="op">+</span> <span class="vr">b</span>;
+}
+
+<span class="kw">func</span> <span class="vr">riempi</span>(<span class="ty">byte</span> <span class="vr">buf</span>[], <span class="ty">byte</span> <span class="vr">val</span>, <span class="ty">byte</span> <span class="vr">n</span>) { <span class="cm">// parametro array</span>
+    <span class="kw">for</span> (<span class="ty">byte</span> <span class="vr">i</span> <span class="op">=</span> <span class="nm">0</span>; <span class="vr">i</span> <span class="op">&lt;</span> <span class="vr">n</span>; <span class="vr">i</span><span class="op">++</span>) { <span class="vr">buf</span>[<span class="vr">i</span>] <span class="op">=</span> <span class="vr">val</span>; }
+}</pre>
+<p>L'entry point obbligatorio è <code>func main()</code>. Le funzioni si dichiarano in ordine top-down (prima di essere chiamate).</p>
+</section>
+
+<section id="func-inline">
+<h3>inline <span class="badge badge-kw">KEYWORD</span></h3>
+<p>Funzioni <code>inline</code> vengono espanse nel punto di chiamata (nessun <code>JSR</code> emesso). Utile per codice chiamato in loop critici.</p>
+<pre><span class="kw">inline</span> <span class="kw">func</span> <span class="vr">ack_vic</span>() { <span class="bi">poke</span>(<span class="hx">$D019</span>, <span class="nm">1</span>); }</pre>
+</section>
+
+<section id="func-irq">
+<h3>irq / raw irq <span class="badge badge-irq">IRQ</span></h3>
+<p><code>irq func</code> genera automaticamente prologo/epilogo (salva A,X,Y; RTI). <code>raw irq func</code> non genera nulla in automatico — tutta la gestione è manuale.</p>
+<pre><span class="kw">irq</span> <span class="kw">func</span> <span class="vr">mio_irq</span>() {
+    <span class="bi">ack_raster_irq</span>();
+    <span class="bi">border_color</span>(<span class="nm">2</span>);
+}
+<span class="kw">raw</span> <span class="kw">irq</span> <span class="kw">func</span> <span class="vr">irq_veloce</span>() {
+    <span class="bi">ack_raster_irq_fast</span>();
+    <span class="bi">border_color</span>(<span class="nm">4</span>);
+}</pre>
+</section>
+
+<section id="return">
+<h3>return</h3>
+<pre><span class="kw">func</span> <span class="ty">byte</span> <span class="vr">clamp</span>(<span class="ty">byte</span> <span class="vr">v</span>, <span class="ty">byte</span> <span class="vr">lo</span>, <span class="ty">byte</span> <span class="vr">hi</span>) {
+    <span class="kw">if</span> (<span class="vr">v</span> <span class="op">&lt;</span> <span class="vr">lo</span>) { <span class="kw">return</span> <span class="vr">lo</span>; }
+    <span class="kw">if</span> (<span class="vr">v</span> <span class="op">&gt;</span> <span class="vr">hi</span>) { <span class="kw">return</span> <span class="vr">hi</span>; }
+    <span class="kw">return</span> <span class="vr">v</span>;
+}</pre>
+</section>
+
+<hr class="section-sep">
+<section id="io-print">
+<h2>print / println</h2>
+<div class="sig-box"><span class="bi">print</span>(<span class="vr">arg1</span> [, <span class="vr">arg2</span>, …])</div>
+<div class="sig-box"><span class="bi">println</span>(<span class="vr">arg1</span> [, <span class="vr">arg2</span>, …])</div>
+<p>Funzioni <strong>polimorfe</strong>: stampano uno o più argomenti in sequenza al cursore corrente via KERNAL CHROUT (<code class="addr">$FFD2</code>). <code>println</code> aggiunge un ritorno a capo (<code>CR</code>, codice 13) al termine.</p>
+<p>Il tipo dell'argomento viene rilevato automaticamente a compile-time e si usa la strategia di stampa più adatta:</p>
+<div class="tbl-wrap"><table>
+<thead><tr><th>Tipo argomento</th><th>Strategia</th><th>Esempio</th></tr></thead>
+<tbody>
+<tr><td class="mono ty-c">string</td><td>CHROUT carattere per carattere (PETSCII)</td><td class="mono"><span class="bi">print</span>(<span class="st">"CIAO"</span>)</td></tr>
+<tr><td class="mono ty-c">float</td><td>FOUT <span class="addr">$BDDD</span> → loop CHROUT <span class="badge badge-rom">BASIC ROM</span></td><td class="mono"><span class="bi">print</span>(<span class="fl">3.14</span>)</td></tr>
+<tr><td class="mono ty-c">long / ulong / dword</td><td>Divisione 32-bit/10 iterata, cifre su stack, CHROUT</td><td class="mono"><span class="bi">print</span>(<span class="vr">big</span>)</td></tr>
+<tr><td class="mono ty-c">word / int</td><td>Stessa routine 32-bit con zero/sign-extend a 16-bit</td><td class="mono"><span class="bi">print</span>(<span class="vr">score</span>)</td></tr>
+<tr><td class="mono ty-c">byte / espressione</td><td>Zero-extend a 8-bit, stessa routine decimale</td><td class="mono"><span class="bi">print</span>(<span class="vr">c</span>)</td></tr>
+<tr><td class="mono ty-c">chiamata float</td><td>FAC1 preservato senza QINT → FOUT</td><td class="mono"><span class="bi">print</span>(<span class="bi">sin</span>(<span class="nm">1</span>))</td></tr>
+</tbody>
+</table></div>
+<pre><span class="cm">// Stringa pura</span>
+<span class="bi">print</span>(<span class="st">"GAME OVER"</span>);
+
+<span class="cm">// Numerici — tipo rilevato automaticamente</span>
+<span class="ty">byte</span>  <span class="vr">vite</span>  <span class="op">=</span> <span class="nm">3</span>;
+<span class="ty">word</span>  <span class="vr">score</span> <span class="op">=</span> <span class="nm">12000</span>;
+<span class="ty">long</span>  <span class="vr">pts</span>   <span class="op">=</span> <span class="nm">9876543</span>;
+<span class="ty">float</span> <span class="vr">vel</span>   <span class="op">=</span> <span class="fl">3.14</span>;
+
+<span class="bi">print</span>(<span class="st">"VITE="</span>, <span class="vr">vite</span>);                        <span class="cm">// VITE=3</span>
+<span class="bi">print</span>(<span class="st">"SCORE="</span>, <span class="vr">score</span>, <span class="st">" PTS="</span>, <span class="vr">pts</span>);       <span class="cm">// SCORE=12000 PTS=9876543</span>
+<span class="bi">print</span>(<span class="st">"VEL="</span>, <span class="vr">vel</span>);                          <span class="cm">// VEL= 3.14159 </span>
+<span class="bi">print</span>(<span class="st">"SIN="</span>, <span class="bi">sin</span>(<span class="nm">1</span>));                       <span class="cm">// SIN= .841471 </span>
+<span class="bi">println</span>(<span class="st">"X="</span>, <span class="vr">score</span>, <span class="st">" Y="</span>, <span class="vr">vite</span>);           <span class="cm">// X=12000 Y=3⏎</span></pre>
+<div class="callout callout-warn">
+  <div class="callout-tag">⚠ Tipi unsigned e valori negativi</div>
+  Assegnare un valore negativo a <code>byte</code>, <code>word</code> o <code>ulong</code> causa un overflow silenzioso: il compilatore emetterà un <strong>warning semantico</strong> indicando il valore effettivamente memorizzato. Usare <code>int</code> o <code>long</code> per valori negativi.
+</div>
+</section>
+
+<section id="io-print_at">
+<h2>print_at</h2>
+<div class="sig-box"><span class="bi">print_at</span>(<span class="ty">byte</span> <span class="vr">col</span>, <span class="ty">byte</span> <span class="vr">riga</span>, <span class="vr">arg1</span> [, <span class="vr">arg2</span>, …])</div>
+<p>Posiziona il cursore via KERNAL PLOT (<code class="addr">$FFF0</code>) e stampa tutti gli argomenti successivi con la stessa logica polimorfa di <code>print</code>. Col: 0–39, Riga: 0–24.</p>
+<pre><span class="bi">print_at</span>(<span class="nm">0</span>,  <span class="nm">0</span>,  <span class="st">"C64C IDE"</span>);
+<span class="bi">print_at</span>(<span class="nm">15</span>, <span class="nm">12</span>, <span class="st">"READY"</span>);
+
+<span class="cm">// Misto stringa + numerici in un'unica chiamata</span>
+<span class="ty">word</span>  <span class="vr">score</span> <span class="op">=</span> <span class="nm">9999</span>;
+<span class="ty">float</span> <span class="vr">pi</span>    <span class="op">=</span> <span class="fl">3.14159</span>;
+<span class="bi">print_at</span>(<span class="nm">0</span>, <span class="nm">3</span>, <span class="st">"SCORE="</span>, <span class="vr">score</span>);             <span class="cm">// SCORE=9999</span>
+<span class="bi">print_at</span>(<span class="nm">0</span>, <span class="nm">4</span>, <span class="st">"PI="</span>, <span class="vr">pi</span>);                   <span class="cm">// PI= 3.14159 </span>
+<span class="bi">print_at</span>(<span class="nm">0</span>, <span class="nm">5</span>, <span class="st">"SIN(1)="</span>, <span class="bi">sin</span>(<span class="nm">1</span>));          <span class="cm">// SIN(1)= .841471 </span>
+<span class="bi">print_at</span>(<span class="nm">0</span>, <span class="nm">6</span>, <span class="st">"X="</span>, <span class="vr">score</span>, <span class="st">" Y="</span>, <span class="vr">score</span>);  <span class="cm">// X=9999 Y=9999</span></pre>
+</section>
+
+<section id="io-kernal">
+<h2>kernal_chrout / kernal_chrin</h2>
+<div class="sig-box"><span class="bi">kernal_chrout</span>(<span class="ty">byte</span> <span class="vr">ch</span>)</div>
+<div class="sig-box"><span class="bi">kernal_chrin</span>() → <span class="ty">byte</span></div>
+<pre><span class="bi">kernal_chrout</span>(<span class="nm">13</span>);               <span class="cm">// newline</span>
+<span class="bi">kernal_chrout</span>(<span class="nm">147</span>);              <span class="cm">// clear screen PETSCII</span>
+<span class="ty">byte</span> <span class="vr">c</span> <span class="op">=</span> <span class="bi">kernal_chrin</span>();          <span class="cm">// legge un tasto</span></pre>
+
+</section>
+
+<section id="io-input">
+<h2>input <span class="badge badge-kw">TASTIERA</span></h2>
+<div class="sig-box"><span class="bi">input</span>() → <span class="ty">byte</span></div>
+<p>Attende un tasto dalla tastiera e ritorna il codice PETSCII in A. Usa la routine KERNAL <strong>GETIN</strong> (<code class="addr">$FFE4</code>) in un loop bloccante: se il buffer è vuoto A=0 e si ripete, altrimenti A contiene il codice del tasto.</p>
+<div class="tbl-wrap"><table>
+<thead><tr><th>Tasto</th><th>Codice PETSCII</th></tr></thead>
+<tbody>
+<tr><td>A–Z</td><td>65–90</td></tr>
+<tr><td>0–9</td><td>48–57</td></tr>
+<tr><td>RETURN</td><td>13</td></tr>
+<tr><td>SPACE</td><td>32</td></tr>
+<tr><td>F1</td><td>133</td></tr>
+</tbody>
+</table></div>
+<pre><span class="ty">byte</span> <span class="vr">k</span> <span class="op">=</span> <span class="bi">input</span>();              <span class="cm">// aspetta tasto, ritorna PETSCII</span>
+<span class="kw">if</span> (<span class="vr">k</span> <span class="op">==</span> <span class="nm">32</span>) { <span class="bi">border_color</span>(<span class="nm">1</span>); } <span class="cm">// SPACE → bordo bianco</span>
+
+<span class="cm">// Loop: premi F1 per uscire</span>
+<span class="kw">while</span> (<span class="nm">1</span>) {
+    <span class="ty">byte</span> <span class="vr">key</span> <span class="op">=</span> <span class="bi">input</span>();
+    <span class="kw">if</span> (<span class="vr">key</span> <span class="op">==</span> <span class="nm">133</span>) { <span class="kw">break</span>; }   <span class="cm">// F1 = esci</span>
+    <span class="bi">kernal_chrout</span>(<span class="vr">key</span>);             <span class="cm">// echo del carattere</span>
+}</pre>
+<div class="callout callout-warn">
+  <div class="callout-tag">⚠ Limitazioni input()</div>
+  Non usare dentro handler IRQ. Non funziona se il KERNAL è disabilitato (<code>$01≠$37</code>). Per input non bloccante usare direttamente <code>kernal_chrin()</code> o GETIN via <code>sys($FFE4)</code>.
+</div>
+
+<hr class="section-sep">
+<section id="mem-poke">
+<h2>poke / peek</h2>
+<div class="sig-box"><span class="bi">poke</span>(<span class="ty">word</span> <span class="vr">addr</span>, <span class="ty">byte</span> <span class="vr">val</span>)</div>
+<div class="sig-box"><span class="bi">peek</span>(<span class="ty">word</span> <span class="vr">addr</span>) → <span class="ty">byte</span></div>
+<div class="sig-box"><span class="bi">poke16</span>(<span class="ty">word</span> <span class="vr">addr</span>, <span class="ty">word</span> <span class="vr">val</span>)</div>
+<div class="sig-box"><span class="bi">peek16</span>(<span class="ty">word</span> <span class="vr">addr</span>) → <span class="ty">word</span></div>
+<pre><span class="bi">poke</span>(<span class="hx">$D020</span>, <span class="nm">2</span>);                   <span class="cm">// bordo rosso</span>
+<span class="ty">byte</span> <span class="vr">r</span> <span class="op">=</span> <span class="bi">peek</span>(<span class="hx">$D012</span>);              <span class="cm">// linea raster</span>
+<span class="kw">while</span> (<span class="bi">peek</span>(<span class="hx">$D012</span>) <span class="op">!=</span> <span class="nm">100</span>) {}     <span class="cm">// sync raster</span></pre>
+</section>
+
+<section id="mem-memset">
+<h2>memset / memcpy</h2>
+<div class="sig-box"><span class="bi">memset</span>(<span class="ty">word</span> <span class="vr">dest</span>, <span class="ty">byte</span> <span class="vr">val</span>, <span class="ty">byte</span> <span class="vr">count</span>)</div>
+<div class="sig-box"><span class="bi">memcpy</span>(<span class="ty">word</span> <span class="vr">dest</span>, <span class="ty">word</span> <span class="vr">src</span>, <span class="ty">byte</span> <span class="vr">count</span>)</div>
+<pre><span class="bi">memset</span>(<span class="hx">$0400</span>, <span class="nm">32</span>,  <span class="nm">255</span>);  <span class="cm">// 255 spazi nella screen RAM</span>
+<span class="bi">memset</span>(<span class="hx">$D800</span>, <span class="nm">1</span>,   <span class="nm">255</span>);  <span class="cm">// color RAM tutta bianca</span></pre>
+</section>
+
+<hr class="section-sep">
+<section id="vic-screen">
+<h2>VIC-II — Schermo e colori</h2>
+<div class="sig-box"><span class="bi">clear_screen</span>()</div>
+<div class="sig-box"><span class="bi">border_color</span>(<span class="ty">byte</span> <span class="vr">c</span>)  &nbsp;→&nbsp; <span class="addr">$D020</span></div>
+<div class="sig-box"><span class="bi">screen_color</span>(<span class="ty">byte</span> <span class="vr">c</span>)  &nbsp;→&nbsp; <span class="addr">$D021</span></div>
+<div class="sig-box"><span class="bi">text_color</span>(<span class="ty">byte</span> <span class="vr">c</span>)    &nbsp;→&nbsp; <span class="addr">$0286</span></div>
+<pre><span class="bi">clear_screen</span>();     <span class="cm">// KERNAL $E544</span>
+<span class="bi">border_color</span>(<span class="nm">0</span>);    <span class="cm">// bordo nero</span>
+<span class="bi">screen_color</span>(<span class="nm">6</span>);    <span class="cm">// sfondo blu</span>
+<span class="bi">text_color</span>(<span class="nm">1</span>);      <span class="cm">// testo bianco</span></pre>
+</section>
+
+<section id="vic-sprites">
+<h2>VIC-II — Sprite</h2>
+<div class="sig-box"><span class="bi">sprite_enable</span>(<span class="ty">byte</span> <span class="vr">mask</span>)  &nbsp;→&nbsp; <span class="addr">$D015</span></div>
+<div class="sig-box"><span class="bi">sprite_pos</span>(<span class="ty">byte</span> <span class="vr">n</span>, <span class="ty">byte</span> <span class="vr">x</span>, <span class="ty">byte</span> <span class="vr">y</span>)</div>
+<div class="sig-box"><span class="bi">sprite_color</span>(<span class="ty">byte</span> <span class="vr">n</span>, <span class="ty">byte</span> <span class="vr">c</span>)  &nbsp;→&nbsp; <span class="addr">$D027+n</span></div>
+<div class="sig-box"><span class="bi">sprite_data</span>(<span class="ty">byte</span> <span class="vr">n</span>, <span class="ty">byte</span> <span class="vr">bank</span>)  &nbsp;→&nbsp; <span class="addr">$07F8+n</span></div>
+<pre><span class="bi">sprite_enable</span>(<span class="hx">$01</span>);        <span class="cm">// abilita sprite 0</span>
+<span class="bi">sprite_pos</span>(<span class="nm">0</span>, <span class="nm">160</span>, <span class="nm">100</span>);   <span class="cm">// X=160, Y=100</span>
+<span class="bi">sprite_color</span>(<span class="nm">0</span>, <span class="nm">1</span>);        <span class="cm">// bianco</span>
+<span class="bi">sprite_data</span>(<span class="nm">0</span>, <span class="nm">192</span>);       <span class="cm">// puntatore dati</span></pre>
+
+
+<hr class="section-sep">
+<section id="vic-draw">
+<h2>VIC-II — Disegno caratteri</h2>
+<div class="sig-box"><span class="bi">plot</span>(<span class="ty">byte</span> <span class="vr">x</span>, <span class="ty">byte</span> <span class="vr">y</span>, <span class="ty">byte</span> <span class="vr">ch</span>)</div>
+<div class="sig-box"><span class="bi">draw_line</span>(<span class="ty">byte</span> <span class="vr">x</span>, <span class="ty">byte</span> <span class="vr">y</span>, <span class="ty">byte</span> <span class="vr">len</span>, <span class="ty">byte</span> <span class="vr">ch</span>)</div>
+<div class="sig-box"><span class="bi">fill_box</span>(<span class="ty">byte</span> <span class="vr">x</span>, <span class="ty">byte</span> <span class="vr">y</span>, <span class="ty">byte</span> <span class="vr">w</span>, <span class="ty">byte</span> <span class="vr">h</span>, <span class="ty">byte</span> <span class="vr">ch</span>)</div>
+<div class="sig-box"><span class="bi">draw_box</span>(<span class="ty">byte</span> <span class="vr">x</span>, <span class="ty">byte</span> <span class="vr">y</span>, <span class="ty">byte</span> <span class="vr">w</span>, <span class="ty">byte</span> <span class="vr">h</span>, <span class="ty">byte</span> <span class="vr">ch</span>)</div>
+<p>Funzioni di disegno su <strong>Screen RAM</strong> (<code class="addr">$0400</code>, modalità carattere 40×25). Operano direttamente in memoria senza passare per il KERNAL: nessuna BASIC ROM richiesta.</p>
+<div class="tbl-wrap"><table>
+<thead><tr><th>Funzione</th><th>Descrizione</th><th>Costo tipico</th></tr></thead>
+<tbody>
+<tr><td class="mono bi-c">plot(x, y, ch)</td><td>Scrive il carattere <em>ch</em> alla colonna <em>x</em> (0–39), riga <em>y</em> (0–24)</td><td>~25 istr.</td></tr>
+<tr><td class="mono bi-c">draw_line(x, y, len, ch)</td><td>Riga orizzontale di <em>len</em> caratteri <em>ch</em> da (x, y) verso destra</td><td>~35 + 6×len</td></tr>
+<tr><td class="mono bi-c">fill_box(x, y, w, h, ch)</td><td>Rettangolo pieno w×h a partire da (x, y)</td><td>~40 + 6×w×h</td></tr>
+<tr><td class="mono bi-c">draw_box(x, y, w, h, ch)</td><td>Solo il perimetro del rettangolo (top, bottom, lati)</td><td>~40 + 6×(2w + 2h−4)</td></tr>
+</tbody>
+</table></div>
+<p>Tutte calcolano l'indirizzo screen come <code>$0400 + y×40 + x</code> usando shift 16-bit (<code>y×40 = y×8 + y×32</code>). Usano i registri ZP utility <code>$FB–$FE</code>. <code>draw_box</code> e <code>fill_box</code> usano PHA/PLA per valori intermedi — non chiamare dentro handler <code>raw irq</code>.</p>
+<pre><span class="cm">// Carattere schermo PETSCII: 32=spazio, 42=asterisco, 160=♦ reverse-space</span>
+<span class="bi">fill_box</span>(<span class="nm">0</span>, <span class="nm">0</span>, <span class="nm">40</span>, <span class="nm">25</span>, <span class="nm">32</span>);       <span class="cm">// pulisci schermo manualmente</span>
+<span class="bi">draw_box</span>(<span class="nm">5</span>, <span class="nm">5</span>, <span class="nm">30</span>, <span class="nm">15</span>, <span class="nm">42</span>);       <span class="cm">// cornice di asterischi</span>
+<span class="bi">draw_line</span>(<span class="nm">10</span>, <span class="nm">12</span>, <span class="nm">20</span>, <span class="nm">160</span>);        <span class="cm">// riga di blocchi solidi</span>
+<span class="bi">plot</span>(<span class="nm">20</span>, <span class="nm">12</span>, <span class="nm">81</span>);                   <span class="cm">// singolo 'Q' al centro</span>
+
+<span class="cm">// Colori separati via Color RAM ($D800 = same layout)</span>
+<span class="kw">func</span> <span class="vr">main</span>() {
+    <span class="bi">clear_screen</span>();
+    <span class="bi">fill_box</span>(<span class="nm">2</span>, <span class="nm">2</span>, <span class="nm">36</span>, <span class="nm">21</span>, <span class="nm">32</span>);   <span class="cm">// sfondo interno</span>
+    <span class="bi">draw_box</span>(<span class="nm">0</span>, <span class="nm">0</span>, <span class="nm">40</span>, <span class="nm">25</span>, <span class="nm">43</span>);   <span class="cm">// bordo '+' perimetro schermo</span>
+    <span class="bi">print_at</span>(<span class="nm">14</span>, <span class="nm">12</span>, <span class="st">"GAME OVER"</span>);
+    <span class="kw">while</span>(<span class="nm">1</span>) {}
+}</pre>
+<div class="callout callout-warn">
+  <div class="callout-tag">⚠ Solo modalità carattere</div>
+  Queste funzioni scrivono nella Screen RAM in modalità carattere 40×25. In modalità bitmap (<code>$D011 bit4=1</code>) gli indirizzi sono diversi: usare <code>poke()</code> direttamente.
+</div>
+</section>
+
+<hr class="section-sep">
+<section id="timing">
+<h2>wait / wait_frames</h2>
+<div class="sig-box"><span class="bi">wait</span>(<span class="ty">byte</span> <span class="vr">jiffie</span>) &nbsp;— 1 jiffy = 1/60 s · max 255 (~4.25 s)</div>
+<div class="sig-box"><span class="bi">wait_frames</span>(<span class="ty">byte</span> <span class="vr">frame</span>) &nbsp;— polling raster $D012, esatto al frame</div>
+<pre><span class="bi">wait</span>(<span class="nm">60</span>);         <span class="cm">// ~1 secondo</span>
+<span class="bi">wait_frames</span>(<span class="nm">1</span>);  <span class="cm">// esattamente 1 frame VBI</span>
+<span class="bi">wait_frames</span>(<span class="nm">2</span>);  <span class="cm">// animazione a 25/30 fps</span></pre>
+</section>
+
+<hr class="section-sep">
+<section id="sys">
+<h2>sys / jsr</h2>
+<div class="sig-box"><span class="bi">sys</span>(<span class="ty">word</span> <span class="vr">addr</span>)  &nbsp;=&nbsp; <span class="bi">jsr</span>(<span class="ty">word</span> <span class="vr">addr</span>)  &nbsp;→ emette JSR assoluto</div>
+<pre><span class="bi">sys</span>(<span class="hx">$E544</span>);    <span class="cm">// KERNAL clear screen</span>
+<span class="bi">jsr</span>(<span class="hx">$FF81</span>);    <span class="cm">// KERNAL SCINIT</span></pre>
+</section>
+
+<section id="cpu">
+<h2>sei / cli</h2>
+<div class="sig-box"><span class="bi">sei</span>() &nbsp;— disabilita interrupt (flag I=1)</div>
+<div class="sig-box"><span class="bi">cli</span>() &nbsp;— abilita interrupt (flag I=0)</div>
+<pre><span class="bi">sei</span>();
+<span class="bi">enable_raster_irq</span>(<span class="nm">100</span>);  <span class="cm">// include cli() interno</span></pre>
+</section>
+
+<hr class="section-sep">
+<section id="math-int">
+<h2>Matematica intera</h2>
+<div class="sig-box"><span class="bi">abs</span>(<span class="vr">x</span>) → stesso tipo <span class="badge badge-rom">BASIC ROM</span></div>
+<div class="sig-box"><span class="bi">sgn</span>(<span class="ty">byte</span> <span class="vr">n</span>) → <span class="ty">byte</span>  &nbsp;&nbsp; <span class="bi">sgn</span>(<span class="ty">int</span> <span class="vr">n</span>) → <span class="ty">byte</span></div>
+<div class="sig-box"><span class="bi">min</span>(<span class="ty">byte</span> <span class="vr">a</span>, <span class="ty">byte</span> <span class="vr">b</span>) → <span class="ty">byte</span>  &nbsp;&nbsp; <span class="bi">max</span>(<span class="ty">byte</span> <span class="vr">a</span>, <span class="ty">byte</span> <span class="vr">b</span>) → <span class="ty">byte</span></div>
+<div class="sig-box"><span class="bi">rnd</span>() → <span class="ty">byte</span> <span class="badge badge-rom">BASIC ROM</span></div>
+<p><code>abs(x)</code> — per argomenti float, integer o byte: delega alla routine KERNAL <code>$BC58</code>. Il valore viene convertito in FAC1 tramite GIVAYF, il segno viene azzerato e il risultato estratto via QINT. Richiede BASIC ROM attiva.</p>
+<p><code>sgn(n)</code> — implementazione intera pura (nessuna BASIC ROM). Per <code>byte</code> (non-signed): 0→0, qualsiasi valore&gt;0→1. Per <code>int</code> (signed, bit 7): bit 7 set → $FF (−1), 0→0, positivo→1.</p>
+<div class="tbl-wrap"><table>
+<thead><tr><th>Tipo argomento</th><th>sgn risultato</th><th>Esempio</th></tr></thead>
+<tbody>
+<tr><td class="mono ty-c">byte (0..255)</td><td>0 o 1</td><td class="mono"><span class="bi">sgn</span>(<span class="nm">200</span>) = 1, <span class="bi">sgn</span>(<span class="nm">0</span>) = 0</td></tr>
+<tr><td class="mono ty-c">int (signed)</td><td>$FF / 0 / 1</td><td class="mono"><span class="bi">sgn</span>(<span class="op">-</span><span class="nm">5</span>) = $FF, <span class="bi">sgn</span>(<span class="nm">3</span>) = 1</td></tr>
+</tbody>
+</table></div>
+<pre><span class="ty">byte</span> <span class="vr">lo</span> <span class="op">=</span> <span class="bi">min</span>(<span class="vr">x</span>, <span class="nm">200</span>);
+<span class="ty">byte</span> <span class="vr">hi</span> <span class="op">=</span> <span class="bi">max</span>(<span class="vr">x</span>, <span class="nm">0</span>);
+<span class="ty">byte</span> <span class="vr">r</span>  <span class="op">=</span> <span class="bi">rnd</span>() <span class="op">%</span> <span class="nm">16</span>;  <span class="cm">// 0..15 casuale</span>
+<span class="ty">byte</span> <span class="vr">s</span>  <span class="op">=</span> <span class="bi">sgn</span>(<span class="vr">valore</span>);   <span class="cm">// 0 o 1 (byte), $FF/0/1 (int)</span></pre>
+</section>
+
+<section id="math-float">
+<h2>Matematica float — KERNAL <span class="badge badge-rom">BASIC ROM</span></h2>
+<div class="tbl-wrap"><table>
+<thead><tr><th>Funzione</th><th>Descrizione</th><th>Indirizzo</th></tr></thead>
+<tbody>
+<tr><td class="mono bi-c">sqr(x)</td><td>√x</td><td class="addr">$BF71</td></tr>
+<tr><td class="mono bi-c">log(x)</td><td>ln(x)</td><td class="addr">$B9EA</td></tr>
+<tr><td class="mono bi-c">exp(x)</td><td>eˣ</td><td class="addr">$BFED</td></tr>
+<tr><td class="mono bi-c">sin(x)</td><td>seno (radianti)</td><td class="addr">$E26B</td></tr>
+<tr><td class="mono bi-c">cos(x)</td><td>coseno (radianti)</td><td class="addr">$E264</td></tr>
+<tr><td class="mono bi-c">tan(x)</td><td>tangente</td><td class="addr">$E2B4</td></tr>
+<tr><td class="mono bi-c">atn(x)</td><td>arcotangente</td><td class="addr">$E30E</td></tr>
+<tr><td class="mono bi-c">abs(x)</td><td>valore assoluto</td><td class="addr">$BC58</td></tr>
+<tr><td class="mono bi-c">floor(x)</td><td>parte intera ≤ x</td><td class="addr">$BCCC</td></tr>
+<tr><td class="mono bi-c">rnd()</td><td>casuale 0.0…1.0</td><td class="addr">$E097</td></tr>
+</tbody>
+</table></div>
+<pre><span class="bi">print</span>(<span class="bi">sin</span>(<span class="nm">1</span>));   <span class="cm">// .841471</span>
+<span class="bi">print</span>(<span class="bi">exp</span>(<span class="nm">1</span>));   <span class="cm">// 2.71828</span>
+<span class="bi">print</span>(<span class="bi">sqr</span>(<span class="nm">9</span>));   <span class="cm">// 3</span></pre>
+</section>
+
+<section id="givayf">
+<h2>GIVAYF e FAC1 — Note tecniche</h2>
+<p>Le funzioni float CBM usano l'accumulatore float <strong>FAC1</strong> (<code>$61–$65</code>, 5 byte).</p>
+<div class="tbl-wrap"><table>
+<thead><tr><th>Routine</th><th>Indirizzo</th><th>Descrizione</th></tr></thead>
+<tbody>
+<tr><td class="mono">GIVAYF</td><td class="addr">$B391</td><td><strong>Y=lo byte, A=hi byte</strong> (sign extension) → FAC1. Converte int16 in float.</td></tr>
+<tr><td class="mono">FOUT</td><td class="addr">$BDDD</td><td>FAC1 → stringa ASCII. Ritorna A=ptr.lo, Y=ptr.hi.</td></tr>
+<tr><td class="mono">QINT</td><td class="addr">$B1AA</td><td>FAC1 → intero 32-bit. LSB in <code>$65</code>.</td></tr>
+</tbody>
+</table></div>
+</section>
+
+</section>
+
+<section id="math-floatfuncs">
+<h2>Aritmetica float esplicita — fadd / fsub / fmul / fdiv / fpow / float_to_str <span class="badge badge-rom">BASIC ROM</span></h2>
+<div class="sig-box"><span class="bi">fadd</span>(<span class="ty">float</span> <span class="vr">a</span>, <span class="ty">float</span> <span class="vr">b</span>) → <span class="ty">float</span></div>
+<div class="sig-box"><span class="bi">fsub</span>(<span class="ty">float</span> <span class="vr">a</span>, <span class="ty">float</span> <span class="vr">b</span>) → <span class="ty">float</span></div>
+<div class="sig-box"><span class="bi">fmul</span>(<span class="ty">float</span> <span class="vr">a</span>, <span class="ty">float</span> <span class="vr">b</span>) → <span class="ty">float</span></div>
+<div class="sig-box"><span class="bi">fdiv</span>(<span class="ty">float</span> <span class="vr">a</span>, <span class="ty">float</span> <span class="vr">b</span>) → <span class="ty">float</span></div>
+<div class="sig-box"><span class="bi">fpow</span>(<span class="ty">float</span> <span class="vr">b</span>, <span class="ty">float</span> <span class="vr">esp</span>) → <span class="ty">float</span></div>
+<div class="sig-box"><span class="bi">float_to_str</span>(<span class="ty">float</span> <span class="vr">x</span>) — stampa via FOUT <span class="addr">$BDDD</span></div>
+<p>Le funzioni <code>fadd</code>…<code>fpow</code> permettono operazioni aritmetiche float esplicite quando il compilatore non riesce a dedurre il tipo float dagli operandi (ad es. somma di due variabili <code>byte</code> intesa come float). Internamente sintetizzano un nodo <code>BinaryOp float</code> e lo passano a <code>_evalFloatBinOp</code>.</p>
+<p>L'operatore <code>+</code> su variabili <code>float</code> già dichiarate usa automaticamente le stesse routine KERNAL — <code>fadd</code> è necessario solo quando si vuole forzare il percorso float su operandi non-float.</p>
+<div class="tbl-wrap"><table>
+<thead><tr><th>Funzione</th><th>Equivalente operatore</th><th>Routine KERNAL</th></tr></thead>
+<tbody>
+<tr><td class="mono bi-c">fadd(a, b)</td><td class="mono"><span class="vr">a</span> <span class="op">+</span> <span class="vr">b</span> (float)</td><td class="addr">$B867 (FADDT)</td></tr>
+<tr><td class="mono bi-c">fsub(a, b)</td><td class="mono"><span class="vr">a</span> <span class="op">-</span> <span class="vr">b</span> (float)</td><td class="addr">$B850 (FSUBT from-mem)</td></tr>
+<tr><td class="mono bi-c">fmul(a, b)</td><td class="mono"><span class="vr">a</span> <span class="op">*</span> <span class="vr">b</span> (float)</td><td class="addr">$BA28 (FMULT)</td></tr>
+<tr><td class="mono bi-c">fdiv(a, b)</td><td class="mono"><span class="vr">a</span> <span class="op">/</span> <span class="vr">b</span> (float)</td><td class="addr">$BB0F (FDIVT from-mem)</td></tr>
+<tr><td class="mono bi-c">fpow(b, esp)</td><td class="mono"><span class="vr">b</span> <span class="op">^</span> <span class="vr">esp</span></td><td class="addr">$BF78 (FPWRT)</td></tr>
+</tbody>
+</table></div>
+<p><code>float_to_str(x)</code> stampa il valore float <em>x</em> via FOUT (<code>$BDDD</code>) + CHROUT loop, senza newline. Equivale a <code>print(x)</code> quando x è di tipo float. Può essere usata per stampare il risultato di espressioni float intermedie.</p>
+<pre><span class="ty">float</span> <span class="vr">a</span> <span class="op">=</span> <span class="fl">3.14</span>;
+<span class="ty">float</span> <span class="vr">b</span> <span class="op">=</span> <span class="fl">2.0</span>;
+
+<span class="cm">// Equivalenti:</span>
+<span class="bi">print</span>(<span class="vr">a</span> <span class="op">+</span> <span class="vr">b</span>);             <span class="cm">// operatore su float → stesso codice</span>
+<span class="bi">print</span>(<span class="bi">fadd</span>(<span class="vr">a</span>, <span class="vr">b</span>));        <span class="cm">// esplicito → uguale risultato</span>
+
+<span class="cm">// Caso d'uso di fadd: forzare float su byte</span>
+<span class="ty">byte</span> <span class="vr">x</span> <span class="op">=</span> <span class="nm">100</span>, <span class="vr">y</span> <span class="op">=</span> <span class="nm">50</span>;
+<span class="bi">print</span>(<span class="bi">fadd</span>(<span class="vr">x</span>, <span class="vr">y</span>));         <span class="cm">// 150.0 (sommati come float)</span>
+
+<span class="ty">float</span> <span class="vr">base</span> <span class="op">=</span> <span class="fl">2.0</span>;
+<span class="bi">print</span>(<span class="bi">fpow</span>(<span class="vr">base</span>, <span class="fl">10.0</span>));   <span class="cm">// 1024.0</span>
+
+<span class="bi">float_to_str</span>(<span class="bi">sin</span>(<span class="fl">1.5708</span>));  <span class="cm">// sin(π/2) ≈ 1.0</span></pre>
+</section>
+
+<section id="math-fphelpers">
+<h2>fp_int / fp_frac — Estrazione Fixed-Point</h2>
+<div class="sig-box"><span class="bi">fp_int</span>(<span class="vr">v</span>) → <span class="ty">byte</span>  &nbsp;— parte intera di una variabile Q / SQ</div>
+<div class="sig-box"><span class="bi">fp_frac</span>(<span class="vr">v</span>) → <span class="ty">byte</span>  &nbsp;— parte frazionaria (byte basso)</div>
+<p>Helper ottimizzati per estrarre le due metà di una variabile fixed-point senza operazioni di shift a runtime. Richiedono che l'argomento sia un identificatore (variabile con indirizzo ZP noto al compilatore).</p>
+<div class="tbl-wrap"><table>
+<thead><tr><th>Funzione</th><th>Descrizione</th><th>Codice emesso</th></tr></thead>
+<tbody>
+<tr><td class="mono bi-c">fp_int(v)</td><td>Carica il byte alto di <em>v</em> — la parte intera. Per <code>sq*</code> (signed) il valore è signed (-128..+127) nel range 6510 $00..$FF.</td><td class="mono">LDA &lt;addr+1&gt;</td></tr>
+<tr><td class="mono bi-c">fp_frac(v)</td><td>Carica il byte basso di <em>v</em> — la parte frazionaria (0..255 = 0..255/256).</td><td class="mono">LDA &lt;addr&gt;</td></tr>
+</tbody>
+</table></div>
+<p>Equivalente manuale (meno efficiente): <code>byte(v &gt;&gt; 8)</code> per fp_int, <code>byte(v &amp; $FF)</code> per fp_frac. Le versioni builtin emettono una sola <code>LDA zp</code> invece di un'intera sequenza di shift.</p>
+<pre><span class="ty">q8_8</span> <span class="vr">pos</span> <span class="op">=</span> <span class="hx">$1940</span>;     <span class="cm">// 25.25 in Q8.8</span>
+
+<span class="ty">byte</span> <span class="vr">pi</span>  <span class="op">=</span> <span class="bi">fp_int</span>(<span class="vr">pos</span>);   <span class="cm">// = 25 (byte hi)</span>
+<span class="ty">byte</span> <span class="vr">pf</span>  <span class="op">=</span> <span class="bi">fp_frac</span>(<span class="vr">pos</span>);  <span class="cm">// = 64 ($40 = 0.25×256)</span>
+
+<span class="cm">// Uso tipico: passare a VIC-II la parte intera</span>
+<span class="bi">poke</span>(<span class="hx">$D000</span>, <span class="bi">fp_int</span>(<span class="vr">pos</span>));   <span class="cm">// sprite X = parte intera di pos</span>
+
+<span class="cm">// Confronto tra approcci:</span>
+<span class="ty">byte</span> <span class="vr">a</span> <span class="op">=</span> <span class="bi">fp_int</span>(<span class="vr">pos</span>);       <span class="cm">// 1 istruzione: LDA addr+1</span>
+<span class="ty">byte</span> <span class="vr">b</span> <span class="op">=</span> <span class="ty">byte</span>(<span class="vr">pos</span> <span class="op">&gt;&gt;</span> <span class="nm">8</span>);   <span class="cm">// ~6 istruzioni: LSR×8 + maschera</span></pre>
+<div class="callout">
+  <div class="callout-tag">◈ Nota su sq (signed)</div>
+  Per variabili <code>sq8_8</code> e simili, <code>fp_int(v)</code> restituisce il byte hi come <em>valore non-signed</em> in A. L'aritmetica 8-bit del 6510 gestisce correttamente i valori negativi: <code>sq8_8 -2.0 → hi=$FE → byte 254</code>. Sottraendo 254 da un contatore byte si ottiene lo stesso risultato che sottrarre 2, grazie al wrap naturale.
+</div>
+</section>
+
+<section id="math-fixedpoint">
+<h2>Matematica Fixed-Point — Ricette 6510</h2>
+<p>Tutte le operazioni sotto funzionano con aritmetica intera pura — nessuna BASIC ROM richiesta. Il tipo <code>q8_8</code> è usato negli esempi (scala 256); per gli altri tipi adattare gli shift di conseguenza.</p>
+<div class="tbl-wrap"><table>
+<thead><tr><th>Operazione</th><th>Codice C64C</th><th>Costo</th></tr></thead>
+<tbody>
+<tr><td>Intero → Q8.8</td><td class="mono"><span class="ty">q8_8</span> <span class="vr">v</span> = <span class="ty">word</span>(<span class="vr">n</span>) <span class="op">&lt;&lt;</span> <span class="nm">8</span></td><td>1 shift</td></tr>
+<tr><td>Q8.8 → parte intera</td><td class="mono"><span class="ty">byte</span> <span class="vr">i</span> = <span class="ty">byte</span>(<span class="vr">v</span> <span class="op">&gt;&gt;</span> <span class="nm">8</span>)</td><td>1 shift</td></tr>
+<tr><td>Addizione</td><td class="mono"><span class="vr">c</span> = <span class="vr">a</span> <span class="op">+</span> <span class="vr">b</span></td><td>1 ADD</td></tr>
+<tr><td>Sottrazione</td><td class="mono"><span class="vr">c</span> = <span class="vr">a</span> <span class="op">-</span> <span class="vr">b</span></td><td>1 SUB</td></tr>
+<tr><td>Moltiplicazione Q×Q</td><td class="mono"><span class="vr">c</span> = <span class="vr">a</span> <span class="op">*</span> <span class="vr">b</span></td><td>MUL (rescaling automatico)</td></tr>
+<tr><td>Scala per costante k (intero)</td><td class="mono"><span class="vr">c</span> = <span class="vr">v</span> <span class="op">*</span> <span class="vr">k</span></td><td>MUL diretto</td></tr>
+<tr><td>Divisione per 2</td><td class="mono"><span class="vr">c</span> = <span class="vr">v</span> <span class="op">&gt;&gt;</span> <span class="nm">1</span></td><td>1 shift</td></tr>
+<tr><td>Lineare: a×t + b×(1−t)</td><td class="mono"><span class="vr">a</span><span class="op">*</span><span class="vr">t</span> <span class="op">+</span> <span class="vr">b</span><span class="op">*</span>(<span class="hx">$0100</span><span class="op">-</span><span class="vr">t</span>)</td><td>lerp — rescaling automatico su ogni *</td></tr>
+</tbody>
+</table></div>
+<div class="callout">
+  <div class="callout-tag">◈ Tabella seno fixed-point</div>
+  Per animazioni e fisica, precalcolare una lookup table di 256 campioni di <code>sin()</code> scalati in Q8.8 è molto più veloce delle routine KERNAL. Vedi l'esempio <em>Tabella Seno Q8.8</em> nella sezione esempi.
+</div>
+
+<hr class="section-sep">
+<section id="sid">
+<h2>SID — Audio</h2>
+<div class="sig-box"><span class="bi">sid_vol</span>(<span class="ty">byte</span> <span class="vr">vol</span>)  &nbsp;→&nbsp; <span class="addr">$D418</span> bit 0–3</div>
+<div class="sig-box"><span class="bi">sid_waveform</span>(<span class="ty">byte</span> <span class="vr">voce</span>, <span class="ty">byte</span> <span class="vr">wf</span>)  &nbsp;→&nbsp; <span class="addr">$D404+voce*7</span></div>
+<div class="sig-box"><span class="bi">sid_freq</span>(<span class="ty">byte</span> <span class="vr">voce</span>, <span class="ty">word</span> <span class="vr">freq</span>)  &nbsp;→&nbsp; <span class="addr">$D400+voce*7</span> lo/hi</div>
+<div class="sig-box"><span class="bi">sid_note</span>(<span class="ty">byte</span> <span class="vr">voce</span>, <span class="ty">byte</span> <span class="vr">nota</span>)</div>
+<div class="tbl-wrap"><table>
+<thead><tr><th>Waveform</th><th>Byte</th><th>Nota</th></tr></thead>
+<tbody>
+<tr><td>Triangle + Gate</td><td class="mono hx">$11</td><td>Onda triangolare</td></tr>
+<tr><td>Sawtooth + Gate</td><td class="mono hx">$21</td><td>Dente di sega</td></tr>
+<tr><td>Pulse + Gate</td><td class="mono hx">$41</td><td>Onda quadra</td></tr>
+<tr><td>Noise + Gate</td><td class="mono hx">$81</td><td>Rumore</td></tr>
+<tr><td>Gate off</td><td class="mono hx">$X0</td><td>Taglia la nota corrente</td></tr>
+</tbody>
+</table></div>
+<pre><span class="bi">sid_vol</span>(<span class="nm">15</span>);
+<span class="bi">sid_waveform</span>(<span class="nm">0</span>, <span class="hx">$21</span>);   <span class="cm">// sawtooth on</span>
+<span class="bi">sid_freq</span>(<span class="nm">0</span>, <span class="nm">17897</span>);     <span class="cm">// ~440 Hz</span>
+<span class="bi">wait</span>(<span class="nm">30</span>);
+<span class="bi">sid_waveform</span>(<span class="nm">0</span>, <span class="hx">$20</span>);   <span class="cm">// gate off</span></pre>
+</section>
+
+<hr class="section-sep">
+<section id="irq-intro">
+<h2>IRQ — Interrupt Request</h2>
+<p>Il VIC-II può generare un IRQ a una linea raster specifica, permettendo di cambiare colori o modalità video a metà schermo (raster split). Le funzioni <code>irq</code> incapsulano automaticamente prologo/epilogo; le <code>raw irq</code> danno controllo totale al programmatore.</p>
+<p>Prologo automatico di <code>irq func</code>: salva A, X, Y sullo stack → esegue il corpo → ripristina Y, X, A → RTI.</p>
+</section>
+
+<section id="irq-raster">
+<h2>Raster IRQ — Workflow completo</h2>
+<pre><span class="kw">irq</span> <span class="kw">func</span> <span class="vr">mio_raster</span>() {
+    <span class="bi">ack_raster_irq</span>();         <span class="cm">// ACK obbligatorio</span>
+    <span class="bi">border_color</span>(<span class="nm">2</span>);         <span class="cm">// effetto raster</span>
+    <span class="bi">next_raster</span>(<span class="nm">200</span>);        <span class="cm">// prossimo IRQ</span>
+}
+
+<span class="kw">func</span> <span class="vr">main</span>() {
+    <span class="bi">clear_screen</span>();
+    <span class="bi">set_irq_vector</span>(<span class="vr">mio_raster</span>);  <span class="cm">// $0314/$0315</span>
+    <span class="bi">enable_raster_irq</span>(<span class="nm">100</span>);      <span class="cm">// attiva a linea 100</span>
+    <span class="kw">while</span> (<span class="nm">1</span>) { <span class="bi">wait_frames</span>(<span class="nm">1</span>); }
+}</pre>
+</section>
+
+<section id="irq-builtins">
+<h2>Builtin IRQ</h2>
+<div class="tbl-wrap"><table>
+<thead><tr><th>Builtin</th><th>Descrizione</th></tr></thead>
+<tbody>
+<tr><td class="mono bi-c">enable_raster_irq(line)</td><td>Configura e attiva IRQ VIC-II a linea <em>line</em>. Esegue SEI, imposta $D012/$D01A, CLI.</td></tr>
+<tr><td class="mono bi-c">disable_raster_irq()</td><td>Disabilita IRQ VIC-II (<code>$D01A=0</code>).</td></tr>
+<tr><td class="mono bi-c">set_irq_vector(func)</td><td>Imposta <code>$0314/$0315</code> (vettore IRQ KERNAL) all'indirizzo della funzione.</td></tr>
+<tr><td class="mono bi-c">set_nmi_vector(func)</td><td>Imposta <code>$0318/$0319</code> (vettore NMI).</td></tr>
+<tr><td class="mono bi-c">set_raw_irq_vector(func)</td><td>Imposta direttamente il vettore hardware <code>$FFFE/$FFFF</code>.</td></tr>
+<tr><td class="mono bi-c">ack_raster_irq()</td><td>ACK VIC-II (<code>$D019=1</code>). Usare in handler <code>irq func</code>.</td></tr>
+<tr><td class="mono bi-c">ack_raster_irq_fast()</td><td>ACK VIC-II veloce senza KERNAL. Per <code>raw irq func</code>.</td></tr>
+<tr><td class="mono bi-c">pass_irq_to_kernal()</td><td>JMP <code>$EA81</code> — cede il controllo al KERNAL (aggiorna jiffy clock ecc.).</td></tr>
+<tr><td class="mono bi-c">next_raster(line)</td><td>Imposta <code>$D012</code> per il prossimo trigger IRQ. Chiamare alla fine dell'handler.</td></tr>
+<tr><td class="mono bi-c">raster_sync(line)</td><td>Aspetta esattamente la linea raster (stable raster, elimina jitter KERNAL).</td></tr>
+<tr><td class="mono bi-c">raster_sync_exact(line)</td><td>Variante a doppio loop di raster_sync, più precisa.</td></tr>
+</tbody>
+</table></div>
+</section>
+
+<section id="irq-pattern">
+<h2>Pattern IRQ consigliati</h2>
+<h4>1 — Handler singolo via KERNAL</h4>
+<pre><span class="kw">irq</span> <span class="kw">func</span> <span class="vr">h</span>() { <span class="bi">ack_raster_irq</span>(); <span class="cm">/* corpo */</span> <span class="bi">pass_irq_to_kernal</span>(); }
+<span class="kw">func</span> <span class="vr">main</span>() { <span class="bi">set_irq_vector</span>(<span class="vr">h</span>); <span class="bi">enable_raster_irq</span>(<span class="nm">100</span>); <span class="kw">while</span>(<span class="nm">1</span>){} }</pre>
+<h4>2 — Multi-raster split (due linee)</h4>
+<pre><span class="ty">byte</span> <span class="vr">flip</span> <span class="op">=</span> <span class="nm">0</span>;
+<span class="kw">irq</span> <span class="kw">func</span> <span class="vr">split</span>() {
+    <span class="bi">ack_raster_irq</span>();
+    <span class="kw">if</span> (<span class="vr">flip</span> <span class="op">==</span> <span class="nm">0</span>) { <span class="bi">border_color</span>(<span class="nm">2</span>); <span class="bi">next_raster</span>(<span class="nm">150</span>); <span class="vr">flip</span><span class="op">=</span><span class="nm">1</span>; }
+    <span class="kw">else</span>             { <span class="bi">border_color</span>(<span class="nm">0</span>); <span class="bi">next_raster</span>(<span class="nm">100</span>); <span class="vr">flip</span><span class="op">=</span><span class="nm">0</span>; }
+}</pre>
+<h4>3 — Stable raster (no jitter)</h4>
+<pre><span class="kw">raw</span> <span class="kw">irq</span> <span class="kw">func</span> <span class="vr">stable</span>() {
+    <span class="bi">ack_raster_irq_fast</span>();
+    <span class="bi">raster_sync</span>(<span class="nm">100</span>);  <span class="cm">// elimina jitter</span>
+    <span class="bi">border_color</span>(<span class="nm">7</span>);
+}</pre>
+<div class="callout callout-warn">
+  <div class="callout-tag">⚠ Regola d'oro IRQ</div>
+  Non usare <code>wait()</code> o funzioni che leggono il jiffy clock dentro un handler: causano deadlock. Gli handler devono essere il più brevi possibile.
+</div>
+</section>
+
+<hr class="section-sep">
+<section id="memmodel">
+<h2>Modello di memoria — Layout PRG</h2>
+<div class="tbl-wrap"><table>
+<thead><tr><th>Zona</th><th>Range</th><th>Descrizione</th></tr></thead>
+<tbody>
+<tr><td class="ok-c">Zero Page vars</td><td class="addr">$02–$FF</td><td>Variabili locali. Accesso veloce (istr. ZP, 3 cicli).</td></tr>
+<tr><td>Stack 6510</td><td class="addr">$0100–$01FF</td><td>Stack hardware. Non modificare direttamente.</td></tr>
+<tr><td>Area sistema</td><td class="addr">$0200–$03FF</td><td>Buffer KERNAL, vettori IRQ/NMI ($0314/$0315).</td></tr>
+<tr><td>Screen RAM</td><td class="addr">$0400–$07FF</td><td>40×25 celle carattere = 1000 byte.</td></tr>
+<tr><td class="ok-c">BASIC stub</td><td class="addr">$0801–$080C</td><td>12 byte: <code>0 SYS 2061</code> — avvia il PRG compilato.</td></tr>
+<tr><td class="ok-c">Codice compilato</td><td class="addr">$080D–…</td><td>Istruzioni 6510 generate. Startup + funzioni.</td></tr>
+<tr><td class="ok-c">BSS (globali)</td><td class="addr">dopo codice</td><td>Variabili globali e array allocati dal Memory Planner.</td></tr>
+<tr><td>BASIC ROM/RAM</td><td class="addr">$A000–$BFFF</td><td>ROM se float ($01=$37), RAM altrimenti ($01=$36, +8 KB).</td></tr>
+<tr><td>RAM libera</td><td class="addr">$C000–$CFFF</td><td>4 KB sempre disponibili.</td></tr>
+<tr><td class="warn-c">I/O hardware</td><td class="addr">$D000–$DFFF</td><td>VIC-II ($D000), SID ($D400), CIA1 ($DC00), CIA2 ($DD00).</td></tr>
+<tr><td>KERNAL ROM</td><td class="addr">$E000–$FFFF</td><td>Sempre attivo. Vettori a $FFFA–$FFFF.</td></tr>
+</tbody>
+</table></div>
+</section>
+
+<section id="memmap">
+<h2>Registri hardware essenziali</h2>
+<div class="tbl-wrap"><table>
+<thead><tr><th>Indirizzo</th><th>Nome</th><th>Descrizione</th></tr></thead>
+<tbody>
+<tr><td class="addr">$01</td><td>CPU Port</td><td><code>$37</code>=BASIC ROM attiva (float), <code>$36</code>=RAM libera</td></tr>
+<tr><td class="addr">$A2</td><td>Jiffy Clock</td><td>Contatore jiffie 1/60 s, aggiornato dall'IRQ KERNAL</td></tr>
+<tr><td class="addr">$D011</td><td>VIC Ctrl 1</td><td>Bit 7=raster bit 8, bit 4=bitmap, bit 3=display enable</td></tr>
+<tr><td class="addr">$D012</td><td>VIC Raster</td><td>Linea raster corrente (R) / linea trigger IRQ (W)</td></tr>
+<tr><td class="addr">$D015</td><td>Sprite Enable</td><td>Bit N = abilita sprite N</td></tr>
+<tr><td class="addr">$D019</td><td>VIC IRQ Status</td><td>Bit 0 = raster IRQ pending. Write 1 per ACK.</td></tr>
+<tr><td class="addr">$D01A</td><td>VIC IRQ Enable</td><td>Bit 0 = abilita raster IRQ</td></tr>
+<tr><td class="addr">$D020</td><td>Border Color</td><td>Colore bordo (0–15)</td></tr>
+<tr><td class="addr">$D021</td><td>BG Color 0</td><td>Colore sfondo (0–15)</td></tr>
+<tr><td class="addr">$D418</td><td>SID Volume</td><td>Nibble basso = volume master (0–15)</td></tr>
+<tr><td class="addr">$DC01</td><td>CIA1 Port B</td><td>Righe tastiera / Joystick 1</td></tr>
+<tr><td class="addr">$0314/$0315</td><td>IRQ Vector</td><td>Vettore IRQ KERNAL (usato da set_irq_vector)</td></tr>
+</tbody>
+</table></div>
+</section>
+
+<hr class="section-sep">
+<section id="ide-shortcuts">
+<h2>Shortcuts tastiera — IDE</h2>
+<div class="tbl-wrap"><table>
+<thead><tr><th>Scorciatoia</th><th>Azione</th></tr></thead>
+<tbody>
+<tr><td class="mono kw-c">F5</td><td>Compila</td></tr>
+<tr><td class="mono kw-c">Ctrl+S</td><td>Compila (alias F5)</td></tr>
+<tr><td class="mono kw-c">Ctrl+N</td><td>Nuovo file (svuota editor)</td></tr>
+<tr><td class="mono kw-c">Ctrl+E</td><td>Esporta PRG binario</td></tr>
+<tr><td class="mono kw-c">Ctrl+O</td><td>Apri file sorgente</td></tr>
+<tr><td class="mono kw-c">Ctrl+Shift+S</td><td>Salva in localStorage</td></tr>
+<tr><td class="mono kw-c">Drag &amp; Drop</td><td>Trascina .c64/.txt sull'editor per caricarlo</td></tr>
+</tbody>
+</table></div>
+</section>
+
+<section id="ide-files">
+<h2>Gestione file</h2>
+<div class="tbl-wrap"><table>
+<thead><tr><th>Controllo</th><th>Descrizione</th></tr></thead>
+<tbody>
+<tr><td class="mono">📂 OPEN</td><td>Dialog di sistema per .c64 / .txt / .asm</td></tr>
+<tr><td class="mono">💾 SAVE</td><td>Salva sorgente in localStorage con nome personalizzabile</td></tr>
+<tr><td class="mono">↓ EXPORT ▾</td><td>Scarica sorgente (.c64) o listing assembly (.asm) come file testo</td></tr>
+<tr><td class="mono">↓ PRG</td><td>Scarica il binario PRG compilato</td></tr>
+<tr><td class="mono">Tab FILES</td><td>Lista file in localStorage · click = carica · ✕ = cancella · ✕ TUTTI = svuota</td></tr>
+</tbody>
+</table></div>
+</section>
+
+<section id="ide-tabs">
+<h2>Tab del pannello destro</h2>
+<div class="tbl-wrap"><table>
+<thead><tr><th>Tab</th><th>Contenuto</th></tr></thead>
+<tbody>
+<tr><td class="mono kw-c">LOG</td><td>Output compilazione: fasi 1–5, errori, riepilogo, layout memoria</td></tr>
+<tr><td class="mono kw-c">AST</td><td>Albero sintattico astratto interattivo (espandibile/collassabile)</td></tr>
+<tr><td class="mono kw-c">ASM</td><td>Listing assembly annotato: indirizzo · bytes · mnemonic · commento</td></tr>
+<tr><td class="mono kw-c">REF</td><td>Riferimento rapido inline: indirizzi, tipi, shortcut</td></tr>
+<tr><td class="mono kw-c">BYTES</td><td>Hex dump del PRG con rappresentazione ASCII</td></tr>
+<tr><td class="mono kw-c">FILES</td><td>Gestore file localStorage</td></tr>
+</tbody>
+</table></div>
+</section>
+
+<hr class="section-sep">
+<section id="kernal-addrs">
+<h2>Indirizzi KERNAL usati da C64C</h2>
+<div class="tbl-wrap"><table>
+<thead><tr><th>Indirizzo</th><th>Nome</th><th>Descrizione</th></tr></thead>
+<tbody>
+<tr><td class="addr">$B391</td><td>GIVAYF</td><td>Y=lo, A=hi → FAC1 float (int16 signed)</td></tr>
+<tr><td class="addr">$B9EA</td><td>LOG</td><td>FAC1 = ln(FAC1)</td></tr>
+<tr><td class="addr">$BC58</td><td>ABS</td><td>FAC1 = |FAC1|</td></tr>
+<tr><td class="addr">$BCCC</td><td>INT/FLOOR</td><td>FAC1 = floor(FAC1)</td></tr>
+<tr><td class="addr">$BDDD</td><td>FOUT</td><td>FAC1 → stringa ASCII (A=lo ptr, Y=hi ptr)</td></tr>
+<tr><td class="addr">$BFED</td><td>EXP</td><td>FAC1 = e^FAC1</td></tr>
+<tr><td class="addr">$BF71</td><td>SQR</td><td>FAC1 = √FAC1</td></tr>
+<tr><td class="addr">$E097</td><td>RND</td><td>FAC1 = casuale 0.0…1.0</td></tr>
+<tr><td class="addr">$E264</td><td>COS</td><td>FAC1 = cos(FAC1) [radianti]</td></tr>
+<tr><td class="addr">$E26B</td><td>SIN</td><td>FAC1 = sin(FAC1) [radianti]</td></tr>
+<tr><td class="addr">$E2B4</td><td>TAN</td><td>FAC1 = tan(FAC1)</td></tr>
+<tr><td class="addr">$E30E</td><td>ATN</td><td>FAC1 = atan(FAC1)</td></tr>
+<tr><td class="addr">$E544</td><td>CLRSCN</td><td>Clear screen + cursore a home</td></tr>
+<tr><td class="addr">$EA81</td><td>IRQ Return</td><td>Ripristina A/X/Y, RTI (pass_irq_to_kernal)</td></tr>
+<tr><td class="addr">$FFD2</td><td>CHROUT</td><td>Stampa carattere in A</td></tr>
+<tr><td class="addr">$FFCF</td><td>CHRIN</td><td>Legge carattere → A</td></tr>
+<tr><td class="addr">$FFF0</td><td>PLOT</td><td>Posiziona cursore: X=riga, Y=col, CLC=set</td></tr>
+</tbody>
+</table></div>
+</section>
+
+<section id="c64-colors">
+<h2>Palette colori C64</h2>
+<div class="grid2">
+<div class="tbl-wrap"><table>
+<thead><tr><th>N</th><th>Colore</th></tr></thead>
+<tbody>
+<tr><td class="mono">0</td><td>⬛ Nero</td></tr>
+<tr><td class="mono">1</td><td>⬜ Bianco</td></tr>
+<tr><td class="mono">2</td><td style="color:#aa3333">■ Rosso</td></tr>
+<tr><td class="mono">3</td><td style="color:#67b6bd">■ Ciano</td></tr>
+<tr><td class="mono">4</td><td style="color:#c060c0">■ Viola</td></tr>
+<tr><td class="mono">5</td><td style="color:#55a049">■ Verde</td></tr>
+<tr><td class="mono">6</td><td style="color:#5050dd">■ Blu</td></tr>
+<tr><td class="mono">7</td><td style="color:#e0e060">■ Giallo</td></tr>
+</tbody></table></div>
+<div class="tbl-wrap"><table>
+<thead><tr><th>N</th><th>Colore</th></tr></thead>
+<tbody>
+<tr><td class="mono">8</td><td style="color:#b07030">■ Arancione</td></tr>
+<tr><td class="mono">9</td><td style="color:#806020">■ Marrone</td></tr>
+<tr><td class="mono">10</td><td style="color:#dd8888">■ Rosa/Rosso chiaro</td></tr>
+<tr><td class="mono">11</td><td style="color:#505050">■ Grigio scuro</td></tr>
+<tr><td class="mono">12</td><td style="color:#808080">■ Grigio medio</td></tr>
+<tr><td class="mono">13</td><td style="color:#88ee88">■ Verde chiaro</td></tr>
+<tr><td class="mono">14</td><td style="color:#8888ee">■ Blu chiaro</td></tr>
+<tr><td class="mono">15</td><td style="color:#b0b0b0">■ Grigio chiaro</td></tr>
+</tbody></table></div>
+</div>
+</section>
+
+<section id="limits-full">
+<h2>Limiti e note implementative</h2>
+<div class="tbl-wrap"><table>
+<thead><tr><th>Caratteristica</th><th>Limite / Nota</th></tr></thead>
+<tbody>
+<tr><td>Zero Page</td><td>$02–$FF (254 byte). Variabili locali byte=1B, word=2B. Esauribile su programmi grandi.</td></tr>
+<tr><td>Aritmetica byte</td><td>Overflow silenzioso mod 256. Usare <code>word</code> per valori &gt;255.</td></tr>
+<tr><td>Parametri funzione</td><td>Passati via ZP. Funzioni profondamente ricorsive possono sovrascriversi (nessuno stack separato).</td></tr>
+<tr><td>Divisione e modulo</td><td>Implementati via sottrazione ripetuta — lenti per dividendi grandi.</td></tr>
+<tr><td>Array</td><td>Solo tipo byte, dimensione costante, nessun controllo bounds.</td></tr>
+<tr><td>Stringhe</td><td>Solo letterali. Nessuna concatenazione o manipolazione dinamica.</td></tr>
+<tr><td>Float</td><td>~9 cifre decimali. Richiede BASIC ROM: $A000–$BFFF non disponibile per il programma.</td></tr>
+<tr><td>Fixed-Point (Q/SQ)</td><td>Nessuna BASIC ROM richiesta. Scala manuale con <code>&lt;&lt;</code>/<code>&gt;&gt;</code>. Prodotto di due Q8.8 può overflow 16-bit — usare <code>word</code> come tipo intermedio. I tipi q16_x e q16_16 occupano 3–4 byte: verificare la disponibilità di ZP.</td></tr>
+<tr><td>plot / draw_line</td><td>Usano ZP utility ($FB–$FE) come scratch. Non annidare in handler raw irq. Y register usato come indice di colonna (max 255 caratteri per riga — ben oltre i 40 del C64).</td></tr>
+<tr><td>fill_box / draw_box</td><td>Usano PHA/PLA per salvare valori intermedi. Non chiamare dentro handler IRQ (stack usato dal KERNAL). Per box grandi: considerare un ciclo esplicito in C64C.</td></tr>
+<tr><td>input()</td><td>GETIN loop bloccante. Non usare dentro IRQ handler. Dipende dalla tastiera CIA1 ($DC01): non funziona se il KERNAL è disabilitato.</td></tr>
+<tr><td>IRQ handler</td><td>Non usare <code>wait()</code> dentro handler. Tenere gli handler brevi.</td></tr>
+<tr><td>Entry point</td><td><code>func main()</code> obbligatorio. Funzioni dichiarate top-down.</td></tr>
+<tr><td>Target</td><td>Commodore 64 PAL/NTSC. PRG standard: LOAD "f",8,1 + RUN oppure VICE.</td></tr>
+</tbody>
+</table></div>
+</section>
+
+<hr class="section-sep">
+<section id="ide-examples">
+<h2>Esempi IDE — Galleria</h2>
+<p>Il menu <strong>EXAMPLES ▾</strong> nella toolbar offre 21 programmi pronti da caricare, compilare ed eseguire in VICE:</p>
+<div class="tbl-wrap"><table>
+<thead><tr><th>Nome</th><th>Tag</th><th>Descrizione</th></tr></thead>
+<tbody>
+<tr><td class="mono">Hello World</td><td><span class="badge">basic</span></td><td>Primo programma — print, border_color, clear_screen</td></tr>
+<tr><td class="mono">Fill Screen</td><td><span class="badge">poke</span></td><td>Riempie la Screen RAM con poke() e memset()</td></tr>
+<tr><td class="mono">Color Loop</td><td><span class="badge">while</span></td><td>Ciclo infinito che ruota il colore del bordo</td></tr>
+<tr><td class="mono">Border Anim</td><td><span class="badge">anim</span></td><td>Animazione colori con wait_frames()</td></tr>
+<tr><td class="mono">Raster Bar</td><td><span class="badge">adv</span></td><td>Effetto raster split via IRQ KERNAL</td></tr>
+<tr><td class="mono">Float / KERNAL Math</td><td><span class="badge badge-rom">float</span></td><td>sin, cos, exp, sqr, rnd via BASIC ROM</td></tr>
+<tr><td class="mono">Float Arithmetic (var)</td><td><span class="badge badge-rom">float</span></td><td>fadd, fsub, fmul, fdiv, fpow su variabili float</td></tr>
+<tr><td class="mono">SID Jingle</td><td><span class="badge">sid</span></td><td>sid_vol, sid_waveform, sid_freq, sid_note</td></tr>
+<tr><td class="mono">Sprite Bounce</td><td><span class="badge">vic</span></td><td>Sprite che rimbalza — sprite_pos, sprite_enable</td></tr>
+<tr><td class="mono">Charset Map</td><td><span class="badge">vic</span></td><td>Visualizza l'intera tabella dei caratteri PETSCII</td></tr>
+<tr><td class="mono">Plasma Effect</td><td><span class="badge badge-rom">float</span></td><td>Plasma classico demo con sin() KERNAL</td></tr>
+<tr><td class="mono">SID Arpeggio</td><td><span class="badge">sid</span></td><td>Accordi e arpeggi SID multicanale</td></tr>
+<tr><td class="mono">Starfield Scroller</td><td><span class="badge">vic</span></td><td>Campo di stelle scorrevole con poke/plot</td></tr>
+<tr><td class="mono">IRQ Sprite Multiplexer</td><td><span class="badge badge-irq">irq</span></td><td>Multiplex sprite via raster IRQ — più di 8 sprite</td></tr>
+<tr><td class="mono">Sprite Multiplexer (poll)</td><td><span class="badge">vic</span></td><td>Multiplex con polling raster senza IRQ</td></tr>
+<tr><td class="mono">Sine Wave Sprites</td><td><span class="badge">vic</span></td><td>Sprites in onda sinusoidale tramite lookup table</td></tr>
+<tr><td class="mono">Pong</td><td><span class="badge">game</span></td><td>Gioco Pong completo — input, collisioni, punteggio</td></tr>
+<tr><td class="mono">SID + Sprite</td><td><span class="badge">demo</span></td><td>Audio SID + sprite animato in sincronia</td></tr>
+<tr><td class="mono">Fixed-Point Q8.8 Colori</td><td><span class="badge">fp</span></td><td>Ciclo colori con incremento frazionario Q8.8</td></tr>
+<tr><td class="mono">Fixed-Point Q8.8 Sprite</td><td><span class="badge">fp</span></td><td>Sprite bounce a velocità sub-pixel con q8_8</td></tr>
+<tr><td class="mono">Fixed-Point Q8.8 Gravità</td><td><span class="badge">fp</span></td><td>Fisica con gravità usando sq8_8 (signed)</td></tr>
+</tbody>
+</table></div>
+</section>
+
+<hr class="section-sep">
+<section id="examples-fixedpoint">
+<h2>Esempi Fixed-Point</h2>
+
+<h3>1 — Sprite con velocità sub-pixel (q8_8)</h3>
+<p>Problema classico della grafica C64: muovere uno sprite a velocità frazionaria (es. 1.5 pixel/frame) senza scatti. Con <code>q8_8</code> la posizione è in unità di 1/256 di pixel — VIC-II riceve solo la parte intera.</p>
+<pre><span class="cm">// ─── Sprite bounce con sub-pixel precision ────────────────────────────</span>
+<span class="cm">// q8_8: scala 256.  px = posizione X reale × 256</span>
+<span class="cm">// $0100 = 1.0  |  $0180 = 1.5  |  $FE80 = -1.5 (sq8_8)</span>
+
+<span class="ty">word</span> <span class="vr">VIC_S0X</span> <span class="op">=</span> <span class="hx">$D000</span>;
+<span class="ty">word</span> <span class="vr">VIC_S0Y</span> <span class="op">=</span> <span class="hx">$D001</span>;
+<span class="ty">word</span> <span class="vr">VIC_SPR</span> <span class="op">=</span> <span class="hx">$D015</span>;
+<span class="ty">word</span> <span class="vr">SPR_PTR</span> <span class="op">=</span> <span class="hx">$07F8</span>;
+<span class="ty">word</span> <span class="vr">SPR_DAT</span> <span class="op">=</span> <span class="hx">$3000</span>;
+
+<span class="cm">// Posizioni in Q8.8 (parte intera × 256)</span>
+<span class="ty">q8_8</span> <span class="vr">px</span> <span class="op">=</span> <span class="hx">$6400</span>;    <span class="cm">// 100.0</span>
+<span class="ty">q8_8</span> <span class="vr">py</span> <span class="op">=</span> <span class="hx">$7800</span>;    <span class="cm">// 120.0</span>
+<span class="cm">// Velocità in Q8.8: 1.5 pixel/frame e 0.75 pixel/frame</span>
+<span class="ty">q8_8</span> <span class="vr">vx</span> <span class="op">=</span> <span class="hx">$0180</span>;    <span class="cm">// +1.5</span>
+<span class="ty">q8_8</span> <span class="vr">vy</span> <span class="op">=</span> <span class="hx">$00C0</span>;    <span class="cm">// +0.75</span>
+<span class="ty">byte</span> <span class="vr">dx</span> <span class="op">=</span> <span class="nm">0</span>;          <span class="cm">// direzione X: 0=avanti 1=indietro</span>
+<span class="ty">byte</span> <span class="vr">dy</span> <span class="op">=</span> <span class="nm">0</span>;          <span class="cm">// direzione Y: 0=avanti 1=indietro</span>
+
+<span class="kw">func</span> <span class="vr">init_spr</span>() {
+    <span class="ty">byte</span> <span class="vr">k</span> <span class="op">=</span> <span class="nm">0</span>;
+    <span class="kw">while</span> (<span class="vr">k</span> <span class="op">&lt;</span> <span class="nm">64</span>) { <span class="bi">poke</span>(<span class="vr">SPR_DAT</span> <span class="op">+</span> <span class="vr">k</span>, <span class="nm">0</span>); <span class="vr">k</span><span class="op">++</span>; }
+    <span class="bi">poke</span>(<span class="vr">SPR_DAT</span> <span class="op">+</span>  <span class="nm">4</span>, <span class="hx">$18</span>);
+    <span class="bi">poke</span>(<span class="vr">SPR_DAT</span> <span class="op">+</span>  <span class="nm">7</span>, <span class="hx">$7E</span>);
+    <span class="bi">poke</span>(<span class="vr">SPR_DAT</span> <span class="op">+</span> <span class="nm">10</span>, <span class="hx">$FF</span>);
+    <span class="bi">poke</span>(<span class="vr">SPR_DAT</span> <span class="op">+</span> <span class="nm">13</span>, <span class="hx">$7E</span>);
+    <span class="bi">poke</span>(<span class="vr">SPR_DAT</span> <span class="op">+</span> <span class="nm">16</span>, <span class="hx">$18</span>);
+    <span class="bi">poke</span>(<span class="vr">SPR_PTR</span>, <span class="nm">192</span>);    <span class="cm">// blocco VIC $3000</span>
+    <span class="bi">poke</span>(<span class="hx">$D027</span>, <span class="nm">7</span>);         <span class="cm">// colore: giallo</span>
+    <span class="bi">poke</span>(<span class="vr">VIC_SPR</span>, <span class="nm">1</span>);       <span class="cm">// abilita sprite 0</span>
+}
+
+<span class="kw">func</span> <span class="vr">main</span>() {
+    <span class="bi">clear_screen</span>();
+    <span class="bi">border_color</span>(<span class="nm">0</span>);
+    <span class="bi">screen_color</span>(<span class="nm">0</span>);
+    <span class="bi">print_at</span>(<span class="nm">7</span>, <span class="nm">0</span>, <span class="st">"SUB-PIXEL Q8.8 BOUNCE"</span>);
+    <span class="bi">print_at</span>(<span class="nm">3</span>, <span class="nm">2</span>, <span class="st">"VX=1.5  VY=0.75  1/256 PRECISION"</span>);
+    <span class="vr">init_spr</span>();
+
+    <span class="kw">while</span> (<span class="nm">1</span>) {
+        <span class="cm">// Aggiorna posizione Q8.8</span>
+        <span class="kw">if</span> (<span class="vr">dx</span> <span class="op">==</span> <span class="nm">0</span>) { <span class="vr">px</span> <span class="op">=</span> <span class="vr">px</span> <span class="op">+</span> <span class="vr">vx</span>; } <span class="kw">else</span> { <span class="vr">px</span> <span class="op">=</span> <span class="vr">px</span> <span class="op">-</span> <span class="vr">vx</span>; }
+        <span class="kw">if</span> (<span class="vr">dy</span> <span class="op">==</span> <span class="nm">0</span>) { <span class="vr">py</span> <span class="op">=</span> <span class="vr">py</span> <span class="op">+</span> <span class="vr">vy</span>; } <span class="kw">else</span> { <span class="vr">py</span> <span class="op">=</span> <span class="vr">py</span> <span class="op">-</span> <span class="vr">vy</span>; }
+
+        <span class="cm">// Estrai parte intera (alto byte) per VIC-II</span>
+        <span class="ty">byte</span> <span class="vr">sx</span> <span class="op">=</span> <span class="ty">byte</span>(<span class="vr">px</span> <span class="op">&gt;&gt;</span> <span class="nm">8</span>);
+        <span class="ty">byte</span> <span class="vr">sy</span> <span class="op">=</span> <span class="ty">byte</span>(<span class="vr">py</span> <span class="op">&gt;&gt;</span> <span class="nm">8</span>);
+
+        <span class="cm">// Bounce ai bordi dello schermo</span>
+        <span class="kw">if</span> (<span class="vr">sx</span> <span class="op">&gt;</span> <span class="nm">228</span>) { <span class="vr">dx</span> <span class="op">=</span> <span class="nm">1</span>; }
+        <span class="kw">if</span> (<span class="vr">sx</span> <span class="op">&lt;</span>  <span class="nm">24</span>) { <span class="vr">dx</span> <span class="op">=</span> <span class="nm">0</span>; }
+        <span class="kw">if</span> (<span class="vr">sy</span> <span class="op">&gt;</span> <span class="nm">228</span>) { <span class="vr">dy</span> <span class="op">=</span> <span class="nm">1</span>; }
+        <span class="kw">if</span> (<span class="vr">sy</span> <span class="op">&lt;</span>  <span class="nm">50</span>) { <span class="vr">dy</span> <span class="op">=</span> <span class="nm">0</span>; }
+
+        <span class="bi">poke</span>(<span class="vr">VIC_S0X</span>, <span class="vr">sx</span>);
+        <span class="bi">poke</span>(<span class="vr">VIC_S0Y</span>, <span class="vr">sy</span>);
+        <span class="bi">border_color</span>(<span class="vr">sx</span> <span class="op">%</span> <span class="nm">16</span>);
+        <span class="bi">wait_frames</span>(<span class="nm">1</span>);
+    }
+}</pre>
+
+<h3>2 — Fisica semplice con gravità (sq8_8)</h3>
+<p>Un proiettile con gravità costante dimostra addizione e aggiornamento di velocità signed in fixed-point. La velocità Y è <code>sq8_8</code> perché diventa negativa in salita.</p>
+<pre><span class="cm">// ─── Proiettile con gravità Q8.8 ──────────────────────────────────────</span>
+<span class="cm">// Gravità = 0.25 pixel/frame²  → $0040 in Q8.8</span>
+<span class="cm">// Velocità iniziale Y = -4.0 (verso l'alto) → sq8_8 = $FC00</span>
+
+<span class="ty">word</span> <span class="vr">VIC_S0X</span> <span class="op">=</span> <span class="hx">$D000</span>;
+<span class="ty">word</span> <span class="vr">VIC_S0Y</span> <span class="op">=</span> <span class="hx">$D001</span>;
+<span class="ty">word</span> <span class="vr">VIC_SPR</span> <span class="op">=</span> <span class="hx">$D015</span>;
+<span class="ty">word</span> <span class="vr">SPR_PTR</span> <span class="op">=</span> <span class="hx">$07F8</span>;
+
+<span class="ty">sq8_8</span> <span class="vr">px</span> <span class="op">=</span> <span class="hx">$6400</span>;  <span class="cm">// 100.0</span>
+<span class="ty">sq8_8</span> <span class="vr">py</span> <span class="op">=</span> <span class="hx">$AA00</span>;  <span class="cm">// 170.0 (fondo schermo)</span>
+<span class="ty">sq8_8</span> <span class="vr">vx</span> <span class="op">=</span> <span class="hx">$0140</span>;  <span class="cm">// +1.25 pixel/frame</span>
+<span class="ty">sq8_8</span> <span class="vr">vy</span> <span class="op">=</span> <span class="hx">$FC00</span>;  <span class="cm">// -4.0 (impulso verso l'alto)</span>
+<span class="ty">q8_8</span>  <span class="vr">G</span>  <span class="op">=</span> <span class="hx">$0040</span>;  <span class="cm">// gravità = 0.25 pixel/frame²</span>
+
+<span class="kw">func</span> <span class="vr">reset_ball</span>() {
+    <span class="vr">px</span> <span class="op">=</span> <span class="hx">$1E00</span>;   <span class="cm">// 30.0</span>
+    <span class="vr">py</span> <span class="op">=</span> <span class="hx">$AA00</span>;   <span class="cm">// 170.0</span>
+    <span class="vr">vy</span> <span class="op">=</span> <span class="hx">$FC00</span>;   <span class="cm">// -4.0 (sparo verso l'alto)</span>
+}
+
+<span class="kw">func</span> <span class="vr">main</span>() {
+    <span class="bi">clear_screen</span>();
+    <span class="bi">border_color</span>(<span class="nm">0</span>);
+    <span class="bi">screen_color</span>(<span class="nm">0</span>);
+    <span class="bi">print_at</span>(<span class="nm">6</span>, <span class="nm">0</span>, <span class="st">"FIXED-POINT GRAVITY SQ8.8"</span>);
+    <span class="bi">print_at</span>(<span class="nm">4</span>, <span class="nm">2</span>, <span class="st">"G=0.25  VY0=-4.0  VX=+1.25"</span>);
+    <span class="bi">poke</span>(<span class="vr">SPR_PTR</span>, <span class="nm">192</span>);
+    <span class="bi">poke</span>(<span class="hx">$D027</span>, <span class="nm">10</span>);   <span class="cm">// arancione</span>
+    <span class="bi">poke</span>(<span class="vr">VIC_SPR</span>, <span class="nm">1</span>);
+
+    <span class="kw">while</span> (<span class="nm">1</span>) {
+        <span class="cm">// Integrazione: velocità += gravità</span>
+        <span class="vr">vy</span> <span class="op">=</span> <span class="vr">vy</span> <span class="op">+</span> <span class="vr">G</span>;
+
+        <span class="cm">// Posizione += velocità (addizione Q8.8 diretta)</span>
+        <span class="vr">px</span> <span class="op">=</span> <span class="vr">px</span> <span class="op">+</span> <span class="vr">vx</span>;
+        <span class="vr">py</span> <span class="op">=</span> <span class="vr">py</span> <span class="op">+</span> <span class="vr">vy</span>;
+
+        <span class="cm">// Parte intera per VIC-II</span>
+        <span class="ty">byte</span> <span class="vr">sx</span> <span class="op">=</span> <span class="ty">byte</span>(<span class="vr">px</span> <span class="op">&gt;&gt;</span> <span class="nm">8</span>);
+        <span class="ty">byte</span> <span class="vr">sy</span> <span class="op">=</span> <span class="ty">byte</span>(<span class="vr">py</span> <span class="op">&gt;&gt;</span> <span class="nm">8</span>);
+
+        <span class="cm">// Rimbalzo sul fondo → reset traiettoria</span>
+        <span class="kw">if</span> (<span class="vr">sy</span> <span class="op">&gt;</span> <span class="nm">210</span>) { <span class="vr">reset_ball</span>(); }
+        <span class="kw">if</span> (<span class="vr">sx</span> <span class="op">&gt;</span> <span class="nm">235</span>) { <span class="vr">reset_ball</span>(); }
+
+        <span class="bi">poke</span>(<span class="vr">VIC_S0X</span>, <span class="vr">sx</span>);
+        <span class="bi">poke</span>(<span class="vr">VIC_S0Y</span>, <span class="vr">sy</span>);
+        <span class="bi">border_color</span>(<span class="vr">sy</span> <span class="op">%</span> <span class="nm">16</span>);
+        <span class="bi">wait_frames</span>(<span class="nm">1</span>);
+    }
+}</pre>
+
+<h3>3 — Tabella seno precalcolata in Q8.8 (senza BASIC ROM)</h3>
+<p>Una lookup table di 64 campioni di <code>sin()</code> scalati in Q8.8 consente animazioni sinusoidali a piena velocità, senza alcuna chiamata al KERNAL float. I valori sono <em>raw Q8.8</em>: <code>sin(angle)*128 + 128</code> produce un valore 0–255 utile come coordinata sprite o indice colore.</p>
+<pre><span class="cm">// ─── Onda sinusoidale via tabella Q8.8 (8 sprite) ─────────────────────</span>
+<span class="cm">// Tabella seno: 32 entry, angolo 0°–360°, range 0–255 (centro=128)</span>
+<span class="cm">// formula: round(sin(k * 2π / 32) * 127 + 128)  per k=0..31</span>
+<span class="cm">// Questi valori sono byte (0–255), ma rappresentano il valore Q8.8</span>
+<span class="cm">// "sin(k) × 127 + 128"  — nessuno shift necessario per VIC-II Y</span>
+
+<span class="ty">word</span> <span class="vr">VIC_SPE</span>  <span class="op">=</span> <span class="hx">$D015</span>;
+<span class="ty">word</span> <span class="vr">SPR_BASE</span> <span class="op">=</span> <span class="hx">$3800</span>;
+<span class="ty">word</span> <span class="vr">SPR_PTR0</span> <span class="op">=</span> <span class="hx">$07F8</span>;
+
+<span class="cm">// Tabella seno: 32 campioni, output scalato a coordinata Y VIC (80–170)</span>
+<span class="ty">byte</span> <span class="vr">SINTBL</span>[<span class="nm">32</span>] <span class="op">=</span> [
+    <span class="nm">125</span>, <span class="nm">140</span>, <span class="nm">153</span>, <span class="nm">163</span>, <span class="nm">170</span>, <span class="nm">170</span>, <span class="nm">163</span>, <span class="nm">153</span>,
+    <span class="nm">140</span>, <span class="nm">125</span>, <span class="nm">110</span>,  <span class="nm">97</span>,  <span class="nm">87</span>,  <span class="nm">80</span>,  <span class="nm">80</span>,  <span class="nm">87</span>,
+     <span class="nm">97</span>, <span class="nm">110</span>, <span class="nm">125</span>, <span class="nm">140</span>, <span class="nm">153</span>, <span class="nm">163</span>, <span class="nm">170</span>, <span class="nm">170</span>,
+    <span class="nm">163</span>, <span class="nm">153</span>, <span class="nm">140</span>, <span class="nm">125</span>, <span class="nm">110</span>,  <span class="nm">97</span>,  <span class="nm">87</span>,  <span class="nm">80</span>
+];
+<span class="cm">// Per velocità frazionaria usiamo il contatore di fase in q8_8:</span>
+<span class="cm">// fase_q = fase_q + step_q;  indice_tabella = byte(fase_q >> 8) % 32</span>
+<span class="cm">// step_q = $0080 → avanza di 0.5 step/frame (velocità dimezzata)</span>
+<span class="cm">// step_q = $0200 → avanza di 2.0 step/frame (velocità doppia)</span>
+
+<span class="ty">q8_8</span> <span class="vr">PHASE0</span> <span class="op">=</span> <span class="hx">$0000</span>;   <span class="cm">// fase Q8.8 sprite 0</span>
+<span class="ty">q8_8</span> <span class="vr">PHASE1</span> <span class="op">=</span> <span class="hx">$0400</span>;   <span class="cm">// sfasamento iniziale 4 step</span>
+<span class="ty">q8_8</span> <span class="vr">PHASE2</span> <span class="op">=</span> <span class="hx">$0800</span>;
+<span class="ty">q8_8</span> <span class="vr">PHASE3</span> <span class="op">=</span> <span class="hx">$0C00</span>;
+<span class="ty">q8_8</span> <span class="vr">STEP</span>   <span class="op">=</span> <span class="hx">$00C0</span>;   <span class="cm">// velocità = 0.75 step/frame</span>
+<span class="ty">byte</span> <span class="vr">SPR_X</span>[<span class="nm">4</span>] <span class="op">=</span> [<span class="nm">50</span>, <span class="nm">110</span>, <span class="nm">170</span>, <span class="nm">230</span>];
+
+<span class="kw">func</span> <span class="vr">main</span>() {
+    <span class="bi">clear_screen</span>();
+    <span class="bi">border_color</span>(<span class="nm">0</span>);
+    <span class="bi">screen_color</span>(<span class="nm">0</span>);
+    <span class="bi">print_at</span>(<span class="nm">6</span>, <span class="nm">0</span>, <span class="st">"SIN TABLE  Q8.8 PHASE"</span>);
+    <span class="bi">print_at</span>(<span class="nm">4</span>, <span class="nm">2</span>, <span class="st">"STEP=0.75  NO BASIC ROM"</span>);
+
+    <span class="cm">// Setup sprite: stelle</span>
+    <span class="ty">byte</span> <span class="vr">k</span> <span class="op">=</span> <span class="nm">0</span>;
+    <span class="kw">while</span> (<span class="vr">k</span> <span class="op">&lt;</span> <span class="nm">64</span>) { <span class="bi">poke</span>(<span class="vr">SPR_BASE</span> <span class="op">+</span> <span class="vr">k</span>, <span class="nm">0</span>); <span class="vr">k</span><span class="op">++</span>; }
+    <span class="bi">poke</span>(<span class="vr">SPR_BASE</span> <span class="op">+</span>  <span class="nm">7</span>, <span class="hx">$7E</span>);
+    <span class="bi">poke</span>(<span class="vr">SPR_BASE</span> <span class="op">+</span> <span class="nm">10</span>, <span class="hx">$FF</span>);
+    <span class="bi">poke</span>(<span class="vr">SPR_BASE</span> <span class="op">+</span> <span class="nm">13</span>, <span class="hx">$7E</span>);
+    <span class="vr">k</span> <span class="op">=</span> <span class="nm">0</span>;
+    <span class="kw">while</span> (<span class="vr">k</span> <span class="op">&lt;</span> <span class="nm">4</span>) {
+        <span class="bi">poke</span>(<span class="vr">SPR_PTR0</span> <span class="op">+</span> <span class="vr">k</span>, <span class="nm">224</span>);
+        <span class="bi">poke</span>(<span class="hx">$D027</span> <span class="op">+</span> <span class="vr">k</span>, <span class="vr">k</span> <span class="op">+</span> <span class="nm">7</span>);
+        <span class="vr">k</span><span class="op">++</span>;
+    }
+    <span class="bi">poke</span>(<span class="vr">VIC_SPE</span>, <span class="hx">$0F</span>);    <span class="cm">// abilita sprite 0–3</span>
+
+    <span class="kw">while</span> (<span class="nm">1</span>) {
+        <span class="cm">// Avanza le fasi Q8.8</span>
+        <span class="vr">PHASE0</span> <span class="op">=</span> <span class="vr">PHASE0</span> <span class="op">+</span> <span class="vr">STEP</span>;
+        <span class="vr">PHASE1</span> <span class="op">=</span> <span class="vr">PHASE1</span> <span class="op">+</span> <span class="vr">STEP</span>;
+        <span class="vr">PHASE2</span> <span class="op">=</span> <span class="vr">PHASE2</span> <span class="op">+</span> <span class="vr">STEP</span>;
+        <span class="vr">PHASE3</span> <span class="op">=</span> <span class="vr">PHASE3</span> <span class="op">+</span> <span class="vr">STEP</span>;
+
+        <span class="cm">// Indice tabella = alto byte delle fasi % 32</span>
+        <span class="ty">byte</span> <span class="vr">i0</span> <span class="op">=</span> <span class="ty">byte</span>(<span class="vr">PHASE0</span> <span class="op">&gt;&gt;</span> <span class="nm">8</span>) <span class="op">%</span> <span class="nm">32</span>;
+        <span class="ty">byte</span> <span class="vr">i1</span> <span class="op">=</span> <span class="ty">byte</span>(<span class="vr">PHASE1</span> <span class="op">&gt;&gt;</span> <span class="nm">8</span>) <span class="op">%</span> <span class="nm">32</span>;
+        <span class="ty">byte</span> <span class="vr">i2</span> <span class="op">=</span> <span class="ty">byte</span>(<span class="vr">PHASE2</span> <span class="op">&gt;&gt;</span> <span class="nm">8</span>) <span class="op">%</span> <span class="nm">32</span>;
+        <span class="ty">byte</span> <span class="vr">i3</span> <span class="op">=</span> <span class="ty">byte</span>(<span class="vr">PHASE3</span> <span class="op">&gt;&gt;</span> <span class="nm">8</span>) <span class="op">%</span> <span class="nm">32</span>;
+
+        <span class="bi">poke</span>(<span class="hx">$D000</span>, <span class="vr">SPR_X</span>[<span class="nm">0</span>]);  <span class="bi">poke</span>(<span class="hx">$D001</span>, <span class="vr">SINTBL</span>[<span class="vr">i0</span>]);
+        <span class="bi">poke</span>(<span class="hx">$D002</span>, <span class="vr">SPR_X</span>[<span class="nm">1</span>]);  <span class="bi">poke</span>(<span class="hx">$D003</span>, <span class="vr">SINTBL</span>[<span class="vr">i1</span>]);
+        <span class="bi">poke</span>(<span class="hx">$D004</span>, <span class="vr">SPR_X</span>[<span class="nm">2</span>]);  <span class="bi">poke</span>(<span class="hx">$D005</span>, <span class="vr">SINTBL</span>[<span class="vr">i2</span>]);
+        <span class="bi">poke</span>(<span class="hx">$D006</span>, <span class="vr">SPR_X</span>[<span class="nm">3</span>]);  <span class="bi">poke</span>(<span class="hx">$D007</span>, <span class="vr">SINTBL</span>[<span class="vr">i3</span>]);
+        <span class="bi">border_color</span>(<span class="vr">i0</span> <span class="op">%</span> <span class="nm">16</span>);
+        <span class="bi">wait_frames</span>(<span class="nm">1</span>);
+    }
+}
+</pre>
+
+<div class="callout callout-ok">
+  <div class="callout-tag">◈ Pattern consigliati fixed-point</div>
+  <ul>
+  <li><strong>Movimento sprite</strong>: usa <code>q8_8</code> per posizioni, <code>sq8_8</code> per velocità. Estrai la parte intera con <code>&gt;&gt; 8</code> prima di passarla a VIC-II.</li>
+  <li><strong>Gravità/fisica</strong>: <code>sq8_8</code> per velocità Y (negativa in salita). Somma la costante G ogni frame.</li>
+  <li><strong>Fase di oscillazione</strong>: <code>q8_8</code> per la fase, <code>byte(phase &gt;&gt; 8) % N</code> come indice nella lookup table.</li>
+  <li><strong>Scala in lerp</strong>: parametro t in <code>q8_8</code> con range 0.0–1.0 ($0000–$0100). Lerp: <code>(a*t + b*($0100-t)) &gt;&gt; 8</code>.</li>
+  </ul>
+</div>
+</section>
+<div style="margin-top:60px;border-top:1px solid rgba(123,123,255,.2);padding-top:20px;font-family:var(--font-mono);font-size:10px;color:rgba(123,123,255,.4);letter-spacing:1px;text-align:center">
+  C64C IDE · MOS 6510 COMPILER · DOCUMENTAZIONE COMPLETA<br>
+  Copyright © Leonardo Boselli — Rilasciato sotto licenza
+  <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank"
+     style="color:rgba(123,123,255,.6);text-decoration:none;letter-spacing:1px">GNU GPL v3</a>
+</div>
+</main>
+</div>
+
+<script>
+const navLinks = document.querySelectorAll('.nav-link');
+const sections = document.querySelectorAll('section[id]');
+const io = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if (e.isIntersecting) {
+      navLinks.forEach(l => l.classList.remove('active'));
+      const lk = document.querySelector('.nav-link[href="#'+e.target.id+'"]');
+      if (lk) lk.classList.add('active');
+    }
+  });
+}, { rootMargin:'-20% 0px -70% 0px', threshold:0 });
+sections.forEach(s => io.observe(s));
+
+document.getElementById('topbar-back').addEventListener('click', e => {
+  e.preventDefault();
+  if (window.opener && !window.opener.closed) { window.opener.focus(); window.close(); }
+  else { window.location.href = 'c64c.html'; }
+});
+</script>
+</body>
+</html>
