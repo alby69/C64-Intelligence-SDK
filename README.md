@@ -22,17 +22,51 @@ C64C è un IDE e compilatore interamente browser-based che traduce un linguaggio
 
 ## Avvio rapido
 
-Nessuna build richiesta. Basta aprire `c64c.html` in un browser moderno.
+Sono disponibili due versioni del file:
 
-```
+| File | Preview emulatore | Come aprirlo |
+|------|:-----------------:|-------------|
+| `c64c.html` | ✗ | Doppio clic sul file — funziona direttamente dal filesystem |
+| `c64c_preview.html` | ✓ | Richiede un server HTTP (anche locale) |
+
+### `c64c.html` — versione standalone
+
+Nessuna build richiesta. Basta aprire il file direttamente nel browser:
+
+```bash
 # Clona il repository
 git clone https://github.com/tuo-utente/c64c.git
 
-# Apri direttamente nel browser
+# Apri direttamente nel browser (doppio clic, o da terminale)
 open c64c.html
 ```
 
-Premi **F5** (o `Ctrl+S`) per compilare. Usa **↓ PRG** per scaricare il binario e caricarlo in VICE o su hardware reale.
+### `c64c_preview.html` — versione con emulatore integrato
+
+Questa versione include la preview del programma compilato in un emulatore C64 embedded. Poiché carica il modulo **WASM** dell'emulatore, il browser richiede che il file venga servito tramite HTTP (i browser bloccano il caricamento di WASM da `file://` per ragioni di sicurezza).
+
+Avvia un server locale nella cartella del progetto:
+
+```bash
+# Python 3 (il più comodo — nessuna installazione aggiuntiva)
+python -m http.server 8080
+
+# oppure Node.js
+npx serve .
+
+# oppure PHP
+php -S localhost:8080
+```
+
+Poi apri nel browser:
+
+```
+http://localhost:8080/c64c_preview.html
+```
+
+---
+
+Premi **F5** (o `Ctrl+S`) per compilare. Usa **↓ PRG** per scaricare il binario e caricarlo in VICE o su hardware reale. Nella versione preview, il pulsante **▶ RUN** avvia direttamente il programma nell'emulatore integrato.
 
 ---
 
@@ -67,7 +101,8 @@ func main() {
 ## Struttura del repository
 
 ```
-c64c.html          — IDE + compilatore (file unico, self-contained)
+c64c.html          — IDE + compilatore (file unico, self-contained, nessun server richiesto)
+c64c_preview.html  — IDE + compilatore + emulatore C64 integrato (richiede server HTTP)
 c64c-docs.html     — Documentazione completa del linguaggio
 README.md          — Questo file
 ```
@@ -95,6 +130,7 @@ Aprire `c64c-docs.html` direttamente nel browser, oppure usare il pulsante **? H
 ## Requisiti
 
 - Browser moderno con JavaScript abilitato (Chrome, Firefox, Safari, Edge)
+- Per la versione con emulatore (`c64c_preview.html`): qualsiasi server HTTP locale (vedi sopra)
 - Per eseguire i PRG generati: [VICE emulator](https://vice-emu.sourceforge.io/) oppure hardware reale con sd2iec / 1541
 
 ---
