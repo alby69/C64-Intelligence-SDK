@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- C64C IDE — MOS 6510 Cross Compiler
+<!-- C64PY IDE — MOS 6510 Cross Compiler
      Copyright (C) Leonardo Boselli
      Released under the GNU General Public License v3.0
      https://www.gnu.org/licenses/gpl-3.0.html -->
@@ -7,7 +7,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>C64C IDE</title>
+<title>C64PY IDE</title>
 
 <!-- CodeMirror 5 -->
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/codemirror/5.65.16/codemirror.min.css">
@@ -76,47 +76,291 @@ body::before {
 .btn-compile:hover { box-shadow: 0 0 8px rgba(245,245,96,0.4); }
 .btn-export { color: var(--c64-green); border-color: var(--c64-green); }
 .btn-export:hover { box-shadow: 0 0 8px rgba(85,255,85,0.4); }
-.btn-run { color: var(--c64-orange); border-color: var(--c64-orange); }
-.btn-run:hover { box-shadow: 0 0 10px rgba(255,136,68,0.55); }
+.btn-clear { color: var(--c64-red); border-color: var(--c64-red); }
+.btn-new   { color: var(--c64-cyan); border-color: var(--c64-cyan); }
 
-/* ─── EMULATOR MODAL ──────────────────────────────────────────────────────── */
-#emu-overlay {
-  display: none; position: fixed; inset: 0; z-index: 9000;
-  background: rgba(0,0,10,0.82);
-  backdrop-filter: blur(4px);
+.dropdown { position: relative; display: inline-block; }
+.dropdown-menu { display: none; position: absolute; top: 100%; left: 0; z-index: 100; background: var(--c64-panel); border: 1px solid var(--c64-border); min-width: 200px; margin-top: 2px; }
+.dropdown:hover .dropdown-menu, .dropdown-menu:hover { display: block; }
+.dropdown-menu a { display: block; padding: 6px 12px; color: var(--c64-text); text-decoration: none; font-size: 12px; letter-spacing: 0.5px; cursor: pointer; }
+.dropdown-menu a:hover { background: var(--c64-key-top); color: var(--c64-bright); }
+.dropdown-menu a span { font-size: 10px; color: var(--c64-border); float: right; opacity: 0.7; }
+
+#filename-display { font-size: 11px; color: var(--c64-cyan); opacity: 0.8; margin-left: 4px; }
+
+/* ─── MAIN AREA ───────────────────────────────────────────────────────────── */
+#main { display: flex; flex: 1; overflow: hidden; }
+
+#editor-pane { flex: 1; display: flex; flex-direction: column; overflow: hidden; border-right: 2px solid var(--c64-border); }
+#editor-header { background: var(--c64-dark); border-bottom: 1px solid rgba(123,123,255,0.3); padding: 3px 10px; font-size: 10px; color: var(--c64-border); letter-spacing: 1px; text-transform: uppercase; flex-shrink: 0; }
+
+/* ─── CODEMIRROR ──────────────────────────────────────────────────────────── */
+.CodeMirror { font-family: var(--font-mono) !important; font-size: 14px; line-height: 1.6; height: 100% !important; background: var(--c64-bg) !important; color: var(--c64-text) !important; border: none !important; }
+.CodeMirror-scroll { overflow: auto !important; }
+.CodeMirror-gutters { background: var(--c64-panel) !important; border-right: 1px solid rgba(123,123,255,0.3) !important; min-width: 44px; }
+.CodeMirror-linenumber { color: rgba(123,123,255,0.4) !important; font-size: 12px; }
+.CodeMirror-cursor { border-left: 2px solid var(--c64-bright) !important; animation: blink 1s step-end infinite; }
+@keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0; } }
+.CodeMirror-selected { background: rgba(123,123,255,0.25) !important; }
+.CodeMirror-activeline-background { background: rgba(255,255,255,0.04) !important; }
+.cm-c64-keyword  { color: var(--tok-keyword) !important; font-weight: bold; }
+.cm-c64-type     { color: var(--tok-type) !important; }
+.cm-c64-builtin  { color: var(--tok-builtin) !important; }
+.cm-c64-comment  { color: var(--tok-comment) !important; font-style: italic; }
+.cm-c64-string   { color: var(--tok-string) !important; }
+.cm-c64-number   { color: var(--tok-number) !important; }
+.cm-c64-hex      { color: #FF7777 !important; font-weight: bold; }
+.cm-c64-operator { color: var(--tok-operator) !important; }
+.cm-c64-variable { color: var(--tok-variable) !important; }
+.cm-c64-float    { color: var(--tok-float) !important; }
+.cm-c64-register { color: var(--c64-orange) !important; }
+
+/* ─── RIGHT PANEL ─────────────────────────────────────────────────────────── */
+#right-panel { width: 340px; flex-shrink: 0; display: flex; flex-direction: column; overflow: hidden; background: var(--c64-dark); }
+.panel-tab-bar { display: flex; border-bottom: 1px solid var(--c64-border); background: var(--c64-panel); flex-shrink: 0; }
+.panel-tab { font-size: 10px; color: var(--c64-border); padding: 5px 10px; cursor: pointer; letter-spacing: 1px; text-transform: uppercase; border-right: 1px solid rgba(123,123,255,0.2); opacity: 0.6; transition: all 0.15s; }
+.panel-tab.active { color: var(--c64-bright); background: var(--c64-dark); opacity: 1; border-bottom: 2px solid var(--c64-yellow); margin-bottom: -1px; }
+.panel-tab:hover { opacity: 0.9; }
+.panel-content { flex: 1; overflow: hidden; display: flex; flex-direction: column; }
+
+/* ─── LOG ─────────────────────────────────────────────────────────────────── */
+#output-area { flex: 1; overflow-y: auto; padding: 8px 10px; font-size: 12px; line-height: 1.6; font-family: var(--font-mono); }
+.log-line { margin-bottom: 2px; }
+.log-info    { color: var(--c64-border); }
+.log-ok      { color: var(--c64-green); }
+.log-warn    { color: var(--c64-yellow); }
+.log-error   { color: var(--c64-red); }
+.log-section { color: var(--c64-cyan); border-top: 1px solid rgba(112,220,255,0.2); margin-top: 6px; padding-top: 4px; font-weight: bold; }
+
+/* ─── ASM ─────────────────────────────────────────────────────────────────── */
+#asm-area { flex: 1; overflow-y: auto; padding: 8px 10px; font-size: 12px; line-height: 1.7; font-family: var(--font-mono); display: none; }
+.asm-addr    { color: var(--c64-cyan); }
+.asm-byte    { color: var(--c64-red); margin: 0 2px; }
+.asm-mnem    { color: var(--c64-yellow); margin-left: 6px; }
+.asm-op      { color: var(--c64-text); margin-left: 4px; }
+.asm-comment { color: var(--tok-comment); font-style: italic; margin-left: 10px; }
+
+/* ─── AST TREE ────────────────────────────────────────────────────────────── */
+#ast-area { flex: 1; overflow-y: auto; padding: 6px 8px; font-size: 11px; line-height: 1.5; font-family: var(--font-mono); display: none; }
+
+.ast-root { padding: 4px 0; }
+
+.ast-item {
+  margin: 1px 0;
+  position: relative;
+}
+.ast-item > .ast-children {
+  margin-left: 14px;
+  border-left: 1px solid rgba(123,123,255,0.25);
+  padding-left: 8px;
+}
+
+.ast-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 1px 3px;
+  border-radius: 2px;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+.ast-label:hover { background: rgba(255,255,255,0.06); }
+
+.ast-toggle { font-size: 9px; color: rgba(123,123,255,0.5); width: 10px; display: inline-block; }
+
+/* Node kind colors */
+.ast-k-Program   { color: #FFFFFF; font-weight: bold; }
+.ast-k-FuncDecl  { color: var(--c64-yellow); font-weight: bold; }
+.ast-k-VarDecl   { color: var(--c64-cyan); }
+.ast-k-Block     { color: rgba(123,123,255,0.7); }
+.ast-k-Assign    { color: var(--c64-bright); }
+.ast-k-If        { color: var(--tok-keyword); font-weight: bold; }
+.ast-k-While     { color: var(--tok-keyword); font-weight: bold; }
+.ast-k-DoWhile   { color: var(--tok-keyword); font-weight: bold; }
+.ast-k-For       { color: var(--tok-keyword); font-weight: bold; }
+.ast-k-Return    { color: var(--tok-keyword); }
+.ast-k-Break     { color: var(--tok-keyword); }
+.ast-k-Continue  { color: var(--tok-keyword); }
+.ast-k-Call      { color: var(--tok-builtin); }
+.ast-k-BinaryOp  { color: var(--tok-operator); }
+.ast-k-UnaryOp   { color: var(--tok-operator); }
+.ast-k-PostfixOp { color: var(--tok-operator); }
+.ast-k-Literal   { color: var(--tok-number); }
+.ast-k-LitStr    { color: var(--tok-string); }
+.ast-k-LitFloat  { color: var(--tok-float); }
+.ast-k-Ident     { color: var(--c64-text); }
+.ast-k-ArrayAccess { color: var(--c64-text); }
+.ast-k-Cast      { color: var(--tok-type); }
+
+.ast-meta { font-size: 10px; opacity: 0.55; margin-left: 5px; }
+.ast-badge { font-size: 9px; padding: 0 4px; border-radius: 2px; border: 1px solid; }
+.ast-badge-type { color: var(--tok-type); border-color: rgba(112,220,255,0.4); }
+.ast-badge-op   { color: var(--tok-operator); border-color: rgba(255,255,255,0.3); }
+.ast-badge-val  { color: var(--tok-number); border-color: rgba(255,85,85,0.4); }
+.ast-badge-str  { color: var(--tok-string); border-color: rgba(255,136,68,0.4); }
+.ast-badge-float{ color: var(--tok-float); border-color: rgba(255,153,204,0.4); }
+
+.ast-collapsed > .ast-children { display: none; }
+
+/* ─── INFO PANEL ──────────────────────────────────────────────────────────── */
+#info-area { flex: 1; overflow-y: auto; padding: 10px; font-size: 11px; line-height: 1.7; display: none; }
+.info-section { margin-bottom: 12px; }
+.info-title { color: var(--c64-cyan); letter-spacing: 1px; text-transform: uppercase; font-size: 10px; border-bottom: 1px solid rgba(112,220,255,0.2); padding-bottom: 3px; margin-bottom: 6px; }
+.info-row { display: flex; justify-content: space-between; margin-bottom: 3px; }
+.info-key { color: var(--c64-border); flex-shrink: 0; }
+.info-val { color: var(--c64-bright); text-align: right; }
+.info-val.warn { color: var(--c64-yellow); }
+.info-kw  { color: var(--tok-keyword); margin-right: 6px; display: inline-block; }
+.info-bi  { color: var(--tok-builtin); margin-right: 6px; display: inline-block; }
+.info-mem { font-family: var(--font-mono); }
+.info-mem-row { display: flex; gap: 8px; margin-bottom: 2px; font-size: 10px; }
+.info-mem-addr { color: #FF7777; min-width: 70px; }
+.info-mem-desc { color: var(--c64-text); flex: 1; }
+.info-mem-active { color: var(--c64-yellow); }
+.info-mem-off    { color: rgba(123,123,255,0.4); text-decoration: line-through; }
+
+
+/* ─── BYTES HEX DUMP ─────────────────────────────────────────────────────── */
+#bytes-area { flex: 1; overflow-y: auto; padding: 8px 10px; font-size: 11px; line-height: 1.55; font-family: var(--font-mono); display: none; }
+.hex-row { display: flex; gap: 0; margin-bottom: 1px; align-items: baseline; }
+.hex-addr { color: var(--c64-cyan); min-width: 56px; }
+.hex-bytes { color: var(--c64-red); min-width: 200px; letter-spacing: 1px; }
+.hex-ascii { color: rgba(123,123,255,0.6); margin-left: 8px; letter-spacing: 1px; }
+.hex-sep { color: rgba(123,123,255,0.25); margin: 0 4px; }
+.hex-hdr { color: var(--tok-comment); font-style: italic; margin-bottom: 6px; font-size: 10px; }
+
+/* ─── STATUS BAR ──────────────────────────────────────────────────────────── */
+#statusbar { background: var(--c64-panel); border-top: 2px solid var(--c64-border); padding: 3px 12px; display: flex; align-items: center; gap: 16px; font-size: 10px; color: var(--c64-border); letter-spacing: 0.5px; flex-shrink: 0; }
+.sb-seg { display: flex; align-items: center; gap: 5px; }
+.sb-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--c64-border); }
+.sb-dot.ok { background: var(--c64-green); box-shadow: 0 0 4px var(--c64-green); }
+.sb-dot.err { background: var(--c64-red); box-shadow: 0 0 4px var(--c64-red); }
+.sb-dot.warn { background: var(--c64-yellow); }
+#sb-cursor { margin-left: auto; }
+
+/* ─── SCROLLBAR ───────────────────────────────────────────────────────────── */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--c64-dark); }
+::-webkit-scrollbar-thumb { background: rgba(123,123,255,0.4); border-radius: 2px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(123,123,255,0.7); }
+
+/* ─── DRAG OVERLAY ────────────────────────────────────────────────────────── */
+#drop-overlay {
+  display: none; position: absolute; inset: 0; z-index: 500;
+  background: rgba(52,53,172,0.90);
+  border: 3px dashed var(--c64-cyan);
   align-items: center; justify-content: center;
+  flex-direction: column; gap: 10px;
+  pointer-events: none;
 }
-#emu-overlay.visible { display: flex; }
-#emu-box {
-  background: var(--c64-dark);
-  border: 2px solid var(--c64-orange);
-  box-shadow: 0 0 40px rgba(255,136,68,0.35), 0 0 80px rgba(0,0,40,0.7);
-  display: flex; flex-direction: column;
-  max-height: 96vh;
-  border-radius: 4px;
-  overflow: hidden;
+#drop-overlay.active { display: flex; }
+#drop-overlay-text { font-size: 22px; color: var(--c64-cyan); letter-spacing: 3px; text-transform: uppercase; text-shadow: 0 0 16px var(--c64-cyan); }
+#drop-overlay-sub  { font-size: 11px; color: var(--c64-border); letter-spacing: 2px; }
+
+/* ─── FILES PANEL ─────────────────────────────────────────────────────────── */
+#files-area { flex: 1; overflow-y: auto; display: none; flex-direction: column; }
+.files-toolbar { padding: 6px 8px; background: var(--c64-panel); border-bottom: 1px solid rgba(123,123,255,0.2); display: flex; gap: 6px; align-items: center; flex-shrink: 0; }
+.files-list { flex: 1; overflow-y: auto; padding: 4px 0; }
+.file-item {
+  display: flex; align-items: center; gap: 6px;
+  padding: 5px 10px; border-bottom: 1px solid rgba(123,123,255,0.1);
+  transition: background 0.1s;
 }
-#emu-titlebar {
-  background: var(--c64-panel);
-  border-bottom: 1px solid var(--c64-orange);
-  padding: 5px 10px; display: flex; align-items: center; gap: 10px;
-  flex-shrink: 0;
+.file-item:hover { background: rgba(123,123,255,0.08); }
+.file-item-icon { color: var(--c64-cyan); font-size: 12px; flex-shrink: 0; }
+.file-item-name { flex: 1; font-size: 12px; color: var(--c64-bright); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; cursor: pointer; }
+.file-item-meta { font-size: 10px; color: var(--c64-border); opacity: 0.6; flex-shrink: 0; cursor: pointer; }
+.file-item-del  { font-size: 11px; color: var(--c64-red); cursor: pointer; padding: 2px 5px; border-radius: 2px; opacity: 0.5; flex-shrink: 0; }
+.file-item-del:hover { opacity: 1; background: rgba(255,85,85,0.15); }
+.files-empty { padding: 20px 12px; text-align: center; font-size: 11px; color: var(--c64-border); opacity: 0.5; letter-spacing: 1px; }
+.btn-file  { color: var(--c64-cyan);   border-color: var(--c64-cyan); }
+.btn-file:hover  { box-shadow: 0 0 8px rgba(112,220,255,0.4); }
+.btn-save  { color: var(--c64-orange); border-color: var(--c64-orange); }
+.btn-save:hover  { box-shadow: 0 0 8px rgba(255,136,68,0.4); }
+
+/* ─── MODAL RENAME ────────────────────────────────────────────────────────── */
+#modal-overlay {
+  display: none; position: fixed; inset: 0; z-index: 1000;
+  background: rgba(0,0,30,0.75); align-items: center; justify-content: center;
 }
-#emu-titlebar span { font-size: 11px; color: var(--c64-orange); letter-spacing: 2px; flex: 1; }
-#emu-status { font-size: 10px; color: var(--c64-text); opacity: 0.7; }
-#emu-close {
-  font-family: var(--font-mono); font-size: 11px;
-  color: var(--c64-red); border: 1px solid var(--c64-red);
-  background: transparent; padding: 2px 8px; cursor: pointer;
-  border-radius: 2px; letter-spacing: 1px;
+#modal-overlay.active { display: flex; }
+#modal-box {
+  background: var(--c64-panel); border: 2px solid var(--c64-border);
+  padding: 20px; min-width: 300px; box-shadow: 0 0 30px rgba(123,123,255,0.5);
 }
-#emu-close:hover { background: rgba(255,85,85,0.15); }
-#emu-iframe {
-  border: none; display: block; flex-shrink: 0;
-  /* C64 canvas: 556×490 visible (actual canvas 556×1049 but scrolled) */
-  width: 556px; height: 520px;
-  background: #000;
+#modal-title { font-size: 12px; color: var(--c64-cyan); letter-spacing: 2px; text-transform: uppercase; margin-bottom: 12px; }
+#modal-input {
+  width: 100%; background: var(--c64-bg); border: 1px solid var(--c64-border);
+  color: var(--c64-bright); font-family: var(--font-mono); font-size: 13px;
+  padding: 6px 8px; outline: none; letter-spacing: 0.5px;
 }
+#modal-input:focus { border-color: var(--c64-cyan); }
+.modal-btns { display: flex; gap: 8px; margin-top: 12px; justify-content: flex-end; }
+</style>
+<style>
+/* ─── FONT IMPORT ─────────────────────────────────────────────────────────── */
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap');
+
+/* ─── RESET & BASE ────────────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --c64-bg:        #3435AC;
+  --c64-border:    #7B7BFF;
+  --c64-text:      #7B7BFF;
+  --c64-bright:    #FFFFFF;
+  --c64-cyan:      #70DCFF;
+  --c64-yellow:    #F5F560;
+  --c64-green:     #55FF55;
+  --c64-red:       #FF5555;
+  --c64-orange:    #FF8844;
+  --c64-dark:      #1A1A6A;
+  --c64-panel:     #28288A;
+  --c64-key:       #222288;
+  --c64-key-top:   #4444CC;
+  --tok-keyword:   #F5F560;
+  --tok-type:      #70DCFF;
+  --tok-builtin:   #55FF55;
+  --tok-comment:   #8888CC;
+  --tok-string:    #FF8844;
+  --tok-number:    #FF5555;
+  --tok-operator:  #FFFFFF;
+  --tok-float:     #FF99CC;
+  --tok-variable:  #C0C0FF;
+  --font-mono: 'Share Tech Mono', 'Courier New', monospace;
+}
+
+html, body { height: 100%; overflow: hidden; background: var(--c64-dark); font-family: var(--font-mono); color: var(--c64-text); }
+
+body::before {
+  content: ''; position: fixed; inset: 0;
+  background: repeating-linear-gradient(to bottom, transparent 0px, transparent 2px, rgba(0,0,10,0.15) 2px, rgba(0,0,10,0.15) 4px);
+  pointer-events: none; z-index: 9999;
+}
+
+#app { display: flex; flex-direction: column; height: 100vh; border: 3px solid var(--c64-border); box-shadow: 0 0 40px rgba(123,123,255,0.4), inset 0 0 60px rgba(0,0,40,0.3); }
+
+/* ─── HEADER ──────────────────────────────────────────────────────────────── */
+#header { background: var(--c64-dark); border-bottom: 2px solid var(--c64-border); padding: 6px 12px; display: flex; align-items: center; gap: 16px; flex-shrink: 0; }
+#logo { display: flex; align-items: center; gap: 10px; }
+#logo-badge { background: var(--c64-border); color: var(--c64-dark); font-size: 10px; font-weight: bold; padding: 2px 6px; letter-spacing: 1px; border-radius: 2px; text-transform: uppercase; }
+#logo-title { font-size: 18px; color: var(--c64-bright); letter-spacing: 3px; text-transform: uppercase; text-shadow: 0 0 12px var(--c64-border); }
+#logo-sub { font-size: 10px; color: var(--c64-border); letter-spacing: 2px; }
+#header-right { margin-left: auto; font-size: 11px; color: var(--c64-border); opacity: 0.7; text-align: right; line-height: 1.5; }
+
+/* ─── TOOLBAR ─────────────────────────────────────────────────────────────── */
+#toolbar { background: var(--c64-panel); border-bottom: 2px solid var(--c64-border); padding: 5px 10px; display: flex; align-items: center; gap: 6px; flex-shrink: 0; flex-wrap: wrap; }
+.tb-sep { width: 1px; height: 24px; background: var(--c64-border); opacity: 0.3; margin: 0 4px; }
+.tb-label { font-size: 10px; color: var(--c64-border); opacity: 0.6; letter-spacing: 1px; text-transform: uppercase; }
+
+.btn { font-family: var(--font-mono); font-size: 12px; color: var(--c64-bright); background: var(--c64-key); border: 1px solid var(--c64-border); border-bottom: 3px solid rgba(0,0,60,0.8); border-right: 2px solid rgba(0,0,60,0.6); padding: 4px 10px; cursor: pointer; letter-spacing: 0.5px; text-transform: uppercase; border-radius: 3px; transition: all 0.08s; position: relative; user-select: none; }
+.btn:hover { background: var(--c64-key-top); box-shadow: 0 0 8px rgba(123,123,255,0.5); }
+.btn:active { transform: translateY(2px); border-bottom-width: 1px; box-shadow: none; }
+.btn-compile { color: var(--c64-yellow); border-color: var(--c64-yellow); }
+.btn-compile:hover { box-shadow: 0 0 8px rgba(245,245,96,0.4); }
+.btn-export { color: var(--c64-green); border-color: var(--c64-green); }
+.btn-export:hover { box-shadow: 0 0 8px rgba(85,255,85,0.4); }
 .btn-clear { color: var(--c64-red); border-color: var(--c64-red); }
 .btn-new   { color: var(--c64-cyan); border-color: var(--c64-cyan); }
 
@@ -341,7 +585,6 @@ body::before {
 </style>
 </head>
 <body>
-
 <div id="app">
 
   <!-- ── HEADER ──────────────────────────────────────────────────────────── -->
@@ -349,7 +592,7 @@ body::before {
     <div id="logo">
       <div id="logo-badge">CBM</div>
       <div>
-        <div id="logo-title">C64C IDE</div>
+        <div id="logo-title">C64PY IDE</div>
         <div id="logo-sub">MOS 6510 · CROSS COMPILER</div>
       </div>
     </div>
@@ -363,12 +606,11 @@ body::before {
   <div id="toolbar">
     <button class="btn btn-compile" onclick="doCompile()" title="Compila (F5)">▶ COMPILE</button>
     <button class="btn btn-export" onclick="doExport()" title="Esporta PRG (Ctrl+E)">↓ PRG</button>
-    <button class="btn btn-run" onclick="openEmulator()" title="Compila ed esegui nell'emulatore C64 (F6)">▶ RUN</button>
     <div class="dropdown">
       <button class="btn btn-export" title="Esporta sorgente o assembly">↓ EXPORT ▾</button>
       <div class="dropdown-menu">
         <a onclick="exportSource()">Sorgente  (.c64) <span>txt</span></a>
-        <a onclick="exportAsm()">Assembly listing (.asm) <span>txt</span></a>
+        <a onclick="exportAsm()">Assembly listing (.asm) <span>txt</span></a><a onclick="exportBasic()">Codice BASIC (.bas) <span>txt</span></a>
       </div>
     </div>
     <div class="tb-sep"></div>
@@ -405,7 +647,7 @@ body::before {
     <div class="tb-sep"></div>
     <button class="btn btn-clear" onclick="clearOutput()">✕ CLEAR LOG</button>
     <div class="tb-sep" style="margin-left:auto;"></div>
-    <button class="btn" style="color:var(--c64-cyan);border-color:var(--c64-cyan);" onclick="window.open('c64c-docs.html','_blank')" title="Apri documentazione">? HELP</button>
+    <button class="btn" style="color:var(--c64-cyan);border-color:var(--c64-cyan);" onclick="window.open('c64py-docs.html','_blank')" title="Apri documentazione">? HELP</button>
     <span class="tb-label" style="margin-left:8px;">FILE:</span>
     <span id="filename-display">untitled.c64</span>
   </div>
@@ -415,7 +657,7 @@ body::before {
   <!-- ── MAIN ────────────────────────────────────────────────────────────── -->
   <div id="main">
     <div id="editor-pane" style="position:relative">
-      <div id="editor-header">◈ SOURCE EDITOR — C64C / MOS 6510</div>
+      <div id="editor-header">◈ SOURCE EDITOR — C64PY / MOS 6510</div>
       <textarea id="editor"></textarea>
       <div id="drop-overlay">
         <div id="drop-overlay-text">◈ RILASCIA IL FILE ◈</div>
@@ -427,7 +669,7 @@ body::before {
       <div class="panel-tab-bar">
         <div class="panel-tab active" onclick="switchTab('log',this)">LOG</div>
         <div class="panel-tab"        onclick="switchTab('ast',this)">AST</div>
-        <div class="panel-tab"        onclick="switchTab('asm',this)">ASM</div>
+        <div class="panel-tab"        onclick="switchTab('asm',this)">ASM</div><div class="panel-tab" onclick="switchTab('basic',this)">BASIC</div>
         <div class="panel-tab"        onclick="switchTab('info',this)">REF</div>
         <div class="panel-tab"        onclick="switchTab('bytes',this)">BYTES</div>
         <div class="panel-tab"        onclick="switchTab('files',this)" id="tab-files">FILES</div>
@@ -436,7 +678,7 @@ body::before {
         <div id="output-area"></div>
         <div id="ast-area"></div>
         <div id="asm-area"></div>
-        <div id="info-area"></div>
+        <div id="basic-area" class="panel-content area-code" style="display:none"><pre id="basic-code" style="color:var(--c64-cyan);padding:10px;font-family:var(--font-mono);font-size:12px;overflow:auto;height:100%"></pre></div><div id="info-area"></div>
         <div id="bytes-area"></div>
         <div id="files-area">
           <div class="files-toolbar">
@@ -467,18 +709,6 @@ body::before {
 
 </div>
 
-<!-- ── MODAL EMULATORE ─────────────────────────────────────────────────── -->
-<div id="emu-overlay">
-  <div id="emu-box">
-    <div id="emu-titlebar">
-      <span>◈ C64 EMULATOR</span>
-      <span id="emu-status">Avvio...</span>
-      <button id="emu-close" onclick="closeEmulator()">✕ CHIUDI</button>
-    </div>
-    <iframe id="emu-iframe" src="" scrolling="no" allowfullscreen></iframe>
-  </div>
-</div>
-
 <!-- ── MODAL SALVA ───────────────────────────────────────────────────────── -->
 <div id="modal-overlay">
   <div id="modal-box">
@@ -491,7 +721,6 @@ body::before {
     </div>
   </div>
 </div>
-
 <script>
 // ═══════════════════════════════════════════════════════════════════════════
 //  C64C CodeMirror Mode
@@ -600,7 +829,7 @@ CodeMirror.defineMode('c64lang', function() {
 // ═══════════════════════════════════════════════════════════════════════════
 //  EXAMPLES
 // ═══════════════════════════════════════════════════════════════════════════
-const EXAMPLES = {
+var EXAMPLES = { // CHANGED TO VAR TO ALLOW OVERRIDE
 hello: `// ─── Hello World ─────────────────────────────
 func main() {
     clear_screen();
@@ -1745,146 +1974,411 @@ func main() {
 `
 };
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  TOKEN TYPES
-// ═══════════════════════════════════════════════════════════════════════════
 const TT = {
   INT_LIT:'INT_LIT', FLOAT_LIT:'FLOAT_LIT', HEX_LIT:'HEX_LIT',
   BIN_LIT:'BIN_LIT', STR_LIT:'STR_LIT',
   KEYWORD:'KEYWORD', TYPE:'TYPE', BUILTIN:'BUILTIN', IDENT:'IDENT',
-  LPAREN:'(', RPAREN:')', LBRACE:'{', RBRACE:'}',
-  LBRACK:'[', RBRACK:']', SEMI:';', COMMA:',', DOT:'.',
+  LPAREN:'(', RPAREN:')', LBRACK:'[', RBRACK:']', COMMA:',', DOT:'.', COLON:':', ARROW:'->',
   OP:'OP', CMP:'CMP', ASSIGN:'=',
-  AND:'&&', OR:'||', INC:'++', DEC:'--', LSHIFT:'<<', RSHIFT:'>>',
+  AND:'and', OR:'or', NOT:'not', NEWLINE:'NEWLINE', INDENT:'INDENT', DEDENT:'DEDENT',
   EOF:'EOF',
 };
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  LEXER — Fase 2a
-// ═══════════════════════════════════════════════════════════════════════════
+const C64PY_KEYWORDS = new Set([
+    'def', 'if', 'else', 'elif', 'while', 'for', 'in', 'return',
+    'pass', 'and', 'or', 'not', 'break', 'continue', 'True', 'False'
+]);
+
+const C64PY_TYPES = new Set([
+    'byte', 'word', 'int', 'float', 'void', 'q8_8', 'sq8_8'
+]);
+
+const C64PY_BUILTINS = new Set([
+    'print', 'print_at', 'input', 'clear_screen', 'border_color', 'screen_color',
+    'peek', 'poke', 'peekw', 'pokew', 'wait', 'wait_frames', 'rand', 'abs', 'sin', 'cos', 'tan',
+    'fp_int', 'fp_frac'
+]);
+
+CodeMirror.defineMode('c64py-lang', function() {
+  return {
+    token: function(stream, state) {
+      if (stream.eatSpace()) return null;
+      if (stream.match('#')) { stream.skipToEnd(); return 'c64-comment'; }
+      if (stream.match(/^\$[0-9A-Fa-f]+/) || stream.match(/^0[xX][0-9A-Fa-f]+/)) return 'c64-hex';
+      if (stream.match(/^[0-9]+\.[0-9]+([eE][+-]?[0-9]+)?/)) return 'c64-float';
+      if (stream.match(/^[0-9]+/)) return 'c64-number';
+      if (stream.match(/^"[^"]*"/)) return 'c64-string';
+      if (stream.match(/^[A-Za-z_][A-Za-z0-9_]*/)) {
+        const w = stream.current();
+        if (C64PY_KEYWORDS.has(w)) return 'c64-keyword';
+        if (C64PY_TYPES.has(w)) return 'c64-type';
+        if (C64PY_BUILTINS.has(w)) return 'c64-builtin';
+        return 'c64-variable';
+      }
+      stream.next(); return null;
+    }
+  };
+});
+
 class Lexer {
-  constructor(src) { this.src=src; this.pos=0; this.line=1; this.col=1; this.tokens=[]; this.errors=[]; }
+  constructor(src) {
+    this.src = src; this.pos = 0; this.line = 1; this.col = 1;
+    this.tokens = []; this.errors = []; this.indentStack = [0]; this.atStartOfLine = true;
+  }
   peek(off=0) { return this.src[this.pos+off]; }
   eof()       { return this.pos >= this.src.length; }
   advance() {
     const c = this.src[this.pos++];
-    if (c==='\n') { this.line++; this.col=1; } else { this.col++; }
+    if (c==='\n') { this.line++; this.col=1; this.atStartOfLine = true; } else { this.col++; }
     return c;
   }
   tok(type,value,line,col) { return {type,value,line,col}; }
   _err(msg,line,col) { this.errors.push({msg,line,col}); }
-  _skipWhitespace() { while (!this.eof() && /[ \t\r\n]/.test(this.peek())) this.advance(); }
-
   tokenize() {
     while (!this.eof()) {
-      this._skipWhitespace();
-      if (this.eof()) break;
       const line=this.line, col=this.col;
-
-      if (this.peek()==='/' && this.peek(1)==='/') { while (!this.eof() && this.peek()!=='\n') this.advance(); continue; }
-      if (this.peek()==='/' && this.peek(1)==='*') {
-        this.advance(); this.advance();
-        while (!this.eof()) {
-          if (this.peek()==='*' && this.peek(1)==='/') { this.advance(); this.advance(); break; }
-          this.advance();
+      if (this.atStartOfLine) {
+        this.atStartOfLine = false; let indent = 0;
+        while (!this.eof() && (this.peek() === ' ' || this.peek() === '\t')) {
+            if (this.advance() === '\t') indent += 4; else indent++;
         }
-        continue;
+        if (this.eof()) break;
+        if (this.peek() === '\n') { this.advance(); this.atStartOfLine = true; continue; }
+        if (this.peek() === '#') {
+            while (!this.eof() && this.peek() !== '\n') this.advance();
+            if (this.peek() === '\n') { this.advance(); this.atStartOfLine = true; }
+            continue;
+        }
+        if (indent > this.indentStack[this.indentStack.length - 1]) {
+          this.indentStack.push(indent); this.tokens.push(this.tok(TT.INDENT, null, line, col));
+        } else {
+          while (indent < this.indentStack[this.indentStack.length - 1]) {
+            this.indentStack.pop(); this.tokens.push(this.tok(TT.DEDENT, null, line, col));
+          }
+        }
       }
-      if (this.peek()==='$' || (this.peek()==='0' && (this.peek(1)==='x'||this.peek(1)==='X'))) {
-        const start=this.pos;
-        if (this.peek()==='$') this.advance(); else { this.advance(); this.advance(); }
+      while (!this.eof() && (this.peek() === ' ' || this.peek() === '\t')) this.advance();
+      if (this.eof()) break;
+      if (this.peek() === '\n') { this.tokens.push(this.tok(TT.NEWLINE, '\n', this.line, this.col)); this.advance(); continue; }
+      if (this.peek() === '#') { while (!this.eof() && this.peek() !== '\n') this.advance(); continue; }
+      const c = this.peek();
+      if (c==='$' || (c==='0' && (this.peek(1)==='x'||this.peek(1)==='X'))) {
+        const start=this.pos; if (this.peek()==='$') this.advance(); else { this.advance(); this.advance(); }
         while (/[0-9A-Fa-f]/.test(this.peek())) this.advance();
-        const raw=this.src.slice(start,this.pos);
-        const val=parseInt(raw.replace(/^\$|^0[xX]/,''),16);
+        const raw=this.src.slice(start,this.pos); const val=parseInt(raw.replace(/^\$|^0[xX]/,''),16);
         const t=this.tok(TT.HEX_LIT,val,line,col); t.raw=raw; this.tokens.push(t); continue;
       }
-      if (this.peek()==='%') {
-        // Disambiguazione contestuale (come fa il compilatore C):
-        // Se il token precedente è un valore (numero, ident, ), ]) → operatore modulo
-        // Altrimenti                                                → letterale binario
-        // Esempi:  %1010  → BIN_LIT(10)
-        //          i%16   → OP(%) + INT_LIT(16)
-        //          i % 11 → OP(%) + INT_LIT(11)
-        //          i % %11 → OP(%) + BIN_LIT(3)    (modulo del binario 11)
-        const prev = this.tokens[this.tokens.length - 1];
-        const prevIsValue = prev && (
-          prev.type === TT.INT_LIT   ||
-          prev.type === TT.HEX_LIT   ||
-          prev.type === TT.BIN_LIT   ||
-          prev.type === TT.FLOAT_LIT ||
-          prev.type === TT.IDENT     ||
-          prev.type === TT.RPAREN    ||
-          prev.type === TT.RBRACK
-        );
-        if (prevIsValue) {
-          // Operatore modulo
-          this.advance();
-          this.tokens.push(this.tok(TT.OP,'%',line,col));
-        } else {
-          // Letterale binario
-          this.advance(); let bits='';
-          while (/[01]/.test(this.peek())) bits+=this.advance();
-          if (!bits) { this._err('Letterale binario vuoto dopo %',line,col); }
-          else { const t=this.tok(TT.BIN_LIT,parseInt(bits,2),line,col); t.raw='%'+bits; this.tokens.push(t); }
+      if (/[0-9]/.test(c)) {
+        let num=''; while (/[0-9]/.test(this.peek())) num+=this.advance();
+        if (this.peek()==='.') {
+          num+=this.advance(); while (/[0-9]/.test(this.peek())) num+=this.advance();
+          if (this.peek()==='e'||this.peek()==='E') { num+=this.advance(); if (this.peek()==='+'||this.peek()==='-') num+=this.advance(); while (/[0-9]/.test(this.peek())) num+=this.advance(); }
+          this.tokens.push(this.tok(TT.FLOAT_LIT,parseFloat(num),line,col)); continue;
         }
+        this.tokens.push(this.tok(TT.INT_LIT,parseInt(num,10),line,col)); continue;
+      }
+      if (c==='"') {
+        this.advance(); let s=''; while (!this.eof() && this.peek()!=='"') { if (this.peek()==='\\') { this.advance(); s+=this.advance(); } else s+=this.advance(); }
+        this.advance(); this.tokens.push(this.tok(TT.STR_LIT,s,line,col)); continue;
+      }
+      if (/[A-Za-z_]/.test(c)) {
+        let id=''; while (/[A-Za-z0-9_]/.test(this.peek())) id+=this.advance();
+        if (C64PY_KEYWORDS.has(id)) this.tokens.push(this.tok(TT.KEYWORD,id,line,col));
+        else if (C64PY_TYPES.has(id)) this.tokens.push(this.tok(TT.TYPE,id,line,col));
+        else if (C64PY_BUILTINS.has(id)) this.tokens.push(this.tok(TT.BUILTIN,id,line,col));
+        else this.tokens.push(this.tok(TT.IDENT,id,line,col));
         continue;
       }
-      if (/[0-9]/.test(this.peek())) {
-        let num='';
-        while (/[0-9]/.test(this.peek())) num+=this.advance();
-        if (this.peek()==='.' && /[0-9]/.test(this.peek(1))) {
-          num+=this.advance();
-          while (/[0-9]/.test(this.peek())) num+=this.advance();
-          if (this.peek()==='e'||this.peek()==='E') {
-            num+=this.advance();
-            if (this.peek()==='+'||this.peek()==='-') num+=this.advance();
-            while (/[0-9]/.test(this.peek())) num+=this.advance();
-          }
-          if (this.peek()==='f') this.advance();
-          const t=this.tok(TT.FLOAT_LIT,parseFloat(num),line,col); t.raw=num; this.tokens.push(t);
-        } else {
-          const t=this.tok(TT.INT_LIT,parseInt(num,10),line,col); t.raw=num; this.tokens.push(t);
-        }
+      const two = c + (this.peek(1)||'');
+      if (two==='->') { this.advance(); this.advance(); this.tokens.push(this.tok(TT.ARROW,'->',line,col)); continue; }
+      if (['==','!=','<=','>=','&&','||','<<','>>'].includes(two)) {
+        this.advance(); this.advance();
+        if (['&&','||'].includes(two)) this.tokens.push(this.tok(two==='&&'?TT.AND:TT.OR,two,line,col));
+        else this.tokens.push(this.tok(TT.CMP,two,line,col));
         continue;
       }
-      if (this.peek()==='"') {
-        this.advance(); let s='';
-        while (!this.eof() && this.peek()!=='"') {
-          if (this.peek()==='\\') { this.advance(); s+=this.advance(); } else s+=this.advance();
-        }
-        if (this.eof()) this._err('Stringa non chiusa',line,col); else this.advance();
-        this.tokens.push(this.tok(TT.STR_LIT,s,line,col)); continue;
-      }
-      if (/[A-Za-z_]/.test(this.peek())) {
-        let id='';
-        while (/[A-Za-z0-9_]/.test(this.peek())) id+=this.advance();
-        let type=TT.IDENT;
-        if (C64_KEYWORDS.has(id)) type=TT.KEYWORD;
-        else if (C64_TYPES.has(id)) type=TT.TYPE;
-        else if (C64_BUILTINS.has(id)) type=TT.BUILTIN;
-        this.tokens.push(this.tok(type,id,line,col)); continue;
-      }
-      const MULTI=['==','!=','<=','>=','&&','||','++','--','<<','>>'];
-      let matched=false;
-      for (const op of MULTI) {
-        if (this.src.startsWith(op,this.pos)) {
-          this.pos+=2; this.col+=2;
-          const tt={'==':TT.CMP,'!=':TT.CMP,'<=':TT.CMP,'>=':TT.CMP,'&&':TT.AND,'||':TT.OR,'++':TT.INC,'--':TT.DEC,'<<':TT.LSHIFT,'>>':TT.RSHIFT}[op]||TT.OP;
-          this.tokens.push(this.tok(tt,op,line,col)); matched=true; break;
-        }
-      }
-      if (matched) continue;
-      const c=this.advance();
-      const PUNCT={'(':TT.LPAREN,')':TT.RPAREN,'{':TT.LBRACE,'}':TT.RBRACE,'[':TT.LBRACK,']':TT.RBRACK,';':TT.SEMI,',':TT.COMMA,'.':TT.DOT,'=':TT.ASSIGN};
-      const SINGLE=new Set(['+','-','*','/','%','&','|','^','~','!','<','>']);
-      if (PUNCT[c]!==undefined) this.tokens.push(this.tok(PUNCT[c],c,line,col));
-      else if (SINGLE.has(c))  this.tokens.push(this.tok(TT.OP,c,line,col));
-      else this._err(`Carattere inatteso: '${c}'`,line,col);
+      if (['<','>'].includes(c)) { this.advance(); this.tokens.push(this.tok(TT.CMP,c,line,col)); continue; }
+      if ('+-*/%&|^'.includes(c)) { this.advance(); this.tokens.push(this.tok(TT.OP,c,line,col)); continue; }
+      if (c === '=') { this.advance(); this.tokens.push(this.tok(TT.ASSIGN,'=',line,col)); continue; }
+      const PUNCT={'(':TT.LPAREN,')':TT.RPAREN,'[':TT.LBRACK,']':TT.RBRACK,',':TT.COMMA,'.':TT.DOT,':':TT.COLON};
+      if (PUNCT[c]) { this.advance(); this.tokens.push(this.tok(PUNCT[c],c,line,col)); continue; }
+      this._err(`Carattere inatteso: ${c}`,line,col); this.advance();
     }
-    this.tokens.push(this.tok(TT.EOF,null,this.line,this.col));
+    while (this.indentStack.length > 1) { this.indentStack.pop(); this.tokens.push(this.tok(TT.DEDENT, null, this.line, this.col)); }
+    this.tokens.push(this.tok(TT.EOF, null, this.line, this.col));
     return {tokens:this.tokens, errors:this.errors};
   }
 }
+
+class ParseError extends Error {
+  constructor(msg, line, col) { super(msg); this.line=line; this.col=col; }
+}
+
+class Parser {
+  constructor(tokens) { this.tokens=tokens; this.pos=0; this.errors=[]; this.nodeCount=0; }
+  peek(off=0) { const i=this.pos+off; return i<this.tokens.length?this.tokens[i]:this.tokens[this.tokens.length-1]; }
+  cur() { return this.peek(0); }
+  isEOF() { return this.cur().type===TT.EOF; }
+  check(type, val=null) { const t=this.cur(); return t.type===type && (val===null || t.value===val); }
+  checkKw(kw) { return this.check(TT.KEYWORD, kw); }
+  checkType() { return this.cur().type===TT.TYPE; }
+  advance() { const t=this.cur(); if (!this.isEOF()) this.pos++; return t; }
+  expect(type, val=null) {
+    if (!this.check(type, val)) { const t=this.cur(); throw new ParseError(`Atteso ${val||type}, trovato ${t.value||t.type}`, t.line, t.col); }
+    return this.advance();
+  }
+  expectKw(kw) { return this.expect(TT.KEYWORD, kw); }
+  tryEat(type, val=null) { if (this.check(type, val)) { this.advance(); return true; } return false; }
+  mk(n) { this.nodeCount++; return n; }
+  _err(msg, tok) { tok=tok||this.cur(); this.errors.push({ msg, line: tok.line||0, col: tok.col||0 }); }
+  sync() { while (!this.isEOF()) { const t=this.cur(); if (t.type===TT.NEWLINE || t.type===TT.DEDENT) return; if (t.type===TT.KEYWORD && ['if','elif','else','while','def','for'].includes(t.value)) return; this.advance(); } }
+  parse() {
+    const globals=[], funcs=[];
+    while (!this.isEOF()) {
+      while (this.tryEat(TT.NEWLINE)); if (this.isEOF()) break;
+      try {
+        if (this.checkKw('def')) { funcs.push(this.parseFuncDecl()); }
+        else if (this.check(TT.IDENT) && this.peek(1).type===TT.COLON) { globals.push(this.parseVarDecl()); }
+        else { this._err("Dichiarazione globale attesa (def o var:type)"); this.advance(); }
+      } catch(e) { if (e instanceof ParseError) { this.errors.push({msg:e.message, line:e.line, col:e.col}); this.sync(); } else throw e; }
+    }
+    return { globals, funcs, errors:this.errors, nodeCount:this.nodeCount };
+  }
+  parseSuite() {
+    if (this.check(TT.NEWLINE) || this.check(TT.INDENT)) {
+      while (this.tryEat(TT.NEWLINE));
+      return this.parseBlock();
+    }
+    const s = this.parseStmt();
+    return s ? [s] : [];
+  }
+  parseBlock() {
+    this.expect(TT.INDENT); const stmts=[];
+    while (!this.isEOF() && !this.check(TT.DEDENT)) {
+      while (this.tryEat(TT.NEWLINE)); if (this.check(TT.DEDENT)) break;
+      const s=this.parseStmt(); if (s) stmts.push(s);
+      while (this.tryEat(TT.NEWLINE));
+    }
+    this.expect(TT.DEDENT); return stmts;
+  }
+  parseStmt() {
+    const t=this.cur();
+    if (this.checkKw('if')) return this.parseIf();
+    if (this.checkKw('while')) return this.parseWhile();
+    if (this.checkKw('for')) return this.parseFor();
+    if (this.checkKw('return')) { const l=t.line; this.advance(); let val=null; if (!this.check(TT.NEWLINE) && !this.check(TT.DEDENT)) val=this.parseExpr(); return this.mk(N.Return(val, l)); }
+    if (this.checkKw('pass')) { this.advance(); return null; }
+    if (this.check(TT.IDENT) && this.peek(1).type===TT.COLON) return this.parseVarDecl();
+    const e=this.parseExpr();
+    if (this.tryEat(TT.ASSIGN)) { const val=this.parseExpr(); return this.mk(N.Assign(e, val, t.line)); }
+    return this.mk(N.ExprStmt(e, t.line));
+  }
+  parseFuncDecl() {
+    const line=this.cur().line; this.expectKw('def'); const name=this.expect(TT.IDENT).value;
+    this.expect(TT.LPAREN); const params=[];
+    if (!this.check(TT.RPAREN)) {
+      do { const pName=this.expect(TT.IDENT).value; this.expect(TT.COLON); const pType=this.advance().value; params.push({name:pName, type:pType}); } while (this.tryEat(TT.COMMA));
+    }
+    this.expect(TT.RPAREN); let ret='void'; if (this.tryEat(TT.ARROW)) ret=this.advance().value;
+    this.expect(TT.COLON); const body=this.parseSuite();
+    return this.mk(N.FuncDecl(name, params, ret, {stmts:body}, line));
+  }
+  parseVarDecl() {
+    const line=this.cur().line;
+    const name=this.expect(TT.IDENT).value; this.expect(TT.COLON); const type=this.advance().value;
+    let isArr=false; let arrSize=0;
+    if (this.tryEat(TT.LBRACK)) {
+        arrSize = this.expect(TT.INT_LIT).value;
+        this.expect(TT.RBRACK); isArr=true;
+    }
+    let init=null; if (this.tryEat(TT.ASSIGN)) init=this.parseExpr();
+    return this.mk(N.VarDecl(type, name, init, isArr, arrSize, null, line));
+  }
+  parseIf() {
+    const line=this.cur().line; this.expectKw('if'); const cond=this.parseExpr(); this.expect(TT.COLON);
+    const thenB=this.parseSuite(); let elseB=null;
+    if (this.checkKw('elif')) elseB = [this.parseIf()];
+    else if (this.checkKw('else')) { this.expectKw('else'); this.expect(TT.COLON); elseB=this.parseSuite(); }
+    return this.mk(N.If(cond, {stmts:thenB}, elseB?{stmts:elseB}:null, line));
+  }
+  parseWhile() {
+    const line=this.cur().line; this.expectKw('while'); const cond=this.parseExpr(); this.expect(TT.COLON);
+    const body=this.parseSuite(); return this.mk(N.While(cond, {stmts:body}, line));
+  }
+  parseFor() {
+    const line=this.cur().line; this.expectKw('for'); const id=this.expect(TT.IDENT).value; this.expectKw('in');
+    this.expect(TT.BUILTIN, 'range'); this.expect(TT.LPAREN);
+    const start=this.parseExpr(); this.expect(TT.COMMA); const end=this.parseExpr(); this.expect(TT.RPAREN);
+    this.expect(TT.COLON); const body=this.parseSuite();
+    const init=N.Assign(N.Ident(id, line), start, line);
+    const cond=N.BinaryOp('<', N.Ident(id, line), end);
+    const incr=N.Assign(N.Ident(id, line), N.BinaryOp('+', N.Ident(id, line), N.Literal('int', 1, '1')), line);
+    return this.mk(N.For(init, cond, incr, {stmts:body}, line));
+  }
+  parseExpr() { return this.parseLogical(); }
+  parseLogical() {
+    let e=this.parseCmp();
+    while (this.check(TT.AND) || this.check(TT.OR)) { const op=this.advance().value; const r=this.parseCmp(); e=this.mk(N.BinaryOp(op,e,r)); }
+    return e;
+  }
+  parseCmp() {
+    let e=this.parseBitwise();
+    while (this.check(TT.CMP)) { const op=this.advance().value; const r=this.parseBitwise(); e=this.mk(N.BinaryOp(op,e,r)); }
+    return e;
+  }
+  parseBitwise() {
+    let e=this.parseShift();
+    while (this.check(TT.OP) && ['&','|','^'].includes(this.cur().value)) { const op=this.advance().value; const r=this.parseShift(); e=this.mk(N.BinaryOp(op,e,r)); }
+    return e;
+  }
+  parseShift() {
+    let e=this.parseAdditive();
+    while (this.check(TT.OP) && ['<<','>>'].includes(this.cur().value)) { const op=this.advance().value; const r=this.parseAdditive(); e=this.mk(N.BinaryOp(op,e,r)); }
+    return e;
+  }
+  parseAdditive() {
+    let e=this.parseMultiplicative();
+    while (this.check(TT.OP) && (this.cur().value==='+'||this.cur().value==='-')) { const op=this.advance().value; const r=this.parseMultiplicative(); e=this.mk(N.BinaryOp(op,e,r)); }
+    return e;
+  }
+  parseMultiplicative() {
+    let e=this.parseUnary();
+    while (this.check(TT.OP) && (this.cur().value==='*'||this.cur().value==='/'||this.cur().value==='%')) { const op=this.advance().value; const r=this.parseUnary(); e=this.mk(N.BinaryOp(op,e,r)); }
+    return e;
+  }
+  parseUnary() {
+    if (this.check(TT.NOT) || (this.check(TT.OP) && this.cur().value==='-')) { const op=this.advance().value; const r=this.parseUnary(); return this.mk(N.UnaryOp(op,r)); }
+    return this.parsePrimary();
+  }
+  parsePrimary() {
+    const t=this.cur();
+    if (this.tryEat(TT.LPAREN)) { const e=this.parseExpr(); this.expect(TT.RPAREN); return e; }
+    if (this.check(TT.INT_LIT)) return this.mk(N.Literal('int', this.advance().value, t.value.toString()));
+    if (this.check(TT.HEX_LIT)) return this.mk(N.Literal('int', this.advance().value, t.raw));
+    if (this.check(TT.FLOAT_LIT)) return this.mk(N.Literal('float', this.advance().value, t.value.toString()));
+    if (this.check(TT.STR_LIT)) return this.mk(N.Literal('str', this.advance().value, '"'+t.value+'"'));
+    if (this.checkKw('True')) { this.advance(); return this.mk(N.Literal('bool', 1, 'True')); }
+    if (this.checkKw('False')) { this.advance(); return this.mk(N.Literal('bool', 0, 'False')); }
+    if (this.check(TT.IDENT)) {
+      const name=this.advance().value;
+      if (this.tryEat(TT.LPAREN)) {
+        const args=[]; if (!this.check(TT.RPAREN)) { do { args.push(this.parseExpr()); } while (this.tryEat(TT.COMMA)); }
+        this.expect(TT.RPAREN); return this.mk(N.Call(name, args, t.line));
+      }
+      return this.mk(N.Ident(name, t.line));
+    }
+    if (this.check(TT.BUILTIN)) {
+      const name=this.advance().value; this.expect(TT.LPAREN);
+      const args=[]; if (!this.check(TT.RPAREN)) { do { args.push(this.parseExpr()); } while (this.tryEat(TT.COMMA)); }
+      this.expect(TT.RPAREN); return this.mk(N.Call(name, args, t.line));
+    }
+    throw new ParseError(`Espressione non valida: ${t.value||t.type}`, t.line, t.col);
+  }
+}
+
+class BASICGenerator {
+  constructor(ast) { this.ast=ast; this.lines=[]; this.curLine=10; this.vars=new Map(); this.nextVarId=0; this.funcLines=new Map(); }
+  _genVar(name) { if (this.vars.has(name)) return this.vars.get(name); let bName=(name.length<=2&&!/^[0-9]/.test(name))?name.toUpperCase():'V'+(this.nextVarId++); if(['IF','TO','ON','OR','AS'].includes(bName)) bName='V'+(this.nextVarId++); this.vars.set(name,bName); return bName; }
+  generate() {
+    this.lines=[]; this.curLine=10; this.funcLines.clear(); this.ast.funcs.forEach(f=>{ if(f.name==='main') this.funcLines.set(f.name,1000); else this.funcLines.set(f.name,2000+([...this.funcLines.keys()].length*500)); });
+    this.ast.globals.forEach(g=>{ if(g.init) this.add(this._genVar(g.name)+' = '+this._expr(g.init)); });
+    if(this.funcLines.has('main')) this.add('GOSUB '+this.funcLines.get('main')); this.add('END');
+    this.ast.funcs.forEach(f=>{ this.curLine=this.funcLines.get(f.name); this.add('REM FUNCTION '+f.name); this._block(f.body); this.add('RETURN'); });
+    return this.lines.join('\n');
+  }
+  add(cmd) { this.lines.push(this.curLine+' '+cmd); this.curLine+=10; }
+  _block(block) { block.stmts.forEach(s=>this._stmt(s)); }
+  _stmt(s) {
+    if(!s) return;
+    if(s.k === 'ExprStmt') { this._stmt(s.expr); return; }
+    switch(s.k) {
+      case 'VarDecl': this.add(this._genVar(s.name)+' = '+(s.init?this._expr(s.init):'0')); break;
+      case 'Assign': this.add(this._expr(s.target)+' = '+this._expr(s.value)); break;
+      case 'If':
+        let ifLine=this.curLine; this.add('IF NOT ('+this._expr(s.cond)+') THEN GOTO '+(ifLine+1000)); this._block(s.then); let endThen=this.curLine;
+        if(s.else) { this.add('GOTO '+(endThen+1000)); let startElse=this.curLine; this.lines=this.lines.map(l=>l.startsWith(ifLine+' IF NOT')?l.replace((ifLine+1000).toString(),startElse):l); this._block(s.else); let endElse=this.curLine; this.lines=this.lines.map(l=>l.startsWith(endThen+' GOTO')?l.replace((endThen+1000).toString(),endElse):l); }
+        else { let endIf=this.curLine; this.lines=this.lines.map(l=>l.startsWith(ifLine+' IF NOT')?l.replace((ifLine+1000).toString(),endIf):l); }
+        break;
+      case 'While':
+        let startW=this.curLine; this.add('REM WHILE '+this._expr(s.cond)); let condLine=this.curLine-10; this._block(s.body); this.add('GOTO '+startW); let endW=this.curLine;
+        this.lines=this.lines.map(l=>l.startsWith(condLine+' REM WHILE')?l.replace('REM WHILE','IF NOT ('+this._expr(s.cond)+') THEN GOTO '+endW+' : REM'):l);
+        break;
+      case 'For':
+        this._stmt(s.init); let startF=this.curLine; this.add('IF NOT ('+this._expr(s.cond)+') THEN GOTO '+(startF+1000)); let loopCond=this.curLine-10; this._block(s.body); this._stmt(s.incr); this.add('GOTO '+startF); let endF=this.curLine;
+        this.lines=this.lines.map(l=>l.startsWith(loopCond+' IF NOT')?l.replace((startF+1000).toString(),endF):l);
+        break;
+      case 'Call':
+        if(s.name==='print'||s.name==='println') { this.add('PRINT '+s.args.map(a=>this._expr(a)).join(';')+(s.name==='println'?'':';')); }
+        else if(this.funcLines.has(s.name)) { this.add('GOSUB '+this.funcLines.get(s.name)); }
+        else if(s.name==='poke') { this.add('POKE '+this._expr(s.args[0])+','+this._expr(s.args[1])); }
+        else if(s.name==='wait') { this.add('FOR TI=1 TO '+this._expr(s.args[0])+':NEXT'); }
+        else if(s.name==='wait_frames') { this.add('FOR TI=1 TO '+this._expr(s.args[0])+':WAIT 53266,128:NEXT'); }
+        else if(s.name==='clear_screen') { this.add('PRINT CHR$(147)'); }
+        else if(s.name==='border_color') { this.add('POKE 53280,'+this._expr(s.args[0])); }
+        else if(s.name==='screen_color') { this.add('POKE 53281,'+this._expr(s.args[0])); }
+        else if(s.name==='print_at') { this.add('POKE 211,'+this._expr(s.args[0])+':POKE 214,'+this._expr(s.args[1])+':SYS 58732:PRINT '+this._expr(s.args[2])+';'); }
+        else { this.add('REM CALL '+s.name); }
+        break;
+      case 'Return': this.add('RETURN'); break;
+    }
+  }
+  _expr(e) {
+    if(!e) return '0';
+    if(e.k==='Literal') {
+      if(e.kind==='str') return '"'+e.value+'"';
+      if(e.kind==='bool') return e.value === 1 ? '-1' : '0';
+      return e.value;
+    }
+    if(e.k==='Ident') return this._genVar(e.name);
+    if(e.k==='Call') {
+      if(e.name==='peek') return 'PEEK('+this._expr(e.args[0])+')';
+      return '0';
+    }
+    if(e.k==='BinaryOp') {
+      let op=e.op;
+      if(op==='&&') op='AND';
+      if(op==='||') op='OR';
+      if(op==='&')  op='AND';
+      if(op==='|')  op='OR';
+      if(op==='!=') op='<>';
+      if(op==='%') return '('+this._expr(e.left)+'-INT('+this._expr(e.left)+'/'+this._expr(e.right)+')*'+this._expr(e.right)+')';
+      return '('+this._expr(e.left)+' '+op+' '+this._expr(e.right)+')';
+    }
+    if(e.k==='UnaryOp') { if(e.op==='!') return 'NOT ('+this._expr(e.operand)+')'; return e.op+'('+this._expr(e.operand)+')'; }
+    return '0';
+  }
+}
+
+EXAMPLES = { // OVERRIDE ORIGINAL
+  hello: `# ─── Hello World ─────────────────────────────
+def main():
+    clear_screen()
+    border_color(0)
+    screen_color(6)
+    print_at(10, 12, "HELLO, WORLD!")
+    print_at(10, 14, "C64PY V0.6")
+    print_at(0, 22, "BYTE=")   print(42)
+    print_at(0, 23, "SCORE=")  print(1234)
+    wait(60)
+`,
+  pong: `# ─── PONG ─────────────────────────────────────
+VIC_SPE: word = $D015
+JOY2: word = $DC00
+
+def main():
+    clear_screen()
+    print_at(17, 0, "PONG")
+    x: byte = 160
+    y: byte = 100
+    while True:
+        poke($D000, x)
+        poke($D001, y)
+        joy: byte = peek(JOY2)
+        if (joy & 1) == 0: y = y - 2
+        if (joy & 2) == 0: y = y + 2
+        wait_frames(1)
+`
+};
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  AST NODE FACTORY — Fase 2b
@@ -1910,440 +2404,9 @@ const N = {
   Ident:       (name, line)                     => ({k:'Ident',      name, line}),
   ArrayAccess: (name, idx, line)                => ({k:'ArrayAccess',name, idx, line}),
   Cast:        (type, expr, line)               => ({k:'Cast',       type, expr, line}),
+  ExprStmt:    (expr, line)                     => ({k:'ExprStmt',    expr, line}),
 };
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  PARSER — Fase 2b
-// ═══════════════════════════════════════════════════════════════════════════
-class ParseError extends Error {
-  constructor(msg, line, col) { super(msg); this.line=line; this.col=col; }
-}
-
-class Parser {
-  constructor(tokens) {
-    this.tokens  = tokens;
-    this.pos     = 0;
-    this.errors  = [];
-    this.nodeCount = 0;
-  }
-
-  // ── Helpers ──────────────────────────────────────────────────────────────
-  peek(off=0) {
-    const i = this.pos + off;
-    return i < this.tokens.length ? this.tokens[i] : this.tokens[this.tokens.length-1];
-  }
-  cur()  { return this.peek(0); }
-  isEOF(){ return this.cur().type === TT.EOF; }
-
-  check(type, val=null) {
-    const t = this.cur();
-    return t.type === type && (val === null || t.value === val);
-  }
-  checkKw(kw)  { return this.check(TT.KEYWORD, kw); }
-  checkType()  { return this.cur().type === TT.TYPE; }
-
-  advance() { const t=this.cur(); if (!this.isEOF()) this.pos++; return t; }
-
-  expect(type, val=null) {
-    if (!this.check(type, val)) {
-      const t = this.cur();
-      const what = val ? `'${val}'` : type;
-      throw new ParseError(`Atteso ${what}, trovato '${t.value ?? t.type}'`, t.line, t.col);
-    }
-    return this.advance();
-  }
-  expectKw(kw) { return this.expect(TT.KEYWORD, kw); }
-
-  tryEat(type, val=null) {
-    if (this.check(type, val)) { this.advance(); return true; }
-    return false;
-  }
-
-  mk(n) { this.nodeCount++; return n; }
-
-  _err(msg, tok) {
-    tok = tok || this.cur();
-    this.errors.push({ msg, line: tok.line||0, col: tok.col||0 });
-  }
-
-  // Sincronizzazione su errore: salta fino a ';' o '}'
-  sync() {
-    while (!this.isEOF()) {
-      const t = this.cur();
-      if (t.type === TT.SEMI)   { this.advance(); return; }
-      if (t.type === TT.RBRACE) { return; }
-      if (t.type === TT.KEYWORD && ['if','while','return','func','break','continue','do','for'].includes(t.value)) return;
-      if (t.type === TT.TYPE)   return;
-      this.advance();
-    }
-  }
-
-  // ═══════════════════════════════════════════════════════════════════════
-  //  DICHIARAZIONI GLOBALI
-  // ═══════════════════════════════════════════════════════════════════════
-  parse() {
-    const globals = [], funcs = [];
-    while (!this.isEOF()) {
-      try {
-        if (this.checkKw('inline')) {
-          this.advance(); // consuma 'inline'
-          const fd = this.parseFuncDecl(); fd.isInline = true; funcs.push(fd);
-        } else if (this.checkKw('raw')) {
-          this.advance(); // consuma 'raw'
-          this.expectKw('irq');
-          const fd = this.parseFuncDecl(); fd.isIrq = true; fd.isRawIrq = true; funcs.push(fd);
-        } else if (this.checkKw('irq')) {
-          this.advance(); // consuma 'irq'
-          const fd = this.parseFuncDecl(); fd.isIrq = true; funcs.push(fd);
-        } else if (this.checkKw('func')) {
-          funcs.push(this.parseFuncDecl());
-        } else if (this.checkType()) {
-          globals.push(this.parseVarDecl());
-        } else {
-          const t = this.cur();
-          this._err(`Token inatteso a livello globale: '${t.value ?? t.type}'`, t);
-          this.advance();
-        }
-      } catch(e) {
-        if (e instanceof ParseError) this._err(e.message, {line:e.line, col:e.col});
-        else this._err(String(e.message));
-        this.sync();
-      }
-    }
-    return this.mk(N.Program(globals, funcs));
-  }
-
-  // func [TYPE] IDENT '(' params ')' block
-  parseFuncDecl() {
-    const line = this.cur().line;
-    this.expectKw('func');
-    let ret = 'void';
-    if (this.checkType()) ret = this.advance().value;
-    const name = this.expect(TT.IDENT).value;
-    this.expect(TT.LPAREN);
-    const params = this.parseParams();
-    this.expect(TT.RPAREN);
-    const body = this.parseBlock();
-    return this.mk(N.FuncDecl(name, params, ret, body, line));
-  }
-
-  parseParams() {
-    const params = [];
-    if (this.check(TT.RPAREN)) return params;
-    do {
-      if (!this.checkType()) break;
-      const type = this.advance().value;
-      const name = this.expect(TT.IDENT).value;
-      let isArr = false;
-      if (this.check(TT.LBRACK)) { this.advance(); this.tryEat(TT.RBRACK); isArr = true; }
-      params.push({ type, name, isArr });
-    } while (this.tryEat(TT.COMMA));
-    return params;
-  }
-
-  // ═══════════════════════════════════════════════════════════════════════
-  //  BLOCCO E STATEMENT
-  // ═══════════════════════════════════════════════════════════════════════
-  parseBlock() {
-    this.expect(TT.LBRACE);
-    const stmts = [];
-    while (!this.isEOF() && !this.check(TT.RBRACE)) {
-      try {
-        const s = this.parseStmt();
-        if (s) stmts.push(s);
-      } catch(e) {
-        if (e instanceof ParseError) this._err(e.message, {line:e.line, col:e.col});
-        else this._err(String(e.message));
-        this.sync();
-      }
-    }
-    this.expect(TT.RBRACE);
-    return this.mk(N.Block(stmts));
-  }
-
-  parseStmt() {
-    const t = this.cur();
-
-    // VarDecl: TYPE ident ...
-    if (this.checkType()) return this.parseVarDecl();
-
-    if (t.type === TT.KEYWORD) {
-      switch(t.value) {
-        case 'if':       return this.parseIf();
-        case 'while':    return this.parseWhile();
-        case 'do':       return this.parseDoWhile();
-        case 'for':      return this.parseFor();
-        case 'return':   return this.parseReturn();
-        case 'break':    { const l=t.line; this.advance(); this.expect(TT.SEMI); return this.mk(N.Break(l)); }
-        case 'continue': { const l=t.line; this.advance(); this.expect(TT.SEMI); return this.mk(N.Continue(l)); }
-      }
-    }
-
-    // Punto e virgola solitario
-    if (this.check(TT.SEMI)) { this.advance(); return null; }
-
-    // Espressione (call, assignment, postfix)
-    const expr = this.parseExpr();
-    this.expect(TT.SEMI);
-    return expr;
-  }
-
-  // TYPE IDENT ('[' size ']')? ('=' (expr | '[' list ']'))? ';'
-  parseVarDecl() {
-    const line = this.cur().line;
-    const type = this.advance().value;
-    const name = this.expect(TT.IDENT).value;
-    let isArr=false, arrSize=null, arrInit=null, init=null;
-
-    if (this.check(TT.LBRACK)) {
-      isArr = true; this.advance();
-      if (!this.check(TT.RBRACK)) arrSize = this.parseExpr();
-      this.expect(TT.RBRACK);
-    }
-    if (this.check(TT.ASSIGN)) {
-      this.advance();
-      if (isArr && this.check(TT.LBRACK)) {
-        this.advance(); arrInit = [];
-        while (!this.isEOF() && !this.check(TT.RBRACK)) {
-          arrInit.push(this.parseExpr());
-          if (!this.tryEat(TT.COMMA)) break;
-        }
-        this.expect(TT.RBRACK);
-      } else {
-        init = this.parseExpr();
-      }
-    }
-    this.expect(TT.SEMI);
-    return this.mk(N.VarDecl(type, name, init, isArr, arrSize, arrInit, line));
-  }
-
-  // VarDecl senza ';' finale (per ciclo for)
-  parseVarDeclInline() {
-    const line = this.cur().line;
-    const type = this.advance().value;
-    const name = this.expect(TT.IDENT).value;
-    let init = null;
-    if (this.check(TT.ASSIGN)) { this.advance(); init = this.parseExpr(); }
-    return this.mk(N.VarDecl(type, name, init, false, null, null, line));
-  }
-
-  parseIf() {
-    const line = this.cur().line;
-    this.expectKw('if');
-    this.expect(TT.LPAREN);
-    const cond = this.parseExpr();
-    this.expect(TT.RPAREN);
-    const then_ = this.parseBlock();
-    let else_ = null;
-    if (this.checkKw('else')) {
-      this.advance();
-      else_ = this.checkKw('if') ? this.parseIf() : this.parseBlock();
-    }
-    return this.mk(N.If(cond, then_, else_, line));
-  }
-
-  parseWhile() {
-    const line = this.cur().line;
-    this.expectKw('while');
-    this.expect(TT.LPAREN);
-    const cond = this.parseExpr();
-    this.expect(TT.RPAREN);
-    const body = this.parseBlock();
-    return this.mk(N.While(cond, body, line));
-  }
-
-  parseDoWhile() {
-    const line = this.cur().line;
-    this.expectKw('do');
-    const body = this.parseBlock();
-    this.expectKw('while');
-    this.expect(TT.LPAREN);
-    const cond = this.parseExpr();
-    this.expect(TT.RPAREN);
-    this.expect(TT.SEMI);
-    return this.mk(N.DoWhile(body, cond, line));
-  }
-
-  parseFor() {
-    const line = this.cur().line;
-    this.expectKw('for');
-    this.expect(TT.LPAREN);
-    let init = null;
-    if (!this.check(TT.SEMI)) {
-      init = this.checkType() ? this.parseVarDeclInline() : this.parseExpr();
-    }
-    this.expect(TT.SEMI);
-    let cond = null;
-    if (!this.check(TT.SEMI)) cond = this.parseExpr();
-    this.expect(TT.SEMI);
-    let incr = null;
-    if (!this.check(TT.RPAREN)) incr = this.parseExpr();
-    this.expect(TT.RPAREN);
-    const body = this.parseBlock();
-    return this.mk(N.For(init, cond, incr, body, line));
-  }
-
-  parseReturn() {
-    const line = this.cur().line;
-    this.expectKw('return');
-    let value = null;
-    if (!this.check(TT.SEMI)) value = this.parseExpr();
-    this.expect(TT.SEMI);
-    return this.mk(N.Return(value, line));
-  }
-
-  // ═══════════════════════════════════════════════════════════════════════
-  //  ESPRESSIONI  (precedenza crescente verso il basso)
-  // ═══════════════════════════════════════════════════════════════════════
-  parseExpr()   { return this.parseAssign(); }
-
-  // Assegnamento (associativo a destra): lvalue '=' expr
-  parseAssign() {
-    const left = this.parseOr();
-    if (this.check(TT.ASSIGN)) {
-      if (left.k !== 'Ident' && left.k !== 'ArrayAccess') {
-        this._err('Lvalue non valido nell\'assegnamento');
-      }
-      const line = this.cur().line;
-      this.advance();
-      return this.mk(N.Assign(left, this.parseAssign(), line));
-    }
-    return left;
-  }
-
-  parseOr() {
-    let l = this.parseAnd();
-    while (this.check(TT.OR)) { const op=this.advance().value; l=this.mk(N.BinaryOp(op,l,this.parseAnd())); }
-    return l;
-  }
-  parseAnd() {
-    let l = this.parseCmp();
-    while (this.check(TT.AND)) { const op=this.advance().value; l=this.mk(N.BinaryOp(op,l,this.parseCmp())); }
-    return l;
-  }
-  parseCmp() {
-    let l = this.parseBitOr();
-    while (this.check(TT.CMP) || (this.check(TT.OP) && (this.cur().value==='<'||this.cur().value==='>'))) {
-      const op=this.advance().value; l=this.mk(N.BinaryOp(op,l,this.parseBitOr()));
-    }
-    return l;
-  }
-  parseBitOr() {
-    let l = this.parseBitXor();
-    while (this.check(TT.OP,'|')) { this.advance(); l=this.mk(N.BinaryOp('|',l,this.parseBitXor())); }
-    return l;
-  }
-  parseBitXor() {
-    let l = this.parseBitAnd();
-    while (this.check(TT.OP,'^')) { this.advance(); l=this.mk(N.BinaryOp('^',l,this.parseBitAnd())); }
-    return l;
-  }
-  parseBitAnd() {
-    let l = this.parseShift();
-    while (this.check(TT.OP,'&')) { this.advance(); l=this.mk(N.BinaryOp('&',l,this.parseShift())); }
-    return l;
-  }
-  parseShift() {
-    let l = this.parseAdd();
-    while (this.cur().type===TT.LSHIFT || this.cur().type===TT.RSHIFT) {
-      const op=this.advance().value; l=this.mk(N.BinaryOp(op,l,this.parseAdd()));
-    }
-    return l;
-  }
-  parseAdd() {
-    let l = this.parseMul();
-    while (this.check(TT.OP,'+') || this.check(TT.OP,'-')) {
-      const op=this.advance().value; l=this.mk(N.BinaryOp(op,l,this.parseMul()));
-    }
-    return l;
-  }
-  parseMul() {
-    let l = this.parseUnary();
-    while (this.check(TT.OP,'*') || this.check(TT.OP,'/') || this.check(TT.OP,'%')) {
-      const op=this.advance().value; l=this.mk(N.BinaryOp(op,l,this.parseUnary()));
-    }
-    return l;
-  }
-
-  parseUnary() {
-    if (this.check(TT.OP,'!') || this.check(TT.OP,'~') || this.check(TT.OP,'-')) {
-      const op=this.advance().value; return this.mk(N.UnaryOp(op, this.parseUnary()));
-    }
-    if (this.cur().type===TT.INC || this.cur().type===TT.DEC) {
-      const op=this.advance().value; return this.mk(N.UnaryOp('pre'+op, this.parseUnary()));
-    }
-    return this.parsePostfix();
-  }
-
-  parsePostfix() {
-    let expr = this.parsePrimary();
-    if (this.cur().type===TT.INC || this.cur().type===TT.DEC) {
-      const op=this.advance().value; expr=this.mk(N.PostfixOp(op,expr));
-    }
-    return expr;
-  }
-
-  parsePrimary() {
-    const t = this.cur();
-
-    // Letterali
-    if (t.type===TT.INT_LIT)   { this.advance(); return this.mk(N.Literal('int',   t.value, t.raw)); }
-    if (t.type===TT.FLOAT_LIT) { this.advance(); return this.mk(N.Literal('float', t.value, t.raw)); }
-    if (t.type===TT.HEX_LIT)   { this.advance(); return this.mk(N.Literal('hex',   t.value, t.raw)); }
-    if (t.type===TT.BIN_LIT)   { this.advance(); return this.mk(N.Literal('bin',   t.value, t.raw)); }
-    if (t.type===TT.STR_LIT)   { this.advance(); return this.mk(N.Literal('str',   t.value, t.raw ?? `"${t.value}"`)); }
-
-    // Cast: TYPE '(' expr ')'   — es. float(n)  int(x)
-    if (t.type===TT.TYPE && this.peek(1).type===TT.LPAREN) {
-      const castType = this.advance().value;
-      this.advance(); // '('
-      const inner = this.parseExpr();
-      this.expect(TT.RPAREN);
-      return this.mk(N.Cast(castType, inner, t.line));
-    }
-
-    // '(' expr ')'
-    if (t.type===TT.LPAREN) {
-      this.advance();
-      const expr = this.parseExpr();
-      this.expect(TT.RPAREN);
-      return expr;
-    }
-
-    // IDENT o BUILTIN: call, array access, o semplice ident
-    if (t.type===TT.IDENT || t.type===TT.BUILTIN) {
-      const name = this.advance().value;
-
-      // Chiamata: name '(' args ')'
-      if (this.check(TT.LPAREN)) {
-        const line = t.line;
-        this.advance();
-        const args = [];
-        if (!this.check(TT.RPAREN)) {
-          do { args.push(this.parseExpr()); } while (this.tryEat(TT.COMMA) && !this.check(TT.RPAREN));
-        }
-        this.expect(TT.RPAREN);
-        return this.mk(N.Call(name, args, line));
-      }
-
-      // Array access: name '[' expr ']'
-      if (this.check(TT.LBRACK)) {
-        const line = t.line;
-        this.advance();
-        const idx = this.parseExpr();
-        this.expect(TT.RBRACK);
-        return this.mk(N.ArrayAccess(name, idx, line));
-      }
-
-      return this.mk(N.Ident(name, t.line));
-    }
-
-    throw new ParseError(
-      `Token inatteso in espressione: '${t.value ?? t.type}'`,
-      t.line, t.col
-    );
-  }
-}
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  ANALISI AST — Fase 2b
@@ -3637,7 +3700,6 @@ class PRGBuilder {
     return prg;
   }
 }
-
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  CODE GENERATOR — Fase 3 Passo 2
@@ -6348,7 +6410,7 @@ function renderListing(builder, planner) {
   const TB = t => { const c=typeColor(t); return `<span style="color:${c};font-size:9px">${t}</span>`; };
 
   // ── Header ───────────────────────────────────────────────────────────
-  sep(`C64C v0.6 — PRG Listing   Fase3·Passo2+CF   (${builder.prgSize()} byte)`);
+  sep(`C64PY v1.0 — PRG Listing   Fase3·Passo2+CF   (${builder.prgSize()} byte)`);
   line(`<span class="asm-comment">; Load $${hex4(PRG_LOAD_ADDR)}  Code $${hex4(PRG_CODE_OFFSET)}  $01: ${builder.usesFloat?'$37 (BASIC ROM)':'$36 (BASIC→RAM)'}</span>`);
   blank();
 
@@ -6459,7 +6521,7 @@ function renderMemoryMap(planner, prg, ast) {
   };
 
   // Header
-  sep(`C64C — Layout Memoria Preliminare (Fase 2b)`);
+  sep(`C64PY — Layout Memoria Preliminare (Fase 2b)`);
   line(`<span class="asm-comment">; MOS 6510 · Load ${h16(PRG_LOAD_ADDR)} · Codice @ ${h16(PRG_CODE_OFFSET)}</span>`);
   line(`<span class="asm-comment">; $01 Config: ${prg.memDesc}</span>`);
   blank();
@@ -6554,7 +6616,6 @@ function renderMemoryMap(planner, prg, ast) {
   line(`<span class="asm-comment">; ════ Dimensione PRG stimata (Fase 3 determinerà il valore esatto) ════</span>`);
   line(`<span class="asm-comment">; Header+stub: 14B  |  Startup: ~6B  |  Codice: TBD  |  BSS: ${planner.bssSize}B</span>`);
 }
-
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  RENDER BYTES — Tab BYTES  hex dump PRG completo (Fase 3 Passo 2)
@@ -6938,6 +6999,7 @@ function switchTab(name, el) {
   document.getElementById('output-area').style.display = name==='log'   ? 'block' : 'none';
   document.getElementById('ast-area').style.display    = name==='ast'   ? 'block' : 'none';
   document.getElementById('asm-area').style.display    = name==='asm'   ? 'block' : 'none';
+  document.getElementById('basic-area').style.display  = name==='basic' ? 'block' : 'none';
   document.getElementById('info-area').style.display   = name==='info'  ? 'block' : 'none';
   document.getElementById('bytes-area').style.display  = name==='bytes' ? 'block' : 'none';
   const fa = document.getElementById('files-area');
@@ -6984,7 +7046,7 @@ function doCompile() {
   _lastBuilder = null;
 
   const src = cm.getValue();
-  logSection('C64C Compiler v0.6 — Fase 3 · Passo 2 — Code Gen');
+  logSection('C64PY Compiler v0.6 — Fase 3 · Passo 2 — Code Gen');
   log(`[SRC]  ${src.split('\n').length} linee · ${src.length} caratteri`, 'info');
   log(`[TGT]  MOS 6510 · Load $0801 · PRG`, 'info');
   log('', 'info');
@@ -7069,6 +7131,10 @@ function doCompile() {
   let builder;
   try {
     builder = new PRGBuilder(ast, planner, usesFloat, sem.global).build();
+    try {
+      const basicGen = new BASICGenerator(ast);
+      document.getElementById('basic-code').textContent = basicGen.generate();
+    } catch(e) { console.error("BASIC Gen error:", e); }
     const buildMs = (performance.now()-t4).toFixed(2);
     _lastBuilder  = builder;
     _lastFilename = (document.getElementById('filename-display').textContent || 'out').replace(/\.c64$/,'') + '.prg';
@@ -7192,110 +7258,7 @@ function doExport() {
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  EMULATOR INTEGRATION
-// ═══════════════════════════════════════════════════════════════════════════
-
-let _emuReady    = false;  // iframe DOM loaded
-let _emuWaiting  = null;   // pending {bytes, filename} to send once ready
-
-function openEmulator() {
-  // 1. Compile if needed
-  if (!_lastBuilder || !_lastBuilder.built) {
-    doCompile();
-    if (!_lastBuilder || !_lastBuilder.built) {
-      log('', 'info');
-      log('[EMU] Compilazione fallita — impossibile avviare l\'emulatore.', 'error');
-      setStatus('EMU: COMPILA PRIMA', 'err');
-      return;
-    }
-  }
-
-  const prg = _lastBuilder.toPRG();
-  const fname = _lastFilename;
-
-  // 2. Log
-  const logTab = document.querySelector('.panel-tab');
-  switchTab('log', logTab);
-  logSection('Emulatore C64 — ' + fname);
-  log('  Dimensione PRG : ' + prg.length + ' byte', 'ok');
-  log('  Avvio emulatore in corso...', 'info');
-
-  // 3. Open modal
-  const overlay = document.getElementById('emu-overlay');
-  const iframe  = document.getElementById('emu-iframe');
-  const status  = document.getElementById('emu-status');
-
-  _emuReady   = false;
-  _emuWaiting = { bytes: Array.from(prg), filename: fname };
-
-  overlay.classList.add('visible');
-  status.textContent = 'Caricamento WASM...';
-
-  // 4. Set iframe src (adjust path to where C64.html lives)
-  iframe.onload = function() {
-    _emuReady = true;
-    status.textContent = 'Avvio emulatore...';
-    _sendPRGToEmulator();
-  };
-  // Only (re)load if src not already set or we need a fresh instance
-  const emuUrl = (typeof EMU_URL !== 'undefined') ? EMU_URL : 'c64/c64.html';
-  if (iframe.src !== location.origin + '/' + emuUrl &&
-      iframe.src !== location.href.replace(/\/[^\/]*$/, '/') + emuUrl) {
-    iframe.src = emuUrl;
-  } else {
-    // Already loaded — just send directly
-    if (_emuReady) _sendPRGToEmulator();
-  }
-
-  // 5. Listen for ack from iframe
-  window.addEventListener('message', _onEmuMessage);
-}
-
-function _sendPRGToEmulator() {
-  if (!_emuWaiting) return;
-  const iframe = document.getElementById('emu-iframe');
-  const status = document.getElementById('emu-status');
-  try {
-    iframe.contentWindow.postMessage({
-      type    : 'loadPRG',
-      bytes   : _emuWaiting.bytes,
-      filename: _emuWaiting.filename
-    }, '*');
-    status.textContent = 'Caricamento PRG...';
-    _emuWaiting = null;
-  } catch(e) {
-    status.textContent = 'Errore invio PRG';
-    log('[EMU] Errore postMessage: ' + e.message, 'error');
-  }
-}
-
-function _onEmuMessage(evt) {
-  if (!evt.data || evt.data.type !== 'prgAck') return;
-  const status = document.getElementById('emu-status');
-  if (evt.data.status === 'loaded') {
-    status.textContent = '▶ ' + (evt.data.filename || 'PRG') + ' in esecuzione';
-    log('[EMU] PRG caricato: ' + (evt.data.filename || ''), 'ok');
-    setStatus('EMU · ' + (evt.data.filename || 'PRG'), 'ok');
-  } else {
-    status.textContent = 'In coda...';
-  }
-}
-
-function closeEmulator() {
-  const overlay = document.getElementById('emu-overlay');
-  const iframe  = document.getElementById('emu-iframe');
-  overlay.classList.remove('visible');
-  window.removeEventListener('message', _onEmuMessage);
-  _emuReady   = false;
-  _emuWaiting = null;
-  // Unload iframe to stop WASM/audio
-  setTimeout(() => { iframe.src = ''; }, 100);
-}
-
-// Close on overlay click (outside the box)
-document.getElementById('emu-overlay').addEventListener('click', function(e) {
-  if (e.target === this) closeEmulator();
-});
+//  EXAMPLES LOADER
 // ═══════════════════════════════════════════════════════════════════════════
 function loadExample(name) {
   if (!EXAMPLES[name]) return;
@@ -7376,8 +7339,8 @@ function renderInfo() {
   </div>
   <div class="info-section">
     <div class="info-title">Nodi AST (Fase 2b)</div>
-    <div class="info-row"><span class="info-key" style="color:var(--c64-yellow)">FuncDecl</span><span class="info-val">func name(params) body</span></div>
-    <div class="info-row"><span class="info-key" style="color:var(--c64-cyan)">VarDecl</span><span class="info-val">type name [= init]</span></div>
+    <div class="info-row"><span class="info-key" style="color:var(--c64-yellow)">FuncDecl</span><span class="info-val">def name(params): body</span></div>
+    <div class="info-row"><span class="info-key" style="color:var(--c64-cyan)">VarDecl</span><span class="info-val">name: type = init</span></div>
     <div class="info-row"><span class="info-key" style="color:var(--c64-bright)">Assign</span><span class="info-val">lvalue = expr</span></div>
     <div class="info-row"><span class="info-key" style="color:var(--tok-keyword)">If</span><span class="info-val">if (cond) then [else]</span></div>
     <div class="info-row"><span class="info-key" style="color:var(--tok-keyword)">While</span><span class="info-val">while (cond) body</span></div>
@@ -7420,7 +7383,7 @@ function renderInfo() {
 
 // ─── Init ─────────────────────────────────────────────────────────────────
 log('╔═══════════════════════════════════════════════╗','info');
-log('║         C64C IDE — MOS 6510 Compiler          ║','ok');
+log('║         C64PY IDE — MOS 6510 Compiler          ║','ok');
 log('║  Lexer · Parser · Semantica · MemPlanner      ║','info');
 log('║  CodeGenerator · PRGBuilder · File I/O        ║','info');
 log('╚═══════════════════════════════════════════════╝','info');
@@ -7436,6 +7399,8 @@ log('[OK]  File I/O     attivo.','ok');
 log('','info');
 log('Premi F5 — LOG = report  |  AST = albero  |  ASM = listing  |  BYTES = hex  |  FILES = locale.','info');
 setStatus('PRONTO','ok');
+
+
 </script>
 </body>
 </html>

@@ -1,8 +1,8 @@
-# C64C — MOS 6510 Cross Compiler
+# C64PY — MOS 6510 Cross Compiler
 
 > Scrivi codice C-like nel browser. Compila in codice macchina reale per il **Commodore 64**.
 
-C64C è un IDE e compilatore interamente browser-based che traduce un linguaggio di alto livello ispirato al C in file **.PRG** eseguibili sul Commodore 64 (o in emulatori come VICE). Nessuna installazione, nessuna dipendenza esterna: un singolo file HTML.
+C64PY è un IDE e compilatore interamente browser-based che traduce un linguaggio di alto livello ispirato al C in file **.PRG** eseguibili sul Commodore 64 (o in emulatori come VICE). Nessuna installazione, nessuna dipendenza esterna: un singolo file HTML.
 
 ---
 
@@ -26,10 +26,10 @@ Sono disponibili due versioni del file:
 
 | File | Preview emulatore | Come aprirlo |
 |------|:-----------------:|-------------|
-| `c64c.html` | ✗ | Doppio clic sul file — funziona direttamente dal filesystem |
-| `c64c_preview.html` | ✓ | Richiede un server HTTP (anche locale) |
+| `c64py.html` | ✗ | Doppio clic sul file — funziona direttamente dal filesystem |
+| `c64py_preview.html` | ✓ | Richiede un server HTTP (anche locale) |
 
-### `c64c.html` — versione standalone
+### `c64py.html` — versione standalone
 
 Nessuna build richiesta. Basta aprire il file direttamente nel browser:
 
@@ -38,10 +38,10 @@ Nessuna build richiesta. Basta aprire il file direttamente nel browser:
 git clone https://github.com/tuo-utente/c64c.git
 
 # Apri direttamente nel browser (doppio clic, o da terminale)
-open c64c.html
+open c64py.html
 ```
 
-### `c64c_preview.html` — versione con emulatore integrato
+### `c64py_preview.html` — versione con emulatore integrato
 
 Questa versione include la preview del programma compilato in un emulatore C64 embedded. Poiché carica il modulo **WASM** dell'emulatore, il browser richiede che il file venga servito tramite HTTP (i browser bloccano il caricamento di WASM da `file://` per ragioni di sicurezza).
 
@@ -61,7 +61,7 @@ php -S localhost:8080
 Poi apri nel browser:
 
 ```
-http://localhost:8080/c64c_preview.html
+http://localhost:8080/c64py_preview.html
 ```
 
 ---
@@ -83,7 +83,7 @@ irq func mio_raster() {
     next_raster(150);
 }
 
-func main() {
+def main():
     clear_screen();
     set_irq_vector(mio_raster);
     enable_raster_irq(100);
@@ -101,9 +101,9 @@ func main() {
 ## Struttura del repository
 
 ```
-c64c.html          — IDE + compilatore (file unico, self-contained, nessun server richiesto)
-c64c_preview.html  — IDE + compilatore + emulatore C64 integrato (richiede server HTTP)
-c64c-docs.html     — Documentazione completa del linguaggio
+c64py.html          — IDE + compilatore (file unico, self-contained, nessun server richiesto)
+c64py_preview.html  — IDE + compilatore + emulatore C64 integrato (richiede server HTTP)
+c64py-docs.html     — Documentazione completa del linguaggio
 README.md          — Questo file
 ```
 
@@ -111,7 +111,7 @@ README.md          — Questo file
 
 ## Documentazione
 
-La documentazione completa è in `c64c-docs.html` e copre:
+La documentazione completa è in `c64py-docs.html` e copre:
 
 - Tutti i tipi di dato e il loro layout in memoria
 - Operatori, precedenza, casting
@@ -123,14 +123,14 @@ La documentazione completa è in `c64c-docs.html` e copre:
 - Modello di memoria e mappa degli indirizzi hardware
 - Shortcuts IDE e gestione file
 
-Aprire `c64c-docs.html` direttamente nel browser, oppure usare il pulsante **? HELP** nell'IDE.
+Aprire `c64py-docs.html` direttamente nel browser, oppure usare il pulsante **? HELP** nell'IDE.
 
 ---
 
 ## Requisiti
 
 - Browser moderno con JavaScript abilitato (Chrome, Firefox, Safari, Edge)
-- Per la versione con emulatore (`c64c_preview.html`): qualsiasi server HTTP locale (vedi sopra)
+- Per la versione con emulatore (`c64py_preview.html`): qualsiasi server HTTP locale (vedi sopra)
 - Per eseguire i PRG generati: [VICE emulator](https://vice-emu.sourceforge.io/) oppure hardware reale con sd2iec / 1541
 
 ---

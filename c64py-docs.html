@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>C64C — Documentazione del Linguaggio</title>
+<title>C64PY — Documentazione del Linguaggio</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Exo+2:wght@300;400;600;700&display=swap');
 :root {
@@ -15,7 +15,7 @@
   --tok-hex:#FF7777;--tok-float:#FF99CC;--tok-variable:#C0C0FF;
   --font-mono:'Share Tech Mono','Courier New',monospace;
   --font-ui:'Exo 2','Segoe UI',sans-serif;
-  --sidebar-w:262px;
+  --sidebar-w:262px};
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 html{scroll-behavior:smooth}
@@ -98,14 +98,14 @@ td.ok-c{color:var(--c64-green)}td.warn-c{color:var(--c64-yellow)}
 <body>
 <div id="topbar">
   <span id="topbar-badge">CBM</span>
-  <div><div id="topbar-title">C64C IDE</div><div id="topbar-sub">DOCUMENTAZIONE DEL LINGUAGGIO</div></div>
+  <div><div id="topbar-title">C64PY IDE</div><div id="topbar-sub">DOCUMENTAZIONE DEL LINGUAGGIO</div></div>
   <a id="topbar-back" href="#">← TORNA ALL'IDE</a>
 </div>
 <div id="layout">
 <nav id="sidebar">
   <div class="nav-group">
     <div class="nav-group-title">Introduzione</div>
-    <a class="nav-link" href="#intro">Cos'è C64C</a>
+    <a class="nav-link" href="#intro">Cos'è C64PY</a>
     <a class="nav-link" href="#quickstart">Quick Start</a>
     <a class="nav-link" href="#pipeline">Pipeline compilazione</a>
   </div>
@@ -223,12 +223,12 @@ td.ok-c{color:var(--c64-green)}td.warn-c{color:var(--c64-yellow)}
 </nav>
 
 <main id="content">
-<h1>C64C — Linguaggio di Programmazione</h1>
-<p class="lead">Documentazione completa del compilatore C64C: sintassi, tipi, builtin, IRQ, modello di memoria e IDE.</p>
+<h1>C64PY — Linguaggio di Programmazione</h1>
+<p class="lead">Documentazione completa del compilatore C64PY: sintassi, tipi, builtin, IRQ, modello di memoria e IDE.</p>
 
 <section id="intro">
-<h2>Cos'è C64C</h2>
-<p>C64C è un linguaggio di alto livello ispirato al C, progettato per compilare direttamente in codice macchina <strong>MOS 6510</strong> per il <strong>Commodore 64</strong>. Il compilatore produce file <strong>.PRG</strong> eseguibili con <code>LOAD "file",8,1</code> + <code>RUN</code>, oppure caricabili in emulatori come VICE.</p>
+<h2>Cos'è C64PY</h2>
+<p>C64PY è un linguaggio di alto livello ispirato al C, progettato per compilare direttamente in codice macchina <strong>MOS 6510</strong> per il <strong>Commodore 64</strong>. Il compilatore produce file <strong>.PRG</strong> eseguibili con <code>LOAD "file",8,1</code> + <code>RUN</code>, oppure caricabili in emulatori come VICE.</p>
 <div class="callout callout-ok">
   <div class="callout-tag">◈ Caratteristiche principali</div>
   Sintassi C-like · Tipi statici · Generazione PRG nativa · Accesso diretto all'hardware · Float via KERNAL ROM · Raster IRQ · SID · Sprite VIC-II · IDE integrato con syntax highlighting, AST viewer, hex dump
@@ -239,7 +239,7 @@ td.ok-c{color:var(--c64-green)}td.warn-c{color:var(--c64-yellow)}
 <section id="quickstart">
 <h2>Quick Start</h2>
 <p>Il programma minimo richiede la funzione <code>main()</code>:</p>
-<pre><span class="cm">// Il mio primo programma C64C</span>
+<pre><span class="cm">// Il mio primo programma C64PY</span>
 <span class="kw">func</span> <span class="vr">main</span>() {
     <span class="bi">clear_screen</span>();
     <span class="bi">border_color</span>(<span class="nm">0</span>);
@@ -710,7 +710,7 @@ td.ok-c{color:var(--c64-green)}td.warn-c{color:var(--c64-yellow)}
 <h2>print_at</h2>
 <div class="sig-box"><span class="bi">print_at</span>(<span class="ty">byte</span> <span class="vr">col</span>, <span class="ty">byte</span> <span class="vr">riga</span>, <span class="vr">arg1</span> [, <span class="vr">arg2</span>, …])</div>
 <p>Posiziona il cursore via KERNAL PLOT (<code class="addr">$FFF0</code>) e stampa tutti gli argomenti successivi con la stessa logica polimorfa di <code>print</code>. Col: 0–39, Riga: 0–24.</p>
-<pre><span class="bi">print_at</span>(<span class="nm">0</span>,  <span class="nm">0</span>,  <span class="st">"C64C IDE"</span>);
+<pre><span class="bi">print_at</span>(<span class="nm">0</span>,  <span class="nm">0</span>,  <span class="st">"C64PY IDE"</span>);
 <span class="bi">print_at</span>(<span class="nm">15</span>, <span class="nm">12</span>, <span class="st">"READY"</span>);
 
 <span class="cm">// Misto stringa + numerici in un'unica chiamata</span>
@@ -1000,7 +1000,7 @@ td.ok-c{color:var(--c64-green)}td.warn-c{color:var(--c64-yellow)}
 <h2>Matematica Fixed-Point — Ricette 6510</h2>
 <p>Tutte le operazioni sotto funzionano con aritmetica intera pura — nessuna BASIC ROM richiesta. Il tipo <code>q8_8</code> è usato negli esempi (scala 256); per gli altri tipi adattare gli shift di conseguenza.</p>
 <div class="tbl-wrap"><table>
-<thead><tr><th>Operazione</th><th>Codice C64C</th><th>Costo</th></tr></thead>
+<thead><tr><th>Operazione</th><th>Codice C64PY</th><th>Costo</th></tr></thead>
 <tbody>
 <tr><td>Intero → Q8.8</td><td class="mono"><span class="ty">q8_8</span> <span class="vr">v</span> = <span class="ty">word</span>(<span class="vr">n</span>) <span class="op">&lt;&lt;</span> <span class="nm">8</span></td><td>1 shift</td></tr>
 <tr><td>Q8.8 → parte intera</td><td class="mono"><span class="ty">byte</span> <span class="vr">i</span> = <span class="ty">byte</span>(<span class="vr">v</span> <span class="op">&gt;&gt;</span> <span class="nm">8</span>)</td><td>1 shift</td></tr>
@@ -1198,7 +1198,7 @@ td.ok-c{color:var(--c64-green)}td.warn-c{color:var(--c64-yellow)}
 
 <hr class="section-sep">
 <section id="kernal-addrs">
-<h2>Indirizzi KERNAL usati da C64C</h2>
+<h2>Indirizzi KERNAL usati da C64PY</h2>
 <div class="tbl-wrap"><table>
 <thead><tr><th>Indirizzo</th><th>Nome</th><th>Descrizione</th></tr></thead>
 <tbody>
@@ -1267,7 +1267,7 @@ td.ok-c{color:var(--c64-green)}td.warn-c{color:var(--c64-yellow)}
 <tr><td>Float</td><td>~9 cifre decimali. Richiede BASIC ROM: $A000–$BFFF non disponibile per il programma.</td></tr>
 <tr><td>Fixed-Point (Q/SQ)</td><td>Nessuna BASIC ROM richiesta. Scala manuale con <code>&lt;&lt;</code>/<code>&gt;&gt;</code>. Prodotto di due Q8.8 può overflow 16-bit — usare <code>word</code> come tipo intermedio. I tipi q16_x e q16_16 occupano 3–4 byte: verificare la disponibilità di ZP.</td></tr>
 <tr><td>plot / draw_line</td><td>Usano ZP utility ($FB–$FE) come scratch. Non annidare in handler raw irq. Y register usato come indice di colonna (max 255 caratteri per riga — ben oltre i 40 del C64).</td></tr>
-<tr><td>fill_box / draw_box</td><td>Usano PHA/PLA per salvare valori intermedi. Non chiamare dentro handler IRQ (stack usato dal KERNAL). Per box grandi: considerare un ciclo esplicito in C64C.</td></tr>
+<tr><td>fill_box / draw_box</td><td>Usano PHA/PLA per salvare valori intermedi. Non chiamare dentro handler IRQ (stack usato dal KERNAL). Per box grandi: considerare un ciclo esplicito in C64PY.</td></tr>
 <tr><td>input()</td><td>GETIN loop bloccante. Non usare dentro IRQ handler. Dipende dalla tastiera CIA1 ($DC01): non funziona se il KERNAL è disabilitato.</td></tr>
 <tr><td>IRQ handler</td><td>Non usare <code>wait()</code> dentro handler. Tenere gli handler brevi.</td></tr>
 <tr><td>Entry point</td><td><code>func main()</code> obbligatorio. Funzioni dichiarate top-down.</td></tr>
@@ -1518,7 +1518,7 @@ td.ok-c{color:var(--c64-green)}td.warn-c{color:var(--c64-yellow)}
 </div>
 </section>
 <div style="margin-top:60px;border-top:1px solid rgba(123,123,255,.2);padding-top:20px;font-family:var(--font-mono);font-size:10px;color:rgba(123,123,255,.4);letter-spacing:1px;text-align:center">
-  C64C IDE · MOS 6510 COMPILER · DOCUMENTAZIONE COMPLETA<br>
+  C64PY IDE · MOS 6510 COMPILER · DOCUMENTAZIONE COMPLETA<br>
   Copyright © Leonardo Boselli — Rilasciato sotto licenza
   <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank"
      style="color:rgba(123,123,255,.6);text-decoration:none;letter-spacing:1px">GNU GPL v3</a>
@@ -1543,7 +1543,7 @@ sections.forEach(s => io.observe(s));
 document.getElementById('topbar-back').addEventListener('click', e => {
   e.preventDefault();
   if (window.opener && !window.opener.closed) { window.opener.focus(); window.close(); }
-  else { window.location.href = 'c64c.html'; }
+  else { window.location.href = 'c64py.html'; }
 });
 </script>
 </body>

@@ -1,0 +1,136 @@
+<div id="app">
+
+  <!-- ── HEADER ──────────────────────────────────────────────────────────── -->
+  <div id="header">
+    <div id="logo">
+      <div id="logo-badge">CBM</div>
+      <div>
+        <div id="logo-title">C64PY IDE</div>
+        <div id="logo-sub">MOS 6510 · CROSS COMPILER</div>
+      </div>
+    </div>
+    <div id="header-right">
+      COMMODORE 64 CROSS-COMPILER<br>
+      LOAD $0801 · PRG · CODE GEN ATTIVO
+    </div>
+  </div>
+
+  <!-- ── TOOLBAR ─────────────────────────────────────────────────────────── -->
+  <div id="toolbar">
+    <button class="btn btn-compile" onclick="doCompile()" title="Compila (F5)">▶ COMPILE</button>
+    <button class="btn btn-export" onclick="doExport()" title="Esporta PRG (Ctrl+E)">↓ PRG</button>
+    <div class="dropdown">
+      <button class="btn btn-export" title="Esporta sorgente o assembly">↓ EXPORT ▾</button>
+      <div class="dropdown-menu">
+        <a onclick="exportSource()">Sorgente  (.c64) <span>txt</span></a>
+        <a onclick="exportAsm()">Assembly listing (.asm) <span>txt</span></a><a onclick="exportBasic()">Codice BASIC (.bas) <span>txt</span></a>
+      </div>
+    </div>
+    <div class="tb-sep"></div>
+    <button class="btn btn-new" onclick="newFile()" title="Nuovo file (Ctrl+N)">✦ NEW</button>
+    <button class="btn btn-file" onclick="openFileDialog()" title="Apri file sorgente (Ctrl+O)">📂 OPEN</button>
+    <button class="btn btn-save" onclick="saveToLocal()" title="Salva in locale (Ctrl+Shift+S)">💾 SAVE</button>
+    <div class="tb-sep"></div>
+    <div class="dropdown">
+      <button class="btn">EXAMPLES ▾</button>
+      <div class="dropdown-menu">
+        <a onclick="loadExample('hello')">Hello World <span>basic</span></a>
+        <a onclick="loadExample('screen')">Fill Screen <span>poke</span></a>
+        <a onclick="loadExample('loop')">Color Loop <span>while</span></a>
+        <a onclick="loadExample('border')">Border Anim <span>anim</span></a>
+        <a onclick="loadExample('raster')">Raster Bar <span>adv</span></a>
+        <a onclick="loadExample('floatmath')">Float / KERNAL Math <span>float</span></a>
+        <a onclick="loadExample('floatarith')">Float Arithmetic (var) <span>float</span></a>
+        <a onclick="loadExample('sid')">SID Jingle <span>sid</span></a>
+        <a onclick="loadExample('sprite')">Sprite Bounce <span>vic</span></a>
+        <a onclick="loadExample('charset')">Charset Map <span>vic</span></a>
+        <a onclick="loadExample('plasma')">Plasma Effect <span>float</span></a>
+        <a onclick="loadExample('music')">SID Arpeggio <span>sid</span></a>
+        <a onclick="loadExample('starfield')">Starfield Scroller <span>vic</span></a>
+        <a onclick="loadExample('irq_mplex')">IRQ Sprite Multiplexer <span>irq</span></a>
+        <a onclick="loadExample('sprite_mplex')">Sprite Multiplexer (poll) <span>vic</span></a>
+        <a onclick="loadExample('sine_sprites')">Sine Wave Sprites <span>vic</span></a>
+        <a onclick="loadExample('pong')">Pong <span>game</span></a>
+        <a onclick="loadExample('sidspr')">SID + Sprite <span>demo</span></a>
+        <a onclick="loadExample('fpbasic')">Fixed-Point Q8.8 Colori <span>fp</span></a>
+        <a onclick="loadExample('fpsmooth')">Fixed-Point Q8.8 Sprite <span>fp</span></a>
+        <a onclick="loadExample('fpgravity')">Fixed-Point Q8.8 Gravità <span>fp</span></a>
+      </div>
+    </div>
+    <div class="tb-sep"></div>
+    <button class="btn btn-clear" onclick="clearOutput()">✕ CLEAR LOG</button>
+    <div class="tb-sep" style="margin-left:auto;"></div>
+    <button class="btn" style="color:var(--c64-cyan);border-color:var(--c64-cyan);" onclick="window.open('c64py-docs.html','_blank')" title="Apri documentazione">? HELP</button>
+    <span class="tb-label" style="margin-left:8px;">FILE:</span>
+    <span id="filename-display">untitled.c64</span>
+  </div>
+  <!-- hidden file input -->
+  <input type="file" id="file-input" accept=".c64,.txt,.asm" style="display:none" onchange="onFileInputChange(event)">
+
+  <!-- ── MAIN ────────────────────────────────────────────────────────────── -->
+  <div id="main">
+    <div id="editor-pane" style="position:relative">
+      <div id="editor-header">◈ SOURCE EDITOR — C64PY / MOS 6510</div>
+      <textarea id="editor"></textarea>
+      <div id="drop-overlay">
+        <div id="drop-overlay-text">◈ RILASCIA IL FILE ◈</div>
+        <div id="drop-overlay-sub">.c64 · .txt · .asm</div>
+      </div>
+    </div>
+
+    <div id="right-panel">
+      <div class="panel-tab-bar">
+        <div class="panel-tab active" onclick="switchTab('log',this)">LOG</div>
+        <div class="panel-tab"        onclick="switchTab('ast',this)">AST</div>
+        <div class="panel-tab"        onclick="switchTab('asm',this)">ASM</div><div class="panel-tab" onclick="switchTab('basic',this)">BASIC</div>
+        <div class="panel-tab"        onclick="switchTab('info',this)">REF</div>
+        <div class="panel-tab"        onclick="switchTab('bytes',this)">BYTES</div>
+        <div class="panel-tab"        onclick="switchTab('files',this)" id="tab-files">FILES</div>
+      </div>
+      <div class="panel-content">
+        <div id="output-area"></div>
+        <div id="ast-area"></div>
+        <div id="asm-area"></div>
+        <div id="basic-area" class="panel-content area-code" style="display:none"><pre id="basic-code" style="color:var(--c64-cyan);padding:10px;font-family:var(--font-mono);font-size:12px;overflow:auto;height:100%"></pre></div><div id="info-area"></div>
+        <div id="bytes-area"></div>
+        <div id="files-area">
+          <div class="files-toolbar">
+            <button class="btn btn-save" onclick="saveToLocal()" style="font-size:11px;padding:3px 8px">💾 SALVA</button>
+            <button class="btn btn-file" onclick="openFileDialog()" style="font-size:11px;padding:3px 8px">📂 APRI</button>
+            <button class="btn btn-clear" onclick="deleteAllFiles()" style="font-size:11px;padding:3px 8px" title="Cancella tutti i file">✕ TUTTI</button>
+          </div>
+          <div class="files-list" id="files-list"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── STATUS BAR ───────────────────────────────────────────────────────── -->
+  <div id="statusbar">
+    <div class="sb-seg">
+      <div class="sb-dot" id="sb-status-dot"></div>
+      <span id="sb-status">READY</span>
+    </div>
+    <div class="sb-seg"><span>LINES: <span id="sb-lines">0</span></span></div>
+    <div class="sb-seg"><span>SIZE: <span id="sb-size">0B</span></span></div>
+    <div class="sb-seg"><span>TOKENS: <span id="sb-tokens">-</span></span></div>
+    <div class="sb-seg"><span>NODES: <span id="sb-nodes">-</span></span></div>
+    <div class="sb-seg"><span>MEM: <span id="sb-mem">-</span></span></div>
+    <span id="sb-cursor">COL 1 · ROW 1</span>
+    <span style="margin-left:16px;opacity:.45;font-size:9px;letter-spacing:1px">© LEONARDO BOSELLI · <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank" style="color:inherit;text-decoration:none">GNU GPL v3</a></span>
+  </div>
+
+</div>
+
+<!-- ── MODAL SALVA ───────────────────────────────────────────────────────── -->
+<div id="modal-overlay">
+  <div id="modal-box">
+    <div id="modal-title">💾 SALVA FILE</div>
+    <input id="modal-input" type="text" placeholder="nome_file.c64" spellcheck="false"
+      onkeydown="if(event.key==='Enter')modalConfirm(); if(event.key==='Escape')modalClose();">
+    <div class="modal-btns">
+      <button class="btn btn-clear" onclick="modalClose()" style="font-size:11px;padding:3px 8px">ANNULLA</button>
+      <button class="btn btn-save" id="modal-confirm-btn" onclick="modalConfirm()" style="font-size:11px;padding:3px 8px">SALVA</button>
+    </div>
+  </div>
+</div>
