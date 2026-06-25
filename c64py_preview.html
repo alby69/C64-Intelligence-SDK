@@ -4380,7 +4380,7 @@ class CodeGenerator {
                 // word = byte: zero-extend
                 if(src.addr<0x100) e.zp('LDA',src.addr); else e.abs('LDA',src.addr);
                 if(vi.addr<0x100)  e.zp('STA',vi.addr);  else e.abs('STA',vi.addr);
-                e.imm('LDA',0); 
+                e.imm('LDA',0);
                 if(vi.addr+1<0x100) e.zp('STA',vi.addr+1); else e.abs('STA',vi.addr+1);
               }
             } else {

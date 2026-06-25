@@ -1,0 +1,49 @@
+# Python-like C64PY example
+# Uses Python syntax: def, indentation, True/False, and/or/not
+
+SCREEN: word = $0400
+BORDER: word = $D020
+BG: word = $D021
+JOY2: word = $DC00
+
+def main():
+    clear_screen()
+    border_color(0)
+    screen_color(6)
+    
+    x: byte = 160
+    y: byte = 100
+    vx: byte = 1
+    vy: byte = 1
+    
+    # Enable sprite 0
+    poke($D015, 1)
+    poke($D000, x)
+    poke($D001, y)
+    
+    score: word = 0
+    
+    while True:
+        # Move sprite
+        x = x + vx
+        y = y + vy
+        
+        # Bounce off edges
+        if x <= 24 or x >= 320:
+            vx = 255 - vx + 1  # negate
+        if y <= 40 or y >= 230:
+            vy = 255 - vy + 1
+        
+        poke($D000, x)
+        poke($D001, y)
+        
+        # Read joystick
+        joy: byte = peek(JOY2)
+        
+        # Fire button = bit 4
+        if (joy & 16) == 0:
+            score = score + 10
+            print_at(0, 0, "SCORE: ")
+            print(score)
+        
+        wait_frames(1)
