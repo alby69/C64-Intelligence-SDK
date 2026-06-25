@@ -78,7 +78,7 @@ rm -rf output/*
 
 **Author:** Alberto Abate
 **Email:** alberto.abate@gmail.com
-**Repository:** [https://github.com/albertoabate/pyc64](https://github.com/alby69/pyc64)
+**Repository:** (https://github.com/alby69/pyc64)
 
 Original concept by Leonardo Boselli.
 Developed with the assistance of Claude (Anthropic).
