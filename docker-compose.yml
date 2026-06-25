@@ -1,0 +1,44 @@
+version: "3.8"
+
+services:
+  pyc64:
+    build: .
+    container_name: pyc64
+    stdin_open: true
+    tty: true
+    working_dir: /app
+    volumes:
+      - ./pyc64c:/app/pyc64c
+      - ./run_c64.py:/app/run_c64.py
+      - ./test_python.c64:/app/test_python.c64
+      - ./output:/app/output
+    command: python3 -c "
+      from pyc64c.compiler import compile_to_prg;
+      import sys;
+      with open('test_python.c64') as f:
+        src = f.read();
+      prg, res = compile_to_prg(src);
+      if prg:
+        with open('output/test_python.prg', 'wb') as f:
+          f.write(prg);
+        print('✓ Compilato: output/test_python.prg');
+      else:
+        print('Errore:', res.lex_errors + res.parse_errors + (res.builder.fixup_errs if res.builder else []))
+      "
+
+  # Optional: run compiled PRG in VICE emulator
+  vice:
+    image: python:3.12-slim
+    container_name: vice64
+    stdin_open: true
+    tty: true
+    volumes:
+      - ./output:/app/output
+    command: >
+      bash -c "
+        apt-get update && apt-get install -y vice && 
+        echo 'Use: x64 /app/output/test_python.prg' && 
+        tail -f /dev/null
+      "
+    profiles:
+      - dont-start

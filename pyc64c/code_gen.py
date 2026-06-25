@@ -337,7 +337,15 @@ class CodeGenerator:
             return
 
         if name in ('println',):
-            self._emit_call(s)
+            if args and args[0]['k'] == 'Literal' and args[0]['kind'] == 'str':
+                s_val = args[0]['value']
+                self.e.jsr('_print_str', f'println "{s_val}"')
+                self.e.data(list(s_val.encode('latin-1')) + [0], f'str "{s_val}"')
+            elif args:
+                self._emit_expr_to_a(args[0])
+                self.e.jsr('_print_byte', 'println byte')
+            self.e.imm('LDA', 0x0D, 'newline')
+            self.e.jsr(0xFFD2, 'KERNAL CHROUT')
             return
 
         if name in ('clear_screen',):
