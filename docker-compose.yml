@@ -11,7 +11,7 @@ services:
     volumes:
       - ./pyc64c:/app/pyc64c:ro
       - ./pyc64_ui:/app/pyc64_ui:ro
-      - .:/app/source:ro
+      - .:/app/source
       - ./output:/app/output
     command: python3 -m pyc64_ui.app /app/source/test_python.c64
 
