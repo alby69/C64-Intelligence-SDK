@@ -23,20 +23,7 @@ services:
     volumes:
       - .:/app/source:ro
       - ./output:/app/output
-    command: python3 -c "
-      from pyc64c.compiler import compile_to_prg;
-      import sys;
-      src = sys.argv[1] if len(sys.argv) > 1 else '/app/source/test_python.c64';
-      with open(src) as f: s = f.read();
-      prg, res = compile_to_prg(s);
-      if prg:
-        p = src.rsplit('/', 1)[-1];
-        p = '/app/output/' + p.rsplit('.', 1)[0] + '.prg';
-        with open(p, 'wb') as f: f.write(prg);
-        print(f'OK: {p}  ({len(prg)} bytes)');
-      else:
-        print('Errors:', res.lex_errors + res.parse_errors + (res.builder.fixup_errs if res.builder else []))
-      "
+    command: python3 /app/scripts/compile.py
 
   # ── Assembla .asm ──
   asm:
@@ -57,10 +44,11 @@ services:
     tty: true
     volumes:
       - ./output:/app/output
-    command: bash -c "
-      apt-get update && apt-get install -y vice &&
-      echo 'Esegui: x64 /app/output/test_python.prg' &&
-      tail -f /dev/null
+    command: >
+      bash -c "
+        apt-get update && apt-get install -y vice &&
+        echo 'Esegui: x64 /app/output/test_python.prg' &&
+        tail -f /dev/null
       "
     profiles:
       - dont-start

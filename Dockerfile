@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
 COPY pyc64c/ pyc64c/
 COPY pyc64_ui/ pyc64_ui/
 COPY asm6502.py run_c64.py .
+COPY scripts/ scripts/
 COPY examples/ examples/
 
 # Create output directory
