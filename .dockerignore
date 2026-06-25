@@ -1,9 +1,10 @@
 .git/
 .gitignore
 __pycache__/
+.pytest_cache/
 *.pyc
-c64/
-src/
-c64py.html
-c64py_preview.html
-c64py-docs.html
+*.pyo
+output/
+*.prg
+*.bas
+*.asm
