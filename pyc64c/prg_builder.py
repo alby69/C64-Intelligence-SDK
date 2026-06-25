@@ -39,11 +39,11 @@ class PRGBuilder:
         if has_main:
             e.jsr('main', 'call main()')
         else:
-            e.imp('BRK', '!!! main() non definita — halt')
+            e.imp('BRK', '!!! main() undefined — halt')
         if not self.uses_float:
-            e.imm('LDA', 0x37, 'ripristina BASIC ROM')
+            e.imm('LDA', 0x37, 'restore BASIC ROM')
             e.zp('STA', 0x01, 'CPU port → $37')
-        e.imp('RTS', 'ritorno al BASIC')
+        e.imp('RTS', 'return to BASIC')
 
     def _emit_func_bodies(self):
         cg = CodeGenerator(self.e, self.planner, self._sem_scope, self.ast)
@@ -91,6 +91,7 @@ class PRGBuilder:
             'clear_screen': '_cls',
             'print_at': '_print_str',
             'print': '_print_str',
+            'println': '_print_str',
             'wait': '_wait_frames',
             'wait_frames': '_wait_frames',
         }
@@ -99,7 +100,7 @@ class PRGBuilder:
             if self._needs_routine(builtin):
                 runtime_names.add(rt)
         # Also check for print_byte / mul_byte usage
-        if self._needs_routine('print'):
+        if self._needs_routine('print') or self._needs_routine('println'):
             runtime_names.add('_print_byte')
         for f in self.ast['funcs']:
             if self._find_mul(f['body']):

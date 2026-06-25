@@ -1,0 +1,39 @@
+# Screen color cycling and simple movement
+
+def main():
+    clear_screen()
+
+    # Colors
+    color: byte = 0
+
+    # Position
+    x: byte = 0
+    y: byte = 0
+
+    println("PYC64 - COLOR CYCLE DEMO")
+    println("------------------------")
+    println("PRESS CTRL+C (OR STOP) TO EXIT")
+
+    while True:
+        border_color(color)
+        screen_color(color)
+
+        color = color + 1
+        if color > 15:
+            color = 0
+
+        print_at(10, 12, "HELLO C64!")
+        print_at(10, 13, "X: ")
+        print(x)
+        print("  Y: ")
+        print(y)
+
+        x = x + 1
+        y = y + 1
+
+        if x > 39:
+            x = 0
+        if y > 24:
+            y = 0
+
+        wait_frames(5)

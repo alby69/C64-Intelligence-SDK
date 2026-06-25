@@ -9,23 +9,23 @@ from textual.binding import Binding
 
 ABOUT_TEXT = """# PYC64 — Python-to-C64 Cross-Compiler & 6502 Assembler
 
-**v0.1.0** — Pure Python toolkit per lo sviluppo Commodore 64.
+**v0.2.0** — Pure Python toolkit for Commodore 64 development.
 
 ## Key Bindings
 
 | Key | Action |
 |-----|--------|
-| `Ctrl+S` | Salva e compila |
-| `Ctrl+O` | File browser (sorgenti + output) |
-| `Ctrl+Q` | Esci |
-| `F1` | Questo help |
-| `Ctrl+←` | Restringe pannello editor |
-| `Ctrl+→` | Allarga pannello editor |
-| `Ctrl+↑` | Allarga pannello output (tabs) |
-| `Ctrl+↓` | Allarga pannello errori |
-| `Enter` | Apri file selezionato |
-| `Del` | Cancella file selezionato |
-| `←` `→` | Cambia categoria file |
+| `Ctrl+S` | Save and compile |
+| `Ctrl+O` | File browser (sources + output) |
+| `Ctrl+Q` | Quit |
+| `F1` | This help |
+| `Ctrl+←` | Narrow editor panel |
+| `Ctrl+→` | Widen editor panel |
+| `Ctrl+↑` | Widen output panel (tabs) |
+| `Ctrl+↓` | Widen error panel |
+| `Enter` | Open selected file |
+| `Del` | Delete selected file |
+| `←` `→` | Change file category |
 
 ## Pipeline
 
@@ -36,15 +36,20 @@ Source (.c64) → Lexer → Parser → CodeGen → PRG (.prg)
 
 ## Output directories
 
-| Cartella | Contenuto |
+| Folder | Content |
 |----------|-----------|
-| `output/basic/` | BASIC listing generati |
-| `output/asm/` | Sorgenti assembly salvati |
-| `output/prg/` | Binari PRG compilati |
+| `output/basic/` | Generated BASIC listings |
+| `output/asm/` | Saved assembly sources |
+| `output/prg/` | Compiled PRG binaries |
 
-## Licenza
+## Credits
 
-GNU GPL v3 — © Leonardo Boselli
+Author: Alberto Abate
+Original concept by Leonardo Boselli.
+
+## License
+
+GNU GPL v3 — © 2024 Alberto Abate
 """
 
 

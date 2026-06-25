@@ -1,0 +1,32 @@
+{
+    "scopeName": "source.c64py",
+    "name": "C64PY",
+    "patterns": [
+        { "include": "#keywords" },
+        { "include": "#strings" },
+        { "include": "#numbers" },
+        { "include": "#comments" }
+    ],
+    "repository": {
+        "keywords": {
+            "patterns": [{
+                "name": "keyword.control.c64py",
+                "match": "\\b(def|if|else|elif|while|for|in|return|pass|and|or|not|break|continue)\\b"
+            }]
+        },
+        "strings": {
+            "name": "string.quoted.double.c64py",
+            "begin": "\"", "end": "\""
+        },
+        "numbers": {
+            "patterns": [
+                { "name": "constant.numeric.hex.c64py", "match": "\\$[0-9A-Fa-f]+" },
+                { "name": "constant.numeric.decimal.c64py", "match": "\\b[0-9]+\\b" }
+            ]
+        },
+        "comments": {
+            "name": "comment.line.number-sign.c64py",
+            "match": "#.*$"
+        }
+    }
+}

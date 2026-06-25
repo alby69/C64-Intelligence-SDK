@@ -48,7 +48,7 @@ class Parser:
         if not self.check(type_, val):
             t = self.cur()
             expected = val or type_
-            raise ParseError(f"Atteso {expected}, trovato {t.value or t.type}", t.line, t.col)
+            raise ParseError(f"Expected {expected}, found {t.value or t.type}", t.line, t.col)
         return self.advance()
 
     def expect_kw(self, kw):
@@ -91,7 +91,7 @@ class Parser:
                 elif self.check(TT.IDENT) and self.peek(1).type == TT.COLON:
                     globals_.append(self.parse_var_decl())
                 else:
-                    self._err("Dichiarazione globale attesa (def o var:type)")
+                    self._err("Global declaration expected (def or var:type)")
                     self.advance()
             except ParseError as e:
                 self.errors.append({'msg': e.args[0], 'line': e.line, 'col': e.col})
@@ -220,7 +220,10 @@ class Parser:
         self.expect_kw('for')
         id_ = self.expect(TT.IDENT).value
         self.expect_kw('in')
-        self.expect(TT.BUILTIN, 'range')
+        if self.check(TT.BUILTIN, 'range'):
+            self.advance()
+        else:
+            self.expect(TT.IDENT, 'range')
         self.expect(TT.LPAREN)
         start = self.parse_expr()
         self.expect(TT.COMMA)
@@ -345,4 +348,4 @@ class Parser:
                         break
             self.expect(TT.RPAREN)
             return self.mk(N.Call(name, args, t.line))
-        raise ParseError(f"Espressione non valida: {t.value or t.type}", t.line, t.col)
+        raise ParseError(f"Invalid expression: {t.value or t.type}", t.line, t.col)

@@ -1,0 +1,26 @@
+{
+    "name": "c64py",
+    "displayName": "C64PY Language Support",
+    "description": "Syntax highlighting and support for C64PY language",
+    "version": "0.1.0",
+    "publisher": "albertoabate",
+    "engines": {
+        "vscode": "^1.60.0"
+    },
+    "categories": [
+        "Programming Languages"
+    ],
+    "contributes": {
+        "languages": [{
+            "id": "c64py",
+            "aliases": ["C64PY", "c64py"],
+            "extensions": [".c64"],
+            "configuration": "./language-configuration.json"
+        }],
+        "grammars": [{
+            "language": "c64py",
+            "scopeName": "source.c64py",
+            "path": "./syntaxes/c64py.tmLanguage.json"
+        }]
+    }
+}

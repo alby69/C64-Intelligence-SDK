@@ -60,7 +60,7 @@ class _ExprParser:
             return _expr_error(self.err)
         rest = self.text[self.pos:].strip()
         if rest:
-            return _expr_error(f"Caratteri extra dopo espressione: '{rest}'")
+            return _expr_error(f"Extra characters after expression: '{rest}'")
         return {'ok': val}
 
     def _peek(self):
@@ -79,7 +79,7 @@ class _ExprParser:
 
     def _expect(self, ch):
         if not self._eat(ch):
-            self.err = f"Atteso '{ch}'"
+            self.err = f"Expected '{ch}'"
         return not self.err
 
     def _parse_sum(self):
@@ -114,7 +114,7 @@ class _ExprParser:
                 if self.err: return 0
                 if op == '*': left *= right
                 elif op == '/':
-                    if right == 0: self.err = "Divisione per zero"; return 0
+                    if right == 0: self.err = "Division by zero"; return 0
                     left //= right
                 elif op == '&': left &= right
         return left
@@ -140,7 +140,7 @@ class _ExprParser:
     def _parse_atom(self):
         self._skip_ws()
         if self.pos >= len(self.text):
-            self.err = "Atomo vuoto"; return 0
+            self.err = "Empty atom"; return 0
 
         # (expr)
         if self._check('('):
@@ -157,34 +157,34 @@ class _ExprParser:
             if self.text[self.pos+2] == "'":
                 self.pos += 3
                 return ord(ch)
-            self.err = "Carattere non chiuso"; return 0
+            self.err = "Unclosed character"; return 0
 
         # % binary
         if c == '%':
             self.pos += 1
             m = RE_BIN.match(self.text[self.pos:])
             if m: self.pos += m.end(); return int(m.group(1), 2)
-            self.err = "Numero binario non valido"; return 0
+            self.err = "Invalid binary number"; return 0
 
         # $ hex
         if c == '$':
             self.pos += 1
             m = RE_HEX.match(self.text[self.pos:])
             if m: self.pos += m.end(); return int(m.group(1), 16)
-            self.err = "Numero hex non valido"; return 0
+            self.err = "Invalid hex number"; return 0
 
         # 0x hex
         if c == '0' and self.pos + 1 < len(self.text) and self.text[self.pos+1] in 'xX':
             self.pos += 2
             m = RE_HEX.match(self.text[self.pos:])
             if m: self.pos += m.end(); return int(m.group(1), 16)
-            self.err = "Numero hex non valido"; return 0
+            self.err = "Invalid hex number"; return 0
 
         # decimal
         if c.isdigit() or (c == '-' and self.pos + 1 < len(self.text) and self.text[self.pos+1].isdigit()):
             m = RE_DEC.match(self.text[self.pos:])
             if m: self.pos += m.end(); return int(m.group(1))
-            self.err = "Numero non valido"; return 0
+            self.err = "Invalid number"; return 0
 
         # label / symbol
         m = RE_IDENT.match(self.text[self.pos:])
@@ -196,10 +196,10 @@ class _ExprParser:
             # Try * (current PC)
             if name.upper() == '*':
                 return 0  # Will be set by caller
-            self.err = f"Simbolo irrisolto: {name}"
+            self.err = f"Unresolved symbol: {name}"
             return 0
 
-        self.err = f"Carattere inatteso: '{c}'"
+        self.err = f"Unexpected character: '{c}'"
         return 0
 
     def _skip_ws(self):
@@ -352,7 +352,7 @@ class Asm6502:
                 else:
                     self._global_scope = label
                 if label in self.labels:
-                    self._errors.append({'line': lnum, 'msg': f"Label duplicata: '{label}'"})
+                    self._errors.append({'line': lnum, 'msg': f"Duplicate label: '{label}'"})
                 else:
                     self.labels[label] = self._pc
                 if rest:
@@ -442,7 +442,7 @@ class Asm6502:
     def _instr_size(self, mnem, args, lnum):
         mnem = mnem.upper()
         if mnem not in OPS:
-            self._errors.append({'line': lnum, 'msg': f"Mnemonico sconosciuto: '{mnem}'"})
+            self._errors.append({'line': lnum, 'msg': f"Unknown mnemonic: '{mnem}'"})
             return
         ops = OPS[mnem]
         args = args.strip()
@@ -452,7 +452,7 @@ class Asm6502:
             elif 'acc' in ops:
                 self._pc += 1
             else:
-                self._errors.append({'line': lnum, 'msg': f"{mnem}: richiede operando"})
+                self._errors.append({'line': lnum, 'msg': f"{mnem}: operand required"})
             return
         # Determine mode for size
         if args[0] == '#':
@@ -460,7 +460,7 @@ class Asm6502:
         elif args[0] == '(':
             close = args.find(')')
             if close == -1:
-                self._errors.append({'line': lnum, 'msg': "Parentesi non chiusa"})
+                self._errors.append({'line': lnum, 'msg': "Unclosed parenthesis"})
                 return
             after = args[close+1:].strip()
             if after.startswith(',Y'):
@@ -578,7 +578,7 @@ class Asm6502:
                     self._pc += 1
                 self._listing.append({'addr': orig_pc, 'bytes': list(encoded), 'text': raw})
             else:
-                self._errors.append({'line': lnum, 'msg': 'Stringa non valida'})
+                self._errors.append({'line': lnum, 'msg': 'Invalid string'})
                 self._listing.append({'addr': orig_pc, 'bytes': [], 'text': raw})
             return
 
@@ -623,19 +623,19 @@ class Asm6502:
                     self._pc += len(inc)
                     self._listing.append({'addr': orig_pc, 'bytes': list(inc[:16]), 'text': raw})
                 else:
-                    self._errors.append({'line': lnum, 'msg': f"File non trovato: '{path}'"})
+                    self._errors.append({'line': lnum, 'msg': f"File not found: '{path}'"})
                     self._listing.append({'addr': orig_pc, 'bytes': [], 'text': raw})
             else:
-                self._errors.append({'line': lnum, 'msg': '.include: atteso filename'})
+                self._errors.append({'line': lnum, 'msg': '.include: expected filename'})
             return
 
-        self._errors.append({'line': lnum, 'msg': f"Direttiva sconosciuta: .{dname}"})
+        self._errors.append({'line': lnum, 'msg': f"Unknown directive: .{dname}"})
         self._listing.append({'addr': orig_pc, 'bytes': [], 'text': raw})
 
     def _emit_instr(self, mnem, args, lnum, raw):
         mnem = mnem.upper()
         if mnem not in OPS:
-            self._errors.append({'line': lnum, 'msg': f"Mnemonico sconosciuto: '{mnem}'"})
+            self._errors.append({'line': lnum, 'msg': f"Unknown mnemonic: '{mnem}'"})
             self._listing.append({'addr': self._pc, 'bytes': [], 'text': raw})
             return
         ops = OPS[mnem]
@@ -653,7 +653,7 @@ class Asm6502:
                 self._listing.append({'addr': orig_pc, 'bytes': [ops['acc']], 'mnem': mnem, 'op': 'A', 'mode': 'acc', 'text': raw})
                 self._pc += 1
                 return
-            self._errors.append({'line': lnum, 'msg': f"{mnem}: richiede operando"})
+            self._errors.append({'line': lnum, 'msg': f"{mnem}: operand required"})
             self._listing.append({'addr': orig_pc, 'bytes': [], 'text': raw})
             return
 
@@ -665,7 +665,7 @@ class Asm6502:
                 self._listing.append({'addr': orig_pc, 'bytes': [], 'text': raw})
                 return
             if 'imm' not in ops:
-                self._errors.append({'line': lnum, 'msg': f"{mnem}: no modalità immediata"})
+                self._errors.append({'line': lnum, 'msg': f"{mnem}: no immediate mode"})
                 self._listing.append({'addr': orig_pc, 'bytes': [], 'text': raw})
                 return
             self._cur_seg.append(ops['imm'])
@@ -678,7 +678,7 @@ class Asm6502:
         if args[0] == '(':
             close = args.find(')')
             if close == -1:
-                self._errors.append({'line': lnum, 'msg': "Parentesi non chiusa"})
+                self._errors.append({'line': lnum, 'msg': "Unclosed parenthesis"})
                 self._listing.append({'addr': orig_pc, 'bytes': [], 'text': raw})
                 return
             inner = args[1:close].strip()
@@ -728,7 +728,7 @@ class Asm6502:
                 self._pc += 3
                 return
 
-            self._errors.append({'line': lnum, 'msg': f"{mnem}: modalità indiretta non valida"})
+            self._errors.append({'line': lnum, 'msg': f"{mnem}: invalid indirect mode"})
             self._listing.append({'addr': orig_pc, 'bytes': [], 'text': raw})
             return
 
@@ -831,7 +831,7 @@ class Asm6502:
                 self._pc += 3
                 return
 
-        self._errors.append({'line': lnum, 'msg': f"{mnem}: nessuna modalità per '{args}'"})
+        self._errors.append({'line': lnum, 'msg': f"{mnem}: no mode for '{args}'"})
         self._listing.append({'addr': orig_pc, 'bytes': [], 'text': raw})
 
     # --- Fixup resolution ---
@@ -848,7 +848,7 @@ class Asm6502:
                 except ValueError:
                     pass
             if label not in self.labels:
-                self._errors.append({'line': fx['line'], 'msg': f"Simbolo irrisolto: {label}"})
+                self._errors.append({'line': fx['line'], 'msg': f"Unresolved symbol: {label}"})
                 continue
             target = self.labels[label] + offset
             seg_idx = fx['seg']
@@ -860,7 +860,7 @@ class Asm6502:
                     instr_end = fx['instr_end']
                     delta = target - instr_end
                     if delta < -128 or delta > 127:
-                        self._errors.append({'line': fx['line'], 'msg': f"Branch fuori range: {label} (delta={delta})"})
+                        self._errors.append({'line': fx['line'], 'msg': f"Branch out of range: {label} (delta={delta})"})
                     else:
                         if 0 <= at < len(buf):
                             buf[at] = delta & 0xFF

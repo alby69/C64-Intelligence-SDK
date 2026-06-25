@@ -33,23 +33,36 @@ def cmd_basic(args):
 
 
 def cmd_compile(args):
-    src = read_source(args.input)
-    prg_data, result = compile_to_prg(src)
-
     base = os.path.splitext(args.input)[0]
+    ext = os.path.splitext(args.input)[1].lower()
 
-    # Save BASIC
-    bas_path = base + '.bas'
-    with open(bas_path, 'w') as f:
-        f.write(result.basic_code)
-    print(f"[BASIC] {bas_path}")
+    if ext == '.asm':
+        from pyc64c.asm6502 import Asm6502
+        asm = Asm6502()
+        src = read_source(args.input)
+        errs = asm.assemble(src)
+        if errs:
+            for e in errs:
+                print(f"[ASM ERROR] {e['msg']} (line {e.get('line',0)})", file=sys.stderr)
+            sys.exit(1)
+        prg_data = asm.output_prg()
+        print(f"[ASM]    {args.input} compiled")
+    else:
+        src = read_source(args.input)
+        prg_data, result = compile_to_prg(src)
 
-    if result.lex_errors:
-        for e in result.lex_errors:
-            print(f"[LEXER ERROR] {e['msg']} ({e.get('line',0)}:{e.get('col',0)})", file=sys.stderr)
-    if result.parse_errors:
-        for e in result.parse_errors:
-            print(f"[PARSER ERROR] {e['msg']} ({e.get('line',0)}:{e.get('col',0)})", file=sys.stderr)
+        # Save BASIC
+        bas_path = base + '.bas'
+        with open(bas_path, 'w') as f:
+            f.write(result.basic_code)
+        print(f"[BASIC] {bas_path}")
+
+        if result.lex_errors:
+            for e in result.lex_errors:
+                print(f"[LEXER ERROR] {e['msg']} ({e.get('line',0)}:{e.get('col',0)})", file=sys.stderr)
+        if result.parse_errors:
+            for e in result.parse_errors:
+                print(f"[PARSER ERROR] {e['msg']} ({e.get('line',0)}:{e.get('col',0)})", file=sys.stderr)
 
     if prg_data:
         prg_path = base + '.prg'
@@ -116,10 +129,10 @@ def cmd_run(args):
             break
     if not rom_dir:
         rom_dir = '.'
-        print(f"[C64]    Attenzione: ROM C64 non trovate. Copia i file ROM in {rom_dir}", file=sys.stderr)
+        print(f"[C64]    Warning: C64 ROMs not found. Copy ROM files to {rom_dir}", file=sys.stderr)
 
     # Run in c64py
-    print("[C64]    Avvio emulatore c64py...")
+    print("[C64]    Starting c64py emulator...")
     try:
         from c64py import C64
         c64 = C64(
@@ -133,7 +146,7 @@ def cmd_run(args):
         # Use c64py's auto-load mechanism (loads after BASIC boot)
         c64.prg_file_path = prg_path
 
-        print("[C64]    Esecuzione... (Ctrl+C per fermare)")
+        print("[C64]    Running... (Ctrl+C to stop)")
         import time
         start = time.time()
         while True:
@@ -142,12 +155,12 @@ def cmd_run(args):
                 print(f"[C64]    Timeout ({args.timeout}s)")
                 break
     except ImportError:
-        print("[C64]    c64py non installato. Installa con: pip install c64py", file=sys.stderr)
-        print("[C64]    Il PRG è comunque stato generato. Usa VICE: x64sc " + prg_path, file=sys.stderr)
+        print("[C64]    c64py not installed. Install with: pip install c64py", file=sys.stderr)
+        print("[C64]    PRG was generated anyway. Use VICE: x64sc " + prg_path, file=sys.stderr)
     except KeyboardInterrupt:
-        print("\n[C64]    Fermato dall'utente")
+        print("\n[C64]    Stopped by user")
     except Exception as e:
-        print(f"[C64]    Errore: {e}", file=sys.stderr)
+        print(f"[C64]    Error: {e}", file=sys.stderr)
         import traceback
         traceback.print_exc()
 

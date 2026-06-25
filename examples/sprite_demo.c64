@@ -1,0 +1,33 @@
+# Sprite animation example
+
+def main():
+    clear_screen()
+    border_color(0)
+    screen_color(0)
+
+    # Sprite 0 pointers is at 2040 ($07F8)
+    # Let's use block 13 for sprite data ($0340)
+    # Actually $0340 is a bit dangerous, let's use $2000 (block 128)
+    poke(2040, 128)
+
+    # Initialize sprite data with a simple box
+    for i in range(0, 63):
+        poke(8192 + i, 255)
+
+    x: byte = 160
+    y: byte = 100
+
+    # Enable sprite 0
+    poke($D015, 1)
+
+    println("SPRITE ANIMATION")
+
+    while True:
+        poke($D000, x)
+        poke($D001, y)
+
+        x = x + 1
+        if x > 255: # Note: this doesn't handle the 9th bit of X yet
+            x = 24
+
+        wait_frames(2)

@@ -220,7 +220,7 @@ class CodeEmitter:
                 offset = int(lbl[plus + 1:]) or 0
                 lbl = lbl[:plus]
             if lbl not in self.labels:
-                errs.append(f"Label non risolta: '{f['label']}'")
+                errs.append(f"Unresolved label: '{f['label']}'")
                 continue
             tgt = self.labels[lbl]
             tgt_addr = self.base + tgt + offset

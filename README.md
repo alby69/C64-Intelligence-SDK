@@ -1,22 +1,22 @@
-# PYC64 — Python-to-C64 Cross-Compiler & TUI Editor
+# PYC64 — Python-to-C64 Cross-Compiler & TUI IDE
 
-Compila codice **Python-like** in codice macchina nativo **Commodore 64**,
-assembla codice **6502** in file `.PRG`,
-modifica e compila con una **TUI** (Textual) — tutto in Python puro.
+Compiles **Python-like** code into native **Commodore 64** machine code,
+assembles **6502** assembly into `.PRG` files,
+and provides a **TUI** (Terminal User Interface) editor — all in pure Python.
 
 ---
 
-## Un comando Docker — tutto incluso
+## Quick Start with Docker
 
 ```bash
-# Prima build (solo la prima volta)
+# First build (only once)
 docker compose build
 
-# TUI + motore: editor, compilazione, BASIC/listing/hex
+# Launch TUI: editor, compilation, BASIC/listing/hex tabs
 docker compose run --rm pyc64
 ```
 
-Oppure con Make:
+Or using Make:
 
 ```bash
 make build   # docker compose build
@@ -25,30 +25,27 @@ make run     # docker compose run --rm pyc64
 
 ---
 
-## Altri comandi utili
+## Useful Commands
 
 ```bash
-# Compila test_python.c64 → output/test_python.prg
+# Compile test_python.c64 → output/test_python.prg
 docker compose run --rm compile
 
-# Assembla examples/hello.asm → output/hello.prg
+# Assemble examples/hello.asm → output/hello.prg
 docker compose run --rm asm
 
-# Build immagini
-docker compose build
-
-# Pulisci output
+# Clean output directory
 rm -rf output/*
 ```
 
 ---
 
-## TUI (Textual) — come funziona
+## TUI (Textual) — Features
 
 ```
 ┌────────── Header ───────────╮
 │ ┌─ Editor ──┐ ┌─ Tabs ───┐ │
-│ │ sorgente   │ │ BASIC    │ │
+│ │ Source     │ │ BASIC    │ │
 │ │ .c64       │ │ Listing  │ │
 │ │            │ │ Hex      │ │
 │ └────────────┘ └──────────┘ │
@@ -58,55 +55,37 @@ rm -rf output/*
 └────────── Footer ───────────┘
 ```
 
-| Tasto | Azione |
+| Key | Action |
 |-------|--------|
-| `Ctrl+S` | Salva e compila |
-| `Ctrl+O` | Apri file |
-| `F1` | Guida |
-| `Ctrl+Q` | Esci |
+| `Ctrl+S` | Save and compile |
+| `Ctrl+O` | Open file |
+| `F1` | Help |
+| `Ctrl+Q` | Quit |
 
 ---
 
-## Componenti
+## Project Structure
 
-| Percorso | Ruolo |
+| Path | Description |
 |----------|-------|
-| `pyc64c/` | Compilatore Python → 6502 (lexer, parser, codegen, runtime, assembler) |
-| `pyc64_ui/` | TUI Textual (editor, tabs, controller) |
-| `asm6502.py` | Assembler 6502 standalone (dual-pass) |
-| `Dockerfile` | Immagine con tutto pre-installato |
-
-**Builtin:** `print`, `println`, `print_at`, `poke`, `peek`, `clear_screen`,
-`border_color`, `screen_color`, `wait_frames`, `sei`, `cli`
+| `pyc64c/` | Compiler core (Lexer, Parser, Codegen, Runtime, Assembler) |
+| `pyc64_ui/` | Textual-based TUI (Editor, Tabs, Controller) |
+| `examples/` | Example source files (.c64 and .asm) |
 
 ---
 
-## Struttura
+## Authors & Credits
 
-```
-pyc64c/                  # Compilatore
-  compiler.py            #   Pipeline orchestrator
-  lexer.py, parser.py    #   Analisi
-  code_gen.py            #   Code generator AST → 6502
-  code_emitter.py        #   Emitter 6502 (label, fixup)
-  prg_builder.py         #   Builder PRG (BASIC stub + code + runtime)
-  runtime.py             #   Runtime 6502 (print, cls, wait, mul)
-  basic_gen.py           #   BASIC listing fallback
-  asm6502.py             #   Assembler 6502 dual-pass
-pyc64_ui/                # TUI
-  app.py                 #   Entry point Textual
-  controller.py          #   Orchestrazione (zero UI import)
-  screens/editor.py      #   Schermata principale
-  screens/about.py       #   Help
-  widgets/               #   HexViewer, ListingView, ErrorPanel
-examples/hello.asm       # Esempio assembly
-test_python.c64          # Esempio Python-like (sprite, joystick, score)
-```
+**Author:** Alberto Abate
+**Email:** alberto.abate@gmail.com
+**Repository:** [https://github.com/albertoabate/pyc64](https://github.com/albertoabate/pyc64)
+
+Original concept by Leonardo Boselli.
+Developed with the assistance of Claude (Anthropic).
 
 ---
 
-## Licenza
+## License
 
-GNU General Public License v3.0 — Copyright © Leonardo Boselli
-
-Progetto realizzato con [Claude](https://claude.ai) di Anthropic · [youdev.it](https://www.youdev.it)
+This project is licensed under the **GNU General Public License v3.0**.
+Respect all third-party code licenses included in this repository.

@@ -2,22 +2,22 @@
 
 all: build
 
-# Costruisce l'immagine Docker
+# Builds the Docker image
 build:
 	docker compose build
 
-# Avvia la TUI (motore + UI)
+# Starts the TUI (engine + UI)
 run:
 	docker compose run --rm pyc64
 
-# Compila test_python.c64 in PRG
+# Compiles test_python.c64 to PRG
 compile:
 	docker compose run --rm compile
 
-# Assembla examples/hello.asm in PRG
+# Assembles examples/hello.asm to PRG
 asm:
 	docker compose run --rm asm
 
-# Pulisce output
+# Cleans output directory
 clean:
 	rm -rf output/*

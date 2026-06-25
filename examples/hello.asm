@@ -1,26 +1,14 @@
-; hello.asm — Hello World per Commodore 64
-; Assembla: python3 asm6502.py hello.asm -l
-; Carica:   LOAD "hello",8,1  poi  SYS 2061
+; C64PY — PRG Hex Dump  (56 byte)
+; Load addr: $0801
+; Code start: $080D
 
-        .org $0801
++0000  $01 $08 $0B $08 $0A $00 $9E $32  .......2
++0008  $30 $36 $31 $00 $00 $00 $20 $44  061... D
++0010  $E5 $A2 $00 $BD $1D $08 $F0 $05  ........
++0018  $20 $D2 $FF $E8 $D0 $F4 $60 $48   .....`H
++0020  $45 $4C $4C $4F $20 $57 $4F $52  ELLO WOR
++0028  $4C $44 $20 $46 $52 $4F $4D $20  LD FROM
++0030  $50 $59 $43 $36 $34 $21 $0D $00  PYC64!..
 
-; BASIC stub: SYS 2061 ($080D)
-basic:  .word basic_end
-        .word 10
-        .null " sys2061"
-basic_end:
-
-main:   sei
-        lda #$93        ; PETSCII clear screen
-        jsr $ffd2       ; CHROUT
-        ldx #0
-loop:   lda hello_msg,x
-        beq done
-        jsr $ffd2
-        inx
-        bne loop
-done:   cli
-        rts
-
-hello_msg:
-        .null "HELLO WORLD! from PYC64"
+LOAD "file",8,1
+SYS 2061

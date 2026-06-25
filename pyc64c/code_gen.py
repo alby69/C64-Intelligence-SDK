@@ -501,21 +501,19 @@ class CodeGenerator:
             return
 
         if op == '+':
-            self._emit_expr_to_a(left)
-            self.e.zp('STA', 0xFC, 'tmp')
             self._emit_expr_to_a(right)
+            self.e.zp('STA', 0xFC, 'tmp')
+            self._emit_expr_to_a(left)
             self.e.imp('CLC')
             self.e.zp('ADC', 0xFC, '+')
             return
 
         if op == '-':
-            self._emit_expr_to_a(left)
-            self.e.zp('STA', 0xFC, 'tmp')
             self._emit_expr_to_a(right)
-            self.e.zp('STA', 0xFB, 'tmp2')
-            self.e.zp('LDA', 0xFC, 'restore left')
+            self.e.zp('STA', 0xFC, 'tmp')
+            self._emit_expr_to_a(left)
             self.e.imp('SEC')
-            self.e.zp('SBC', 0xFB, '-')
+            self.e.zp('SBC', 0xFC, '-')
             return
 
         if op in ('&', '|', '^'):
