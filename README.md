@@ -44,7 +44,7 @@ rm -rf output/*
 
 ```
 ┌────────── Header ───────────╮
-│ ┌─ Editor ──┐ ┌─ Tabs ───┐ │
+│ ┌─ Editor ───┐ ┌─ Tabs ───┐ │
 │ │ Source     │ │ BASIC    │ │
 │ │ .c64       │ │ Listing  │ │
 │ │            │ │ Hex      │ │
@@ -66,11 +66,11 @@ rm -rf output/*
 
 ## Project Structure
 
-| Path | Description |
-|----------|-------|
-| `pyc64c/` | Compiler core (Lexer, Parser, Codegen, Runtime, Assembler) |
-| `pyc64_ui/` | Textual-based TUI (Editor, Tabs, Controller) |
-| `examples/` | Example source files (.c64 and .asm) |
+| Path         | Description |
+|--------------|-------------|
+| `pyc64c/`    | Compiler core (Lexer, Parser, Codegen, Runtime, Assembler) |
+| `pyc64_ui/`  | Textual-based TUI (Editor, Tabs, Controller) |
+| `examples/`  | Example source files (.c64 and .asm) |
 
 ---
 
@@ -78,7 +78,7 @@ rm -rf output/*
 
 **Author:** Alberto Abate
 **Email:** alberto.abate@gmail.com
-**Repository:** [https://github.com/albertoabate/pyc64](https://github.com/albertoabate/pyc64)
+**Repository:** [https://github.com/albertoabate/pyc64](https://github.com/alby69/pyc64)
 
 Original concept by Leonardo Boselli.
 Developed with the assistance of Claude (Anthropic).
