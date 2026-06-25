@@ -1,0 +1,9 @@
+# Memory Page 167
+
+nome: GONE
+descrizione: Read and Execute Next Statement This is the routine which gets the next token and executes the statement. It is vectored through RAM at 776 ($308) to allow the addition and execution of new statement tokens. Since a statement must always start with a token or an implied LET statement, this routine checks to see if the first character is a valid token. If it is, the address is placed on the stack, so that a call to CHRGET will return to the address of the code that executes the statement (see the table of statement tokens at 40972 ($AOOC)). An invalid token will cause a SYNTAX ERROR. A character whose ASCII value is less than 128 will cause LET to be executed. 43037 $A81D RESTOR Perform RESTORE The RESTORE command simply resets the DATA pointer at 65-66 ($41-$42) from the start of BASIC pointer at 43-44 ($2B-$2C). 43052 $A82C Test STOP Key for Break in Program The Kernal STOP routine is called from here, and if the key is pressed, the STOP (63213, $F6ED) command, below, is executed. 43055 $A82F STOP Perform STOP This entry point preserves the Carry flag (which is set to 1) and enters the END routine, which also performs STOP. 43057 $A831 END Perform END The current line number and text pointers are preserved for a possible CONT command, and the READY prompt is printed. If a STOP key break occurred, the BREAK message is printed first. 43095 $A857 CONT Perform CONT The CONT statement is performed by moving the saved pointers back to the current statement and current text character pointers. If the saved pointers cannot be retrieved, the CAN'T CONTINUE error statement is printed. 43121 $A871 RUN Perform RUN RUN is executed by calling the Kernal SETMSG (65048, $FE18) 98
+indirizzo_memoria_decimale: 42980
+indirizzo_memoria_hex: $A7E4
+man: Page 112
+
+---

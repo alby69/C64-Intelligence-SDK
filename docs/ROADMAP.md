@@ -13,3 +13,9 @@
 - **VSCode Extension**: Syntax highlighting, snippets, and integrated build tasks for a modern development experience.
 - **Native C64 Tools**: A small assembly-based tool to load and run scripts directly on the machine.
 - **Graphics Library**: Simple primitives for high-resolution graphics.
+- **Hardware DSL Architecture**: Implementing a 4-level abstraction layer for C64 hardware.
+    - *Level 0*: Pure Assembly / Native POKE.
+    - *Level 1*: Named memory symbols and registers.
+    - *Level 2*: Hardware operations (e.g., `set_border(RED)`).
+    - *Level 3*: High-level components (e.g., `Sprite` objects, `RasterIRQ` context managers).
+- **Automated Documentation Extraction**: PDF/EPUB to Markdown extraction for automated hardware library generation.

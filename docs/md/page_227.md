@@ -1,0 +1,17 @@
+# Memory Page 227
+
+nome: ATN
+descrizione: Perform ATN The arc tangent of the number in FACl (which represents the angle in radians) is evaluated using the 12-term series of operations from the constant table which follows. The answer is left in FACl. 58174 $E33E ATNCON Table of Constants for ATN Evaluation The table begins with a count byte of 11, which is followed by 12 constants in five-byte floating point representation. 58235 $E37B Warm Start BASIC This is the entry point into BASIC from the BRK routine at 65126 ($FE66), which is executed when the STOP and RESTORE keys are both pressed. It first executes the Kernal CLRCHN routine which closes all files. It then sets the default devices, resets the stack and BASIC program pointers, and jumps through the vector at 768 ($300) to the next routine to print the READY prompt and enter the main BASIC loop. 58251 $E38B Error Message Handler This routine to print error messages is pointed to by the vector at 768 ($300). Using the .X register as an index, it either prints an error message from the table at 41363 ($A193) or the READY prompt, and continues through the vector at 770 ($302) to the main BASIC loop. 58260 $E394 Cold Start BASIC This initialization routine is executed at the time of power-up. The RAM vectors to important BASIC routines are set up starting at 768 ($300), the interpreter is initialized, the start-up messages are printed, and the main loop entered through the end of the warm start routine. 58274 $E3A2 INITAT Text of the CHRGET Routine Which Runs at 115 ($73) The text of the CHRGET routine is stored here, and moved to Page 0 by the BASIC initialization routine. When creating a wedge in CHRGET, it is possible to execute all or part of this code in place of the RAM version. 211
+indirizzo_memoria_decimale: 58126
+indirizzo_memoria_hex: $E30E
+man: Page 225
+
+---
+
+nome: UNKNOWN
+descrizione: Initial RND Seed Value At power-up time, this five-byte floating point constant is transferred to 139 ($8B), where it functions as the starting RND seed number. Thus, if RND is not initialized with a negative or zero argument, it will always return the same sequence of numbers. 58303 $E3BF INIT Initialize BASIC This routine is called by the cold start routine to initialize all of the BASIC zero-page locations which have a fixed value. This includes copying the CHRGET routine from the ROM location above, to 115 ($73). 58402 $E422 Print BASIC Start-Up Messages This routine prints the start-up message "***♦ COMMODORE 64 BASIC V2 •***", calculates the amount of free memory, and prints the BYTES FREE message. 58439 $E447 Table of Vectors to Important BASIC Routines This table contains the vectors which point to the addresses of some important BASIC routines. The contents of this table are moved to the RAM table at 768 ($300). 58451 $E453 Copy BASIC Vectors to RAM The cold start routine calls this subroutine to copy the table of vectors to important BASIC routines to RAM, starting at location 768 ($300). 58464 $E460 WORDS Power-Up Messages The ASCII text of the start-up messages "**** COMMODORE 64 BASIC V2 ****" and "BYTES FREE" is stored here. Location Range: 58541-65535 ($E4AD$FFFF) Kemal I/O Routines After the conclusion of BASIC comes the part of this ROM which can be considered the Kemal proper. This part contains all of the vectored routines found in the jump table starting at 65409 ($FF81). 212
+indirizzo_memoria_decimale: 58298
+indirizzo_memoria_hex: $E3BA
+man: Page 226
+
+---

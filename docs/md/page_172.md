@@ -1,0 +1,9 @@
+# Memory Page 172
+
+nome: EXIGNT
+descrizione: ASCII Text for Input Error Messages The text stored here is ?EXTBIA IGNORED and ?REDO FROM START, each followed by a carriage return and a zero byte. 44318 $AD1E NEXT Perform NEXT NEXT is executed by finding the appropriate FOR data on the stack, adding the STEP value to the FOR variable, and comparing the result to the TO value. If the loop is done, the stack entries for that FOR command are removed from the stack. If the loop hasn't reached its limit, the pointers to the current statement and text character are updated from the FOR stack entry, which causes execution to continue with the statement after the FOR statement. 44426 $AD8A FRMNUM Evaluate a Numeric Expression and/or Check for Data Type Mismatch This routine can be called from different entry points to check the current data against the desired data type (string or numeric) to see if they match. If they don't, a TYPE MISMATCH error will result. 44446 $AD9E FRMEVL Evaluate Expression This is the beginning point of a very powerful group of subroutines which are used extensively by BASIC. The main purpose of these routines is to read in the ASCII text of BASIC expressions, separate the operators and terms of the ex- ^ j pression, check them for errors, combine the individual terms by t ) performing the indicated operations, and obtain a single value which the BASIC program can use. This can be a very complex task, as expressions can be of the | | string or numeric type, and can contain any type of variable, as well as constants. At the end, the flag which shows whether the resulting value is } ) string or numeric at 13 ($D) is set, and if the value is numeric, the — ' flag at 14 ($E) is set as well, to show if it is an integer or floating point number. j j 102
+indirizzo_memoria_decimale: 44284
+indirizzo_memoria_hex: $ACFC
+man: Page 116
+
+---

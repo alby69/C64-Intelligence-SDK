@@ -1,0 +1,9 @@
+# Memory Page 169
+
+nome: REM
+descrizione: Perfonn REM The REM statement is executed by skipping all program text until the beginning of the next statement. It is actually a part of the IF statement, which continues for a few bytes after the REM part. 43339 $A94B ONGOTO Perform ON GOTO or ON GOSUB ON is performed by converting the argument to an integer, and then skipping a number between commas each time that the integer is ' decremented until the argument reaches 0. If a GOTO or GOSUB is the next token, the current number between commas is used to execute one of those statements. If the numbers between commas are used up before the argument reaches 0, the statement has no effect, and the next statement is executed. 43371 $A96B LINGET Convert an ASCII Decimal Number to a Two-Byte Binary Line Number This subroutine is used by several statements to read a decimal number, convert it to a two-byte integer line number (in low-byte, highbyte format), and check that it is in the correct range of 0-63999. 43429 $A9A5 LET Perform LET The LET command causes variables to be created and initialized, or to have a new value assigned. It handles all types of array or nonarray variables: strings, floating point, integer, ST, TI, and TI$. The routine is composed of several subroutines that evaluate the variable, evaluate the assigned expression, check that the assigned value is suitable for a variable of that type, and then assign a value to the existing variable, or create a new variable. 43648 $ilLA80 PRINTN Perform PRINT# The PRINT# statement calls CMD and then doses the output channel with the Kemal CLRCHN routine (62259, $F333). 43654 $AA86 CMD Perform CMD This routine calls the Kemal CHKOUT routine (62032, $F250), and calls PRINT to send any included text to the device. Unlike PRINT* it leaves the output channel open, so that output continues to go to that device. 100
+indirizzo_memoria_decimale: 43323
+indirizzo_memoria_hex: $A93B
+man: Page 114
+
+---

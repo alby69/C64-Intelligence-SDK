@@ -1,0 +1,9 @@
+# Memory Page 4
+
+nome: VICSCN
+descrizione: Video Screen Memory Area This is the default location of the video screen memory area, which contains the video matrix and the sprite data pointers. Keep in mind, however, that the video screen memory area can be relocated to start on any even IK boundary. Its location at any given moment is determined by the VIC-II chip memory control register at 53272 ($D018), and the VIC-II memory bank select bits on CIA #2 Data Port A (56576, $DDOO). 1024-2023 $400-$7E7 Video Matrix: 25 Lines by 40 Columns The video matrix is where text screen characters are stored in RAM. Normally, the VIC-II chip will treat each byte of memory here as a screen display code and will display the text character that corresponds to that byte of code. The first byte of memory here will be displayed in the top-left corner of the screen, and subsequent bytes will be displayed in the columns to the right and the rows below that character. It is possible to make text or graphics characters appear on the screen by POKEing their screen codes directly into this area of RAM. For example, the letter A has a screen code value of 1 . Therefore, POKE 1024,1 should make the letter A appear in the top-left comer of the screen. However, you should be aware that the most current version of the Operating System initializes the color RAM which is used for the foreground color of text characters to the same value as the background color every time that the screen is cleared. The result is that although the POKE will put a blue A on the screen, you won't be able to see it because it is the same color blue as the background. This can be remedied by POKEing a different value into color RAM (which starts at 55296, $D800). 81
+indirizzo_memoria_decimale: 1024-2047
+indirizzo_memoria_hex: $400-$7FF
+man: Page 95
+
+---

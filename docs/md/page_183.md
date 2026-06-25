@@ -1,0 +1,9 @@
+# Memory Page 183
+
+nome: GETBYTC
+descrizione: Input a Parameter Whose Value Is Between 0 and 255 This routine reads numeric ASCII program text, converts it to an integer, checks that it is in the range 0-255, and stores it in the .X register. This routine can be useful for reading parameters from a USR statement or new commands. 47021 $B7AD VAL Perform VAL The VAL routine obtains the string pointer, and reads the string one character at a time until an invalid character is found (ASCII numbers, sign character, a single decimal point, exponent, and spaces are all valid). Then the string is changed to floating point. If no valid characters are found, a 0 is returned. 47083 $B7EB GETNUM Get a 16-Bit Address Parameter and an 8-Bit Parameter (for POKE and WAIT) This routine gets the next numeric parameter from the current place in program text. The routine evaluates it, checks that it is a positive integer within the range 0-65535, and changes it from floating point to a two-byte integer in 20-21 ($14-$15). It checks for and skips a comma, then gets a one-byte integer parameter in the .X register. The routine is used to get the parameters for POKE and WAIT. 47095 $B7F7 GETADR Convert a Floating Point Number to an Unsigned Two-Byte Integer This routine checks the number in the Floating Point Accumulator to make sure that it is a positive number less than 65536, and then calls the subroutine which converts floating point to integer. It is used to get address parameters, for commands such as PEEK. 47117 $B80D PEEK Perform PEEK PEEK reads the address parameter and converts it to a pointer. Then it gets the byte pointed to into the .Y register, and calls the part of POS that converts a single integer in .Y to a floating point number. 47140 $B824 POKE Perform POKE POKE gets a pointer to the address parameter, and stores the next parameter there. Ill
+indirizzo_memoria_decimale: 47003
+indirizzo_memoria_hex: $B79B
+man: Page 125
+
+---
