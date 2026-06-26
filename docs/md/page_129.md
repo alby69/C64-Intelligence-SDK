@@ -1,0 +1,9 @@
+# Memory Page 129
+
+nome: UNKNOWN
+descrizione: fileHeader Used to hold the header block for a GEOS file The header block contains the icon shape data information, the Commodore file tj^e, the GEOS file type, the starting and ending address data contained in the file, the initialization address, a permanent identifier, the author's name, and if the file is a data file, the name of the application file to which the data belongs. 33280-33535 $8200-$82FF curDirHeod Block containing directory header information for the disk in the currently selected drive 33536-33791 $8300-$83FF flleTrScTtib Buffer used to hold the track and sector chain for a file whose maximum size is 32,258 bytes. In order to save a file larger than this, use the partial-file read and write routines, and a special track and sector table of sufficient size. 33792-33821 $8400-$841D dlrEntryBuf Buffer used to build a file's directory entry 33822-33839 $841E-$842F DrACurDkNm Disk name of disk in drive A The first 16 characters are used for the name, the last 2 for the disk ID. 33840-33857 $8430-$8441 DrBCurDkNm Disk name of disk in drive B The first 16 characters are used for the name, the last 2 for the disk ID. 33858-33874 $8442-$8452 dcrtaFileName Name of the data file that is used to start an application This name is passed to the application. 33875-33892 $8453-$8464 dataDlskNamo The name of the disk on which the data file used to start the application is located 33893-33909 $8465-$8475 PmtFUename Name of the current printer driver The first 16 characters are used for the filename, the last character for a string terminator. 33910-33928 $8476-$8488 PrntDlskName The name of the disk on which the current printer driver is located The name of the disk is followed by a string terminator byte. 259
+indirizzo_memoria_decimale: 33024-33279
+indirizzo_memoria_hex: $8100-$81FF
+man: Page 273
+
+---

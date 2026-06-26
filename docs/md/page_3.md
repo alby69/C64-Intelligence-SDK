@@ -1,0 +1,73 @@
+# Memory Page 3
+
+nome: UNKNOWN
+descrizione: lERSOR Vector to the Print BASIC Error Message Routine This vector points to the address of the ERROR routine at 58251 ($E38B). 770-771 $302-$303 IMAIN Vector to the Main BASIC Program Loop This vector points to the address of the main BASIC program loop at 42115 ($A483). This is the routine that is operating when you are in the direct mode (READY). It executes statements, or stores them as program lines. 772-773 $304-$305 ICRNCH Vector to the Routine That Crunches the ASCII Text of Keywords into Tokens This vector points to the address of the CRUNCH routine at 42364 ($A57C). 774-775 $306-$307 IGLPLOP Vector to the Routine That Lists BASIC Program Token as ASCII Text This vector points to the address of the QPLOP routine at 42778 ($A71A). 69
+indirizzo_memoria_decimale: 768-769
+indirizzo_memoria_hex: $300-$301
+man: Page 83
+
+---
+
+nome: UNKNOWN
+descrizione: lEVAL Vector to the Routine That Evaluates a Single-Term Arithmetic Expression This vector points to the address of the EVAL routine at 44678 ($AE86) which, among other things, is used to evaluate BASIC functions such as INT and ABB. Location Range: 780-783 ($30C-$30F) Register Storage Area The BASIC SYS command uses this area to store 6510 internal registers— the Accumulator (.A), the .X and Y. index registers, and the status register, .P. Before every SYS command, each of the registers is loaded with the value found in the corresponding storage address. After the ML program finishes executing, and returns to BASIC with an RTS instruction, the new value of each register is stored in the appropriate storage address. This is true only of SYS, not of the similar USR command. This feature allows you to place the necessary preentry values into the registers from BASIC before you SYS to a Kemal or BASIC ML routine. It also enables you to examine the resulting effect of the routine on the registers, and to preserve the condition of the registers on exit for subsequent SYS calls. An extremely practical application comes immediately to mind. Although the 64's BASIC 2 has many commands for formatting printed characters on the monitor screen (for example, TAB, SPC, PRINT A$,B), there are none to adjust the vertical cursor position. There is a Kemal routine, PLOT (58634, $E50A), which will allow you to position the cursor an)where on the screen. In order to use it, however, you must first clear the carry flag (set it to 0), and then place the desired horizontal column number in the .Y register and the vertical row number in the .X register before entering the routine with a SYS 65520. Using the register storage area, we can print the word HELLO at row 10, column 5 with the following BASIC line: POKE 781,10:POKE 782,5:POKE 783,0:SYS 65520:PRINT "HELLO" You can also use these locations to help you take advantage of Kemal routines that retum information in the register. For example. 70
+indirizzo_memoria_decimale: 778-779
+indirizzo_memoria_hex: $30A-$30B
+man: Page 84
+
+---
+
+nome: SAREG
+descrizione: Storage Area for .A Register (Accumulator) 781 $30D SXREG Storage Area for .X Index Register 782 $30E SYREG Storage Area for .Y Index Register 783 $30F SPREG Storage Area for .P (Status) Register The Status (.P) register has seven different flags. Their bit assignments are as follows: Bit 7 (bit value of 128) = Negative Bit 6 (bit value of 64) = Overflow Bit 5 (bit value of 32) = Not Used Bit 4 (bit value of 16) = BREAK Bit 3 (bit value of 8) = Decimal Bit 2 (bit value of 4) = Interrupt Disable Bit 1 (bit value of 2) = Zero Bit 0 (bit value of 1) = Carry If you wish to clear any flag before a SYS, it is safe to clear them all with a POKE 783,0. The reverse is not true, however, as you must watch out for the Interrupt disable flag. A 1 in this flag bit is equal to an SEI instruction, which turns off all IRQ interrupts (like the one that reads the keyboard, for example). Turning off the keyboard could make the computer very difficult to operate! To set all flags except for Interrupt disable to 1, POKE 783,251. 784 $310 USRPOK Jump Instruction for User Function ($4C) The value here (76, $4C) is first part of the 6510 machine langauge JuMP instruction for the USR command. 71
+indirizzo_memoria_decimale: 780
+indirizzo_memoria_hex: $30C
+man: Page 85
+
+---
+
+nome: USRADD
+descrizione: Address of USR Routine (Low Byte First) These locations contain the target address of the USR command. They are initialized by the Operating System to point to the BASIC error message handler routine, so that if you try to execute a USR call without changing these values, you will receive an ILLEGAL QUANTITY error message. In order to successfully execute a USR call, you must first POKE in the target address in low-byte, high-byte order. You can calculate these two values for any address with the formula: HI=INT(AD/256):LO=AD-(HI*256) For example, if the USR routine started at 49152 ($C000), you would POKE 786,INT(49152/256):POKE 785,49152 -(PEEK(786)*256) before executing the USR command. What makes the USR command different from SYS is that you can pass a parameter into the machine language routine by placing it in parentheses after the USR keyword, and you can pass a parameter back to a variable by assigning its value to the USR function. In other words, the statement X=USR(50) will first put the number 50 in floating point format into the Floating Point Accumulator (FACl) at 97-102 ($61-$66). Then, the machine language program designated by the address at this vector will be executed. Finally, the variable X will be assigned the floating point value which ends up in FACl after the user-written routine is finished. Since floating point representation is difficult to work with, it is handy to change these floating point parameters to integers before working with them. Fortunately, there are vectored routines which will do the conversions for you. The routine vectored at locations 3-4 converts the number in FACl to a two-byte signed integer, with the low byte in the .Y register (and location 101 ($65)) and the high byte in the Accumulator (.A). Remember, that number is converted to a signed integer in the range between 32767 and -32768, with Bit 7 of the high byte used to indicate the sign. To pass a value back through the USR function, you need to place the number into FACl. To convert a singed integer to floating point format, place the high byte into the Accumulator (.A), the low byte into the .Y register, and jump through the vector at location 5-6 with a JMP ($0005) instruction. The floating point resuh will be left in FACl. 787 $313 Unused 72
+indirizzo_memoria_decimale: 785-786
+indirizzo_memoria_hex: $311-$312
+man: Page 86
+
+---
+
+nome: CINV
+descrizione: Vector to IRQ Interrupt Routine This vector points to the address of the routine that is executed / ] when an IRQ interrupt occurs (normally 59953 ($EA31)). At power-on, the CIA #1 Timer B is set to cause an IRQ interrupt to occur every 1/60 second. This vector is set to point to the routine which updates the software clock and STOP key check, blinks the cursor, maintains the tape interlock, and reads the keyboard. By changing this vector, the user can add or substitute a machine language routine that will likewise execute every 1 /60 second. The user who is writing IRQ interrupt routines should consider the following: 1. It is possible for an IRQ interrupt to occur while you are changing this vector, which would cause an error from which no recovery could be made. Therefore, you must disable all IRQ interrupts before changing the contents of this location, and reenable them afterwards, by using the 6510 SEI and CLI instructions, or by using the Kemal VECTOR routine (64794, $FD1A) to set this vector. 2. There is some code in ROM that is executed before the interrupt routine is directed through this vector. This code checks whether the source of the interrupt was an IRQ or the BRK instruction. It first preserves the contents of all the registers by pushing them onto the stack in the following sequence: PHA, TXA, PHA, TYA, PHA. It is up to the user to restore the stack at the end of his routine, either by exiting through the normal IRQ, or with the sequence: PLA, TAY, PLA, TAX, PLA, RTI. 3. There is only one IRQ vector, but there are many sources for IRQ interrupts (two CIA chips, and several VIC chip IRQs). If you plan to enable IRQs from more than one source, the IRQ routine here must determine the soxirce, and continue the routine in the appropriate place for an IRQ from that source. In the same vein, if you replace the normal IRQ routine with your own, you should be aware that the keyboard's scanning and clock update will not occur unless you call the old interrupt routine once every 1 /60 second. It is suggested that if you plan to use that routine, you save the old vector address in some other location. In I I that way, you can JuMP to the keyboard interrupt routine through this alternate vector, rather than assuming that the ROM address will never change and that it is safe to jump into the ROM directly. n 790-791 $316-$317 CBINV Vector: BRK Instruction Interrupt nThis vector points to the address of the routine which will be execut^ - ed anytime that a 6510 BRK instruction (00) is encountered. The default value points to a routine that calls several of the n
+indirizzo_memoria_decimale: 788-789
+indirizzo_memoria_hex: $314-$315
+man: Page 87
+
+---
+
+nome: NMINV
+descrizione: Vector: Non-Maskable Interrupt This vector points to the address of the routine that will be executed when a Non-Maskable Interrupt (NMI) occurs (currently at 65095, $FE47). There are two possible sources for an NMI interrupt. The first is the RESTORE key, which is connected directly to the 6510 NMI line. The second is CIA #2, the interrupt line of which is connected to the 6510 NMI line. When an NMI interrupt occurs, a ROM routine sets the Interrupt disable flag, and then jumps through this RAM vector. The default vector points to an interrupt routine which checks to see what the cause of the NMI was. If the cause was CIA #2, the routine checks to see if one of the RS-232 routines should be called. If the source was the RESTORE key, it checks for a cartridge, and if present, the cartridge is entered at the warm start entry point. If there is no cartridge, the STOP key is tested. If the STOP key was pressed at the same time as the RESTORE key, several of the Kernal initialization routines such as RESTOR, lONIT and part of CINT are executed, and BASIC is entered through its warm start vector at 40962. If the STOP key was not pressed simultaneously v«th RESTORE, the interrupt will end without letting the user know that anything happened at all when the RESTORE key was pressed. Since this vector controls the outcome of pressing the RESTORE key, it can be used to disable the STOP/RESTORE sequence. A simple way to do this is to change this vector to point to the RTI instruction. A simple POKE 792,193 will accomplish this. To set the vector back, POKE 792,71. Note that this will cut out all NMIs, including those required for RS-232 I/O. Location Range: 794-813 ($31A-$32D) Kernal Indirect Vectors There are 39 Kemal routines for which there are vectors in the jump table located at the top of the ROM (65409, $FF81). For ten of these 74
+indirizzo_memoria_decimale: 792-793
+indirizzo_memoria_hex: $318-$319
+man: Page 88
+
+---
+
+nome: UNKNOWN
+descrizione: lOPEN Vector to Kemal OPEN Routine (Currently at 62282, $F34A) 796-797 $31C-$31D ICLOSE Vector to Kernal CLOSE Routine (Currently at 62097, $F291) 798-799 $31E-$31F ICHKIN Vector to Kernal CHKIN Routine (Currently at 61966, $F20E) 800-801 $320-$321 ICKOUT Vector to Kernal CKOUT Routine (Currently at 62032, $F250) 802-803 $322-$323 ICLRCH Vector to Kernal CLRCHN Routine (Currently at 62259, $F333) n 804-805 $324-$325 IBASIN Vector to Kernal CHRIN Routine (Currently at 61783, $F157) n 806-807 $326-$327 IBSOUT ' ' Vector to Kernal CHROUT Routine (Currently at 61898, $F1CA) 808-809 $328-$329 ISTOP Vector to Kernal STOP Routine (Currently at 63213, $F6ED) This vector points to the address of the routine that tests the STOP f~l key. The STOP key can be disabled by changing this with a POKE ^ 808,239. This will not disable the STOP/RESTORE combination, however. To disable botii STOP and STOP/RESTORE, POKE 75
+indirizzo_memoria_decimale: 794-795
+indirizzo_memoria_hex: $31A-$31B
+man: Page 89
+
+---
+
+nome: IGETIN
+descrizione: Vector to Kernal GETIN Routine (Currently at 61758, $F13E) 812-813 $32C-$32D ICLALL Vector to Kemal CLALL Routine (Currently at 62255, $F32F) 814-815 $32E-$32F USRCMD Vector to User-Defined Command (Currently Points to BRK at 65126, $FE66) This appears to be a holdover from PET days, when the built-in ^nachine language monitor would JuMP through the USRCMD vector when it encountered a command that it did not understand, allowing the user to add new commands to the monitor. Although this vector is initialized to point to the routine called by STOP/RESTORE and the BRK interrupt, and is updated by the Kemal VECTOR routine (64794, $FD1A), it does not seem to have the function of aiding in the addition of new commands. 816-817 $330-$331 ILOAD Vector to Kemal LOAD Routine (Currently at 62622, $F49E) 818-819 $332-$333 ISAVE Vector: Kernal SAVE Routine (Currently at 62941, $F5DD) 820-827 $334-$33B Unused Eight free bytes for user vectors or other data. 828-1019 $33C-$3FB TBUFFER Cassette I/O Buffer This 192-byte buffer area is used to temporarily hold data that is read from or written to the tape device (device number 1). When not being used for tape I/O, the cassette buffer has long been a favorite place for Commodore programmers to place short machine language routines (although the 64 has 4K of unused RAM above the BASIC ROM at 49152 ($C000) that would probably better serve the purpose). Of more practical interest to the 64 programmer is the possible use of this area for VIC-II chip graphics memory (for example, sprite shape data or text character dot data). If the VIC-II chip is banked to the lowest 16K of memory (as is the default selection), there is very little memory space which can be used for such things as sprite 76
+indirizzo_memoria_decimale: 810-811
+indirizzo_memoria_hex: $32A-$32B
+man: Page 90
+
+---
+
+nome: UNKNOWN
+descrizione: Unused Four more free bytes. 77
+indirizzo_memoria_decimale: 1020-1023
+indirizzo_memoria_hex: $3FC-$3FF
+man: Page 91 The text on this page is estimated to be only 3.00% accurate □ y a P O u G U Q Page 92 Chapter 4 lKto40K Screen Memory, Sprite Pointers, and BASIC Program Text Page 93 The text on this page is estimated to be only 3.00% accurate □ y a P O u G U Q Page 94
+
+---

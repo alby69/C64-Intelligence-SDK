@@ -1,0 +1,17 @@
+# Memory Page 246
+
+nome: UNKNOWN
+descrizione: If in Direct Mode, Print SAVING and Filename 63131 $F69B UDTIM Update the Software Clock and Check for the STOP Key UDTIM is a documented Kemal routine which can be entered through the jump table at 65514 ($FFEA). It is normally called by the IRQ interrupt handler once every sixtieth of a second. It adds one to the value in the three-byte software jiffy clock at 160-162 ($A0-$A2), and sets the clock back to zero when it reaches the 24-hour point. In addition, it scans the keyboard row in which the STOP key is located, and stores the current value of that key in location 145 ($91). This variable is used by the STOP routine which checks for the STOP key. 63197 $F6DD RDTIM Read the Time From the Software Clock into the .A, .X, and .Y Registers This is a documented Kemal routine whose entry point in the jump table is 65502 ($FFDE). It reads the software clock (which counts sixtieths of a second) into the internal registers. The .Y register contains the most significant byte (from location 160, $A0), the .X register contains the middle byte (from location 161, $A1), and the Accumulator contains the least significant byte (from location 162, $A2). 63204 $F6E4 SETTIM Set the Software Clock from the .A, .X, and .Y Registers This documented Kemal routine can be entered from location 65499 ($FFDB). It performs the reverse operation from UDTIM, storing the value in the .Y register into location 160 ($A0), the .X register into 161 ($A1), and the Accumulator into 162 ($A2). Intermpts are first disabled, to make sure that the clock will not be updated while being set. 63213 $F6ED STOP Test STOP Key STOP is a documented Kemal routine which can be entered from the jump table at location 65505 ($EFE1). 232
+indirizzo_memoria_decimale: 63119
+indirizzo_memoria_hex: $F68F
+man: Page 246
+
+---
+
+nome: UNKNOWN
+descrizione: I J Set Kernal I/O Error Message This subroutine is used to handle I/O errors from Kernal I/O routines. It calls CLRCHN to restore default I/O devices. If Bit 6 of the flag at 157 ($9D) is set, it prints I/O ERROR followed by the error number, and then sets the Carry flag to indicate an error, with the error number in the Accumulator. The Kernal error messages are not used by BASIC, but may be used by machine language monitors and other applications. 63276 $F72C Get Next Tape File Header from Cassette This routine reads in tape blocks until it finds a file header block. It then prints the FOUND message along with the first 16 characters of the filename. 63338 $F76A Write Tape File Header Block 63440 $F7D0 Put Pointer to Tape Buffer in .X and .Y Registers 63447 $F7D7 Set I/O Area Start and End Pointers to Tape Buffer Start and End Address ^ 63466 $F7EA I 1^ Search Tape for a Filename _ 63511 $F817 Test Cassette Buttons and Handle Messages for Tape Read This routine tests the sense switch, and if no buttons are depressed it prints the PRESS PLAY ON TAPE message, and loops until a cassette button is pressed, or until the STOP key is pressed. If a button is pressed, it prints the message OK. Since the message printing routine is entered after the test for direct mode, these messages cannot be suppressed by changing the flag at 157 ($9D). You could have them harmlessly printed to ROM, however, by changing the value of HIBASE at 648 ($288) temporarily to 160, and then back to 4. 233
+indirizzo_memoria_decimale: 63227
+indirizzo_memoria_hex: $F6FB
+man: Page 247
+
+---

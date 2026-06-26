@@ -1,0 +1,9 @@
+# Memory Page 235
+
+nome: UNKNOWN
+descrizione: Keyboard Decode Table Vectors This table contains the two-byte addresses of the four keyboard decode tables ill low-byte, high-byte format. 60289 $EB81 Standard Keyboard Matrix Decode Table This table contains the 64 PETASCII values for the standard keyboard, one for each key which is struck by itself. The table is in keycode order (see the keycode table in Appendix H for the correspondence of keycode to key). A 65th byte with the value of 255 ($FF) marks the end of the table (this corresponds to a keypress value of 64, no key pressed). 60354 $EBC2 SHIFTed Keyboard Matrix Decode Table This table contains the 64 PETASCII values for the shifted keyboard, one for each key which is struck while the SHIFT key is pressed. The table is in keycode order (see the keycode table in Appendix H for the correspondence of keycode to key). A 65th byte with the value of 255 ($FF) marks the end of the table (this corresponds to a keypress value of 64, no key pressed). 60419 $EC03 Commodore Logo Keyboard Matrix Decode Table This table contains the 64 PETASCII values for the logo keyboard, one for each key which is struck while the Commodore logo key is pressed. The table is in keycode order (see the keycode table in Appendix H for the correspondence of keycode to key). A 65th byte with the value of 255 ($FF) marks the end of the table (this corresponds to a keypress value of 64, no key pressed). ' 60484 $EC44 Set Lowercase/Uppercase or Uppercase/Graphics Character Set Tl The part of the Kemal CHROUT routine that outputs to the screen ■ uses this subroutine to check for the special nonprinting characters that switch the character set (CHR$(14) and CHR$(142)). If one of 221
+indirizzo_memoria_decimale: 60281
+indirizzo_memoria_hex: $EB79
+man: Page 235
+
+---

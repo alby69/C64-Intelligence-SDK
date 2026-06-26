@@ -1,0 +1,9 @@
+# Memory Page 237
+
+nome: TKSA
+descrizione: Send a Secondary Address to a Device on the Serial Bus after TALK This is a documented Kemal routine that can be entered from the jump table at 65430 ($FF96). It sends a secondary address from the Accumulator to the device on the serial bus that has just been commanded to TALK. This is usually done to give the device more particular instructions on how the I/O is to be carried out before information is sent. 60893 $EDDD CIOUT Send a Byte to an I/O Device over the Serial Bus This is a documented Kemal routine which can be entered from the jump table at 65448 ($FFA8). Its purpose is to send a byte of data over the serial bus. In order for the data to be received, the serial device must have first been commanded to LISTEN and been given a secondary address if necessary. This routine always buffers the current character, and defers sending it until the next byte is buffered. When the UNLISTEN command is sent, the last byte will be sent with an End or Identify (EOI). 60911 $EDEF UNTLK Send UNTALK to a Device on the Serial Bus This is a documented Kemal routine whose entry in the jump table is 65451 ($FFAB). When called, it sends the UNTALK code (95, $5F) on the serial bus. This commands any TALKer on the bus to stop sending data. 60926 $EDFE UNLSN Send UNLISTEN to a Device on the Serial Bus This is a documented Kemal routine whose entry in the jump table is 65454 ($FFAE). It sends the UNLISTEN code (63, $3F) on the serial bus. This commands any LISTENers to get off the serial bus, and frees up the bus for other users. 60947 $EE13 ACPTR Receive a Byte of Data from a Device on the Serial Bus This is a documented Kemal routine whose entry point in the jump table is 65445 ($FFA5). When called, it will get a byte of data from the current TALKer on the serial bus and store it in the Accumulator. 224
+indirizzo_memoria_decimale: 60871
+indirizzo_memoria_hex: $EDC7
+man: Page 238
+
+---
