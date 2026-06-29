@@ -1,0 +1,51 @@
+# Graphics Test Example
+# Tests the new graphics functions
+
+def main():
+    clear_screen()
+    border_color(0)
+    screen_color(0)
+
+    println("GRAPHICS TEST")
+
+    # Setup Sprite 0
+    # Pointer at 2040, use block 128 ($2000)
+    sprite_pointer(0, 128)
+
+    # Create a pattern in sprite memory
+    for i in range(0, 63):
+        poke(8192 + i, $AA)
+
+    sprite_color(0, 7) # Yellow
+    sprite_pos(0, 100, 100)
+    sprite_enable(0, 1)
+
+    wait_frames(50)
+
+    # Test stretching
+    println("STRETCHING...")
+    sprite_stretch(0, 1, 1)
+    wait_frames(50)
+    sprite_stretch(0, 0, 0)
+
+    # Test multicolor sprite
+    println("MULTICOLOR SPRITE...")
+    sprite_config(2, 3) # Red, Cyan
+    sprite_multicolor(0, 1)
+    wait_frames(50)
+    sprite_multicolor(0, 0)
+
+    # Test Bitmap mode (SCROLY bit 5)
+    println("BITMAP MODE...")
+    bitmap_clear()
+    bitmap_mode(1)
+    wait_frames(100)
+    bitmap_mode(0)
+
+    # Test dynamic sprite pos
+    println("DYNAMIC SPRITE...")
+    for i in range(24, 250):
+        sprite_pos(0, i, i)
+        wait_frames(1)
+
+    println("DONE.")

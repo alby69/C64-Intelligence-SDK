@@ -7,13 +7,48 @@ def runtime_labels_and_bytes(base_addr):
     All offsets are relative to the runtime start (which gets appended
     after user code). Labels are resolved by the PRGBuilder.
     """
+    # Pre-calculate labels to allow cross-references
+    labels = {
+        '_cls': 0,
+        '_print_str': 6,
+        '_ps_loop': 12,
+        '_ps_done': 29,
+        '_ps_ret': 35,
+        '_print_byte': 42,
+        '_pb_hun': 47,
+        '_pb_tens': 84,
+        '_pb_ten': 61,
+        '_pb_ones': 68,
+        '_pb_do_tens': 92,
+        '_pb_one': 100,
+        '_wait_frames': 109,
+        '_wf_loop': 111,
+        '_wf_outer': 115,
+        '_wf_inner': 117,
+        '_mul_byte': 129,
+        '_mul_loop': 139,
+        '_mul_done': 145,
+        '_bitmap_clear': 146,
+        '_bc_loop': 158,
+        '_set_sprite_pos': 169,
+        '_ssp_off': 202,
+        '_set_sprite_bit': 214,
+        '_ssb_off': 238,
+        '_get_mask': 255,
+        '_gm_loop': 264,
+        '_gm_done': 269
+    }
     buf = bytearray()
-    labels = {}
     CHROUT = 0xFFD2
 
     def b(v): buf.append(v & 0xFF)
     def w(v): b(v); b((v >> 8) & 0xFF)
-    def label(name): labels[name] = len(buf)
+    def label(name):
+        if name not in labels:
+            labels[name] = len(buf)
+        elif labels[name] != len(buf):
+             # For now let's just update it to be sure
+             labels[name] = len(buf)
 
     # --- _cls: clear screen via KERNAL CHROUT ---
     label('_cls')
@@ -125,5 +160,71 @@ def runtime_labels_and_bytes(base_addr):
     b(0xD0); b(0xF9)           # BNE _mul_loop
     label('_mul_done')
     b(0x60)                     # RTS
+
+    # --- _bitmap_clear: clear 8000 bytes at $2000 ---
+    label('_bitmap_clear')
+    b(0xA9); b(0x20); b(0x85); b(0xFC) # LDA #$20 / STA $FC (HI)
+    b(0xA9); b(0x00); b(0x85); b(0xFB) # LDA #$00 / STA $FB (LO)
+    b(0xA2); b(0x20)                   # LDX #32 (32 * 256 = 8192 bytes, enough for 8000)
+    b(0xA0); b(0x00)                   # LDY #0
+    label('_bc_loop')
+    b(0x91); b(0xFB)                   # STA ($FB),Y
+    b(0xC8)                             # INY
+    b(0xD0); b(0xFB)                   # BNE _bc_loop
+    b(0xE6); b(0xFC)                   # INC $FC
+    b(0xCA)                             # DEX
+    b(0xD0); b(0xF6)                   # BNE _bc_loop
+    b(0x60)                             # RTS
+
+    # --- _set_sprite_pos: set sprite pos (idx=A, x=$FB/FC, y=X) ---
+    label('_set_sprite_pos')
+    b(0x48)                             # PHA (idx)
+    b(0x0A); b(0xA8)                   # ASL / TAY
+    b(0x8A); b(0x99); w(0xD001)         # TXA / STA $D001,Y
+    b(0xA5); b(0xFB); b(0x99); w(0xD000) # LDA $FB / STA $D000,Y
+    b(0x68); b(0x20); w(base_addr + labels['_get_mask']) # PLA / JSR _get_mask
+    b(0x85); b(0xFD)                   # STA $FD (mask)
+    b(0xA5); b(0xFC); b(0xF0); b(0x0A)  # LDA $FC / BEQ _ssp_off
+    # X > 255
+    b(0xAD); w(0xD010); b(0x05); b(0xFD) # LDA $D010 / ORA $FD
+    b(0x8D); w(0xD010); b(0x60)         # STA $D010 / RTS
+    label('_ssp_off')
+    b(0xA5); b(0xFD); b(0x49); b(0xFF)  # LDA $FD / EOR #$FF
+    b(0x2D); w(0xD010); b(0x8D); w(0xD010) # AND $D010 / STA $D010
+    b(0x60)                             # RTS
+
+    # --- _set_sprite_bit: A=idx, X=on, $FC/FD=reg_addr ---
+    label('_set_sprite_bit')
+    b(0x48)                             # PHA (idx)
+    b(0x20); w(base_addr + labels['_get_mask']) # JSR _get_mask
+    b(0x85); b(0xFE)                   # STA $FE (mask)
+    b(0x8A); b(0xF0); b(0x0E)           # TXA / BEQ _ssb_off
+    # ON
+    b(0xA0); b(0x00); b(0xB1); b(0xFC)  # LDY #0 / LDA ($FC),Y
+    b(0x05); b(0xFE)                   # ORA $FE
+    b(0x91); b(0xFC)                   # STA ($FC),Y
+    b(0x68); b(0x60)                   # PLA / RTS
+    label('_ssb_off')
+    # OFF
+    b(0xA5); b(0xFE); b(0x49); b(0xFF)  # LDA $FE / EOR #$FF
+    b(0x85); b(0xFE)                   # STA $FE (inv mask)
+    b(0xA0); b(0x00); b(0xB1); b(0xFC)  # LDY #0 / LDA ($FC),Y
+    b(0x25); b(0xFE)                   # AND $FE
+    b(0x91); b(0xFC)                   # STA ($FC),Y
+    b(0x68); b(0x60)                   # PLA / RTS
+
+    # --- _get_mask: A = 1 << A (0-7) ---
+    label('_get_mask')
+    b(0x48)                             # PHA
+    b(0xA9); b(0x01)                   # LDA #1
+    b(0x85); b(0xFB)                   # STA $FB
+    b(0x68); b(0xAA)                   # PLA / TAX
+    b(0xF0); b(0x07)                   # BEQ _gm_done
+    label('_gm_loop')
+    b(0x06); b(0xFB)                   # ASL $FB
+    b(0xCA); b(0xD0); b(0xFA)           # DEX / BNE _gm_loop
+    label('_gm_done')
+    b(0xA5); b(0xFB)                   # LDA $FB
+    b(0x60)                             # RTS
 
     return labels, bytes(buf)
