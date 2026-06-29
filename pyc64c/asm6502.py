@@ -33,7 +33,7 @@ RE_CHAR      = re.compile(r"'([^'\\])'")
 RE_DEC       = re.compile(r'^(-?\d+)')
 RE_HEX       = re.compile(r'^([0-9A-Fa-f]+)')
 RE_BIN       = re.compile(r'^([01]+)')
-RE_IDENT     = re.compile(r'^([A-Za-z_][A-Za-z0-9_]*)')
+RE_IDENT     = re.compile(r'^([A-Za-z_][A-Za-z0-9_.]*)')
 
 class _Token:
     INT, IDENT, OP = 'INT', 'IDENT', 'OP'
@@ -220,6 +220,15 @@ def _classify(line):
         return LT_EMPTY, None
     if s.startswith(';') or s.startswith('//'):
         return LT_COMMENT, None
+
+    # Check for Assignment (A = B)
+    if '=' in s:
+        parts = s.split('=', 1)
+        name = parts[0].strip()
+        expr = parts[1].strip()
+        if RE_IDENT.match(name):
+            return LT_DIR, ('EQU', f"{name},{expr}")
+
     # Label
     m = RE_LABEL.match(s)
     if m:
@@ -251,7 +260,7 @@ class Asm6502:
         self._fixups = []      # list of fixup records
         self._global_scope = ''  # for local labels
 
-    def assemble(self, source, origin=0x0801):
+    def assemble(self, source, origin=0x0801, filepath=None):
         self.labels.clear()
         self._segments.clear()
         self._cur_seg = bytearray()
@@ -261,24 +270,11 @@ class Asm6502:
         self._listing = []
         self._fixups = []
 
-        raw_lines = source.split('\n')
         self._lines = []
-        for i, rl in enumerate(raw_lines):
-            # Strip inline comments (; or //)
-            clean = rl
-            for sep in (';', '//'):
-                idx = clean.find(sep)
-                if idx >= 0:
-                    # Only if not inside a string
-                    in_str = False
-                    for j in range(idx):
-                        if clean[j] == '"':
-                            in_str = not in_str
-                    if not in_str:
-                        clean = clean[:idx]
-                        break
-            typ, data = _classify(clean)
-            self._lines.append((typ, data, rl, i + 1))
+        self._load_source(source, filepath)
+
+        if self._errors:
+            return self._errors
 
         # Phase 1: collect all global label definitions
         self._phase1_labels()
@@ -333,12 +329,50 @@ class Asm6502:
 
     # --- Phase 1: collect labels ---
 
+    def _load_source(self, source, filepath=None):
+        raw_lines = source.split('\n')
+        for i, rl in enumerate(raw_lines):
+            # Strip inline comments (; or //)
+            clean = rl
+            for sep in (';', '//'):
+                idx = clean.find(sep)
+                if idx >= 0:
+                    # Only if not inside a string
+                    in_str = False
+                    for j in range(idx):
+                        if clean[j] == '"':
+                            in_str = not in_str
+                    if not in_str:
+                        clean = clean[:idx]
+                        break
+            typ, data = _classify(clean)
+
+            if typ == LT_DIR and data[0].lower() == 'include':
+                m = RE_STR.match(data[1].strip())
+                if m:
+                    inc_path = m.group(1)
+                    if filepath:
+                        inc_path = os.path.join(os.path.dirname(filepath), inc_path)
+
+                    if os.path.exists(inc_path):
+                        try:
+                            with open(inc_path, 'r') as f:
+                                inc_src = f.read()
+                            self._load_source(inc_src, inc_path)
+                        except Exception as e:
+                            self._errors.append({'line': i + 1, 'msg': f"Error reading include '{inc_path}': {e}", 'file': filepath})
+                    else:
+                        self._errors.append({'line': i + 1, 'msg': f"Include file not found: '{inc_path}'", 'file': filepath})
+                continue
+
+            self._lines.append((typ, data, rl, i + 1, filepath))
+
     def _phase1_labels(self):
         self._pc = self._cur_org
-        self._global_scope = ''
+        self._global_scope = 'GLOBAL'
         i = 0
         while i < len(self._lines):
-            typ, data, raw, lnum = self._lines[i]
+            typ, data, raw, lnum, fpath = self._lines[i]
             i += 1
 
             if typ == LT_EMPTY or typ == LT_COMMENT:
@@ -348,13 +382,14 @@ class Asm6502:
             if typ == LT_LABEL:
                 label, rest = data
                 if label.startswith('.'):
-                    label = self._global_scope + label
+                    full_label = self._global_scope + label
                 else:
                     self._global_scope = label
-                if label in self.labels:
-                    self._errors.append({'line': lnum, 'msg': f"Duplicate label: '{label}'"})
+                    full_label = label
+                if full_label in self.labels:
+                    self._errors.append({'line': lnum, 'msg': f"Duplicate label: '{full_label}'"})
                 else:
-                    self.labels[label] = self._pc
+                    self.labels[full_label] = self._pc
                 if rest:
                     # Re-classify the rest
                     sub_typ, sub_data = _classify(rest)
@@ -367,13 +402,22 @@ class Asm6502:
 
             if typ == LT_DIR:
                 dname, args = data
-                self._dir_size(dname, args, lnum)
+                self._dir_size(dname, args, lnum, fpath)
             elif typ == LT_INSTR:
                 mnem, args = data
                 self._instr_size(mnem, args, lnum)
 
-    def _dir_size(self, dname, args, lnum):
+    def _dir_size(self, dname, args, lnum, fpath=None):
         dname = dname.lower()
+        if dname == 'equ':
+            parts = args.split(',', 1)
+            if len(parts) == 2:
+                name = parts[0].strip()
+                expr = parts[1].strip()
+                val = self._eval(expr, lnum)
+                if val.get('ok') is not None:
+                    self.labels[name] = val['ok']
+            return
         if dname == 'org':
             val = self._eval(args, lnum)
             if val.get('ok') is not None:
@@ -431,13 +475,17 @@ class Asm6502:
             if val.get('ok') is not None and val['ok'] > 0:
                 pad = (val['ok'] - (self._pc % val['ok'])) % val['ok']
                 self._pc += pad
-        elif dname in ('include', 'incbin'):
+        elif dname == 'incbin':
             m = RE_STR.match(args.strip())
             if m:
                 path = m.group(1)
+                if fpath:
+                    path = os.path.join(os.path.dirname(fpath), path)
                 if os.path.exists(path):
                     with open(path, 'rb') as fh:
                         self._pc += len(fh.read())
+                else:
+                    self._errors.append({'line': lnum, 'msg': f"incbin file not found: {path}", 'file': fpath})
 
     def _instr_size(self, mnem, args, lnum):
         mnem = mnem.upper()
@@ -490,9 +538,10 @@ class Asm6502:
         self._pc = self._cur_org
         self._cur_seg = bytearray()
         self._seg_start = self._cur_org
-        self._global_scope = ''
+        self._global_scope = 'GLOBAL'
 
-        for typ, data, raw, lnum in self._lines:
+        for typ, data, raw, lnum, fpath in self._lines:
+
             if typ == LT_EMPTY:
                 self._listing.append({'addr': self._pc, 'bytes': [], 'text': raw})
                 continue
@@ -503,28 +552,33 @@ class Asm6502:
             if typ == LT_LABEL:
                 label, rest = data
                 if label.startswith('.'):
-                    label = self._global_scope + label
+                    full_label = self._global_scope + label
                 else:
                     self._global_scope = label
-                self._listing.append({'addr': self._pc, 'bytes': [], 'isLabel': True, 'labelName': label, 'text': raw})
+                    full_label = label
+                self._listing.append({'addr': self._pc, 'bytes': [], 'isLabel': True, 'labelName': full_label, 'text': raw})
                 if rest:
                     sub_typ, sub_data = _classify(rest)
                     if sub_typ == LT_DIR:
-                        self._emit_dir(sub_data[0], sub_data[1], lnum, raw)
+                        self._emit_dir(sub_data[0], sub_data[1], lnum, raw, fpath)
                     elif sub_typ == LT_INSTR:
                         self._emit_instr(sub_data[0], sub_data[1], lnum, raw)
                 continue
 
             if typ == LT_DIR:
-                self._emit_dir(data[0], data[1], lnum, raw)
+                self._emit_dir(data[0], data[1], lnum, raw, fpath)
             elif typ == LT_INSTR:
-                self._emit_instr(data[0], data[1], lnum, raw)
+                self._emit_instr(data[0], data[1], lnum, raw, fpath)
             else:
                 self._listing.append({'addr': self._pc, 'bytes': [], 'text': raw})
 
-    def _emit_dir(self, dname, args, lnum, raw):
+    def _emit_dir(self, dname, args, lnum, raw, fpath=None):
         dname = dname.lower()
         orig_pc = self._pc
+
+        if dname == 'equ':
+            self._listing.append({'addr': self._pc, 'bytes': [], 'text': raw})
+            return
 
         if dname == 'org':
             val = self._eval(args, lnum)
@@ -612,10 +666,12 @@ class Asm6502:
             self._listing.append({'addr': orig_pc, 'bytes': [], 'text': raw})
             return
 
-        if dname in ('include', 'incbin'):
+        if dname == 'incbin':
             m = RE_STR.match(args.strip())
             if m:
                 path = m.group(1)
+                if fpath:
+                    path = os.path.join(os.path.dirname(fpath), path)
                 if os.path.exists(path):
                     with open(path, 'rb') as fh:
                         inc = fh.read()
@@ -623,16 +679,16 @@ class Asm6502:
                     self._pc += len(inc)
                     self._listing.append({'addr': orig_pc, 'bytes': list(inc[:16]), 'text': raw})
                 else:
-                    self._errors.append({'line': lnum, 'msg': f"File not found: '{path}'"})
+                    self._errors.append({'line': lnum, 'msg': f"incbin file not found: {path}", 'file': fpath})
                     self._listing.append({'addr': orig_pc, 'bytes': [], 'text': raw})
             else:
-                self._errors.append({'line': lnum, 'msg': '.include: expected filename'})
+                self._errors.append({'line': lnum, 'msg': '.incbin: expected filename', 'file': fpath})
             return
 
         self._errors.append({'line': lnum, 'msg': f"Unknown directive: .{dname}"})
         self._listing.append({'addr': orig_pc, 'bytes': [], 'text': raw})
 
-    def _emit_instr(self, mnem, args, lnum, raw):
+    def _emit_instr(self, mnem, args, lnum, raw, fpath=None):
         mnem = mnem.upper()
         if mnem not in OPS:
             self._errors.append({'line': lnum, 'msg': f"Unknown mnemonic: '{mnem}'"})
@@ -755,10 +811,10 @@ class Asm6502:
                 self._fixups.append({
                     'at': len(self._cur_seg) - 1, 'seg': len(self._segments),
                     'size': 1, 'type': 'rel', 'label': operand, 'line': lnum,
-                    'instr_end': self._pc
+                    'instr_end': self._pc, 'file': fpath, 'scope': self._global_scope
                 })
                 return
-            self._errors.append({'line': lnum, 'msg': f"{mnem}: {val['err']}"})
+            self._errors.append({'line': lnum, 'msg': f"{mnem}: {val['err']}", 'file': fpath})
             self._listing.append({'addr': orig_pc, 'bytes': [], 'text': raw})
             return
 
@@ -801,7 +857,7 @@ class Asm6502:
                     self._fixups.append({
                         'at': len(self._cur_seg) + 1, 'seg': len(self._segments),
                         'size': 1, 'type': 'rel', 'label': operand, 'line': lnum,
-                        'instr_end': self._pc + 2
+                        'instr_end': self._pc + 2, 'file': fpath, 'scope': self._global_scope
                     })
                     self._cur_seg.append(ops['rel'])
                     self._cur_seg.append(0)
@@ -839,6 +895,7 @@ class Asm6502:
     def _resolve_fixups(self):
         for fx in self._fixups:
             label = fx['label']
+            fpath = fx.get('file')
             offset = 0
             if '+' in label:
                 parts = label.rsplit('+', 1)
@@ -847,10 +904,15 @@ class Asm6502:
                     label = parts[0]
                 except ValueError:
                     pass
-            if label not in self.labels:
-                self._errors.append({'line': fx['line'], 'msg': f"Unresolved symbol: {label}"})
+
+            full_label = label
+            if label.startswith('.') and 'scope' in fx:
+                full_label = fx['scope'] + label
+
+            if full_label not in self.labels:
+                self._errors.append({'line': fx['line'], 'msg': f"Unresolved symbol: {full_label}", 'file': fpath})
                 continue
-            target = self.labels[label] + offset
+            target = self.labels[full_label] + offset
             seg_idx = fx['seg']
             at = fx['at']
             if seg_idx < len(self._segments):
@@ -860,7 +922,7 @@ class Asm6502:
                     instr_end = fx['instr_end']
                     delta = target - instr_end
                     if delta < -128 or delta > 127:
-                        self._errors.append({'line': fx['line'], 'msg': f"Branch out of range: {label} (delta={delta})"})
+                        self._errors.append({'line': fx['line'], 'msg': f"Branch out of range: {full_label} (delta={delta})", 'file': fpath})
                     else:
                         if 0 <= at < len(buf):
                             buf[at] = delta & 0xFF
@@ -876,8 +938,21 @@ class Asm6502:
     # --- Expression evaluation ---
 
     def _eval(self, text, lnum):
+        # Handle local labels in expressions
+        processed_text = text
+        if text.startswith('.'):
+            processed_text = self._global_scope + text
+        else:
+            # Check for local labels preceded by non-alphanumerics
+            def replace_local(m):
+                return m.group(1) + self._global_scope + m.group(2)
+            processed_text = re.sub(r'([^A-Za-z0-9_])(\.[A-Za-z_][A-Za-z0-9_]*)', replace_local, text)
+            # Special case for branch instructions where text is JUST the local label
+            if re.match(r'^\.[A-Za-z_][A-Za-z0-9_]*$', text):
+                processed_text = self._global_scope + text
+
         ep = _ExprParser(self.labels, lnum)
-        return ep.parse(text)
+        return ep.parse(processed_text)
 
     # --- Helpers ---
 
