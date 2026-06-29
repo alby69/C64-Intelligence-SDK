@@ -148,10 +148,52 @@ class BASICGenerator:
             self.add(f'FOR TI=1 TO {self._expr(args[0])}:WAIT 53266,128:NEXT')
         elif name == 'clear_screen':
             self.add('PRINT CHR$(147)')
+        elif name == 'bitmap_clear':
+            self.add('FOR I=8192 TO 16191:POKE I,0:NEXT')
         elif name == 'border_color':
             self.add(f'POKE 53280,{self._expr(args[0])}')
         elif name == 'screen_color':
             self.add(f'POKE 53281,{self._expr(args[0])}')
+        elif name == 'sprite_enable':
+            idx = self._expr(args[0])
+            on = self._expr(args[1])
+            self.add(f'V=PEEK(53269):IF {on} THEN POKE 53269,V OR (2^{idx}) ELSE POKE 53269,V AND (255-2^{idx})')
+        elif name == 'sprite_pos':
+            idx = self._expr(args[0])
+            x = self._expr(args[1])
+            y = self._expr(args[2])
+            self.add(f'POKE 53248+{idx}*2,{x} AND 255:POKE 53249+{idx}*2,{y}')
+            self.add(f'V=PEEK(53264):IF {x}>255 THEN POKE 53264,V OR (2^{idx}) ELSE POKE 53264,V AND (255-2^{idx})')
+        elif name == 'sprite_color':
+            self.add(f'POKE 53287+{self._expr(args[0])},{self._expr(args[1])}')
+        elif name == 'sprite_multicolor':
+            idx = self._expr(args[0])
+            on = self._expr(args[1])
+            self.add(f'V=PEEK(53276):IF {on} THEN POKE 53276,V OR (2^{idx}) ELSE POKE 53276,V AND (255-2^{idx})')
+        elif name == 'sprite_config':
+            self.add(f'POKE 53285,{self._expr(args[0])}:POKE 53286,{self._expr(args[1])}')
+        elif name == 'bitmap_mode':
+            on = self._expr(args[0])
+            self.add(f'V=PEEK(53265):IF {on} THEN POKE 53265,V OR 32 ELSE POKE 53265,V AND 223')
+        elif name == 'multicolor_mode':
+            on = self._expr(args[0])
+            self.add(f'V=PEEK(53270):IF {on} THEN POKE 53270,V OR 16 ELSE POKE 53270,V AND 239')
+        elif name == 'sprite_stretch':
+            idx = self._expr(args[0])
+            h = self._expr(args[1])
+            v = self._expr(args[2])
+            self.add(f'V=PEEK(53277):IF {h} THEN POKE 53277,V OR (2^{idx}) ELSE POKE 53277,V AND (255-2^{idx})')
+            self.add(f'V=PEEK(53271):IF {v} THEN POKE 53271,V OR (2^{idx}) ELSE POKE 53271,V AND (255-2^{idx})')
+        elif name == 'sprite_pointer':
+            idx = self._expr(args[0])
+            ptr = self._expr(args[1])
+            self.add(f'POKE 2040+{idx},{ptr}')
+        elif name == 'sprite_collision_sprite':
+            self.add('V=PEEK(53278)')
+        elif name == 'sprite_collision_data':
+            self.add('V=PEEK(53279)')
+        elif name == 'raster_line':
+            self.add('V=PEEK(53266)')
         elif name in ('peek',):
             self.add(f'PEEK({self._expr(args[0])})')
         else:
@@ -185,6 +227,12 @@ class BASICGenerator:
         args = e['args']
         if name == 'peek':
             return 'PEEK(' + self._expr(args[0]) + ')'
+        if name == 'sprite_collision_sprite':
+            return 'PEEK(53278)'
+        if name == 'sprite_collision_data':
+            return 'PEEK(53279)'
+        if name == 'raster_line':
+            return 'PEEK(53266)'
         return '0'
 
     def _expr_binary(self, e):

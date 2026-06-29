@@ -94,6 +94,11 @@ class PRGBuilder:
             'println': '_print_str',
             'wait': '_wait_frames',
             'wait_frames': '_wait_frames',
+            'bitmap_clear': '_bitmap_clear',
+            'sprite_enable': '_set_sprite_bit',
+            'sprite_pos': '_set_sprite_pos',
+            'sprite_multicolor': '_set_sprite_bit',
+            'sprite_stretch': '_set_sprite_bit',
         }
         runtime_names = set()
         for builtin, rt in builtin_to_runtime.items():

@@ -352,6 +352,10 @@ class CodeGenerator:
             self.e.jsr('_cls', 'clear_screen')
             return
 
+        if name == 'bitmap_clear':
+            self.e.jsr('_bitmap_clear', 'bitmap_clear')
+            return
+
         if name in ('border_color',):
             if args:
                 self._emit_expr_to_a(args[0])
@@ -368,6 +372,118 @@ class CodeGenerator:
             if args:
                 self._emit_expr_to_a(args[0])
                 self.e.jsr('_wait_frames', 'wait frames')
+            return
+
+        if name == 'sprite_collision_sprite':
+            self.e.abs('LDA', 0xD01E, 'sprite-sprite collision')
+            return
+
+        if name == 'sprite_collision_data':
+            self.e.abs('LDA', 0xD01F, 'sprite-data collision')
+            return
+
+        if name == 'raster_line':
+            self.e.abs('LDA', 0xD012, 'raster line')
+            return
+
+        if name == 'sprite_enable':
+            if len(args) >= 2:
+                # reg $D015 -> $FC/FD
+                self.e.imm('LDA', 0x15)
+                self.e.zp('STA', 0xFC)
+                self.e.imm('LDA', 0xD0)
+                self.e.zp('STA', 0xFD)
+                self._emit_expr_to_a(args[0])
+                self.e.zp('STA', 0xFE, 'idx -> $FE')
+                self._emit_expr_to_a(args[1])
+                self.e.imp('TAX', 'on/off -> X')
+                self.e.zp('LDA', 0xFE, 'idx')
+                self.e.jsr('_set_sprite_bit', 'call set_sprite_bit')
+            return
+
+        if name == 'sprite_pos':
+            if len(args) >= 3:
+                # idx, x, y
+                # idx -> A, x -> $FB/FC, y -> X
+                self._emit_word_to_fb_fc(args[1]) # x
+                self._emit_expr_to_x(args[2])    # y
+                self._emit_expr_to_a(args[0])    # idx
+                self.e.jsr('_set_sprite_pos', 'call set_sprite_pos')
+            return
+
+        if name == 'sprite_color':
+            if len(args) >= 2:
+                self._emit_expr_to_a(args[1])
+                self.e.imp('TAX', 'color -> X')
+                self._emit_expr_to_a(args[0])
+                self.e.imp('TAY', 'idx -> Y')
+                self.e.aby('STX', 0xD027, 'STX $D027,Y')
+            return
+
+        if name == 'sprite_pointer':
+            if len(args) >= 2:
+                self._emit_expr_to_a(args[1])
+                self.e.imp('TAX', 'ptr -> X')
+                self._emit_expr_to_a(args[0])
+                self.e.imp('TAY', 'idx -> Y')
+                self.e.aby('STX', 0x07F8, 'STX $07F8,Y')
+            return
+
+        if name == 'bitmap_mode':
+            if args:
+                on_val = args[0].get('value') if args[0]['k'] == 'Literal' else None
+                self.e.abs('LDA', 0xD011, 'read SCROLY')
+                if on_val:
+                    self.e.imm('ORA', 0x20, 'set BMM')
+                else:
+                    self.e.imm('AND', 0xDF, 'clear BMM')
+                self.e.abs('STA', 0xD011, 'write SCROLY')
+            return
+
+        if name == 'multicolor_mode':
+            if args:
+                on_val = args[0].get('value') if args[0]['k'] == 'Literal' else None
+                self.e.abs('LDA', 0xD016, 'read SCROLX')
+                if on_val:
+                    self.e.imm('ORA', 0x10, 'set MCM')
+                else:
+                    self.e.imm('AND', 0xEF, 'clear MCM')
+                self.e.abs('STA', 0xD016, 'write SCROLX')
+            return
+
+        if name == 'sprite_multicolor':
+            if len(args) >= 2:
+                self.e.imm('LDA', 0x1C); self.e.zp('STA', 0xFC)
+                self.e.imm('LDA', 0xD0); self.e.zp('STA', 0xFD)
+                self._emit_expr_to_a(args[0]); self.e.zp('STA', 0xFE)
+                self._emit_expr_to_a(args[1]); self.e.imp('TAX')
+                self.e.zp('LDA', 0xFE)
+                self.e.jsr('_set_sprite_bit', 'call set_sprite_bit')
+            return
+
+        if name == 'sprite_stretch':
+            if len(args) >= 3:
+                self._emit_expr_to_a(args[0]); self.e.zp('STA', 0xFE)
+                # H
+                self.e.imm('LDA', 0x1D); self.e.zp('STA', 0xFC)
+                self.e.imm('LDA', 0xD0); self.e.zp('STA', 0xFD)
+                self._emit_expr_to_a(args[1]); self.e.imp('TAX')
+                self.e.zp('LDA', 0xFE)
+                self.e.jsr('_set_sprite_bit', 'X stretch')
+                # V
+                self.e.imm('LDA', 0x17); self.e.zp('STA', 0xFC)
+                self.e.imm('LDA', 0xD0); self.e.zp('STA', 0xFD)
+                self._emit_expr_to_a(args[2]); self.e.imp('TAX')
+                self.e.zp('LDA', 0xFE)
+                self.e.jsr('_set_sprite_bit', 'Y stretch')
+            return
+
+        if name == 'sprite_config':
+            if len(args) >= 2:
+                self._emit_expr_to_a(args[0])
+                self.e.abs('STA', 0xD025, 'sprite multicolor 0')
+                self._emit_expr_to_a(args[1])
+                self.e.abs('STA', 0xD026, 'sprite multicolor 1')
             return
 
         if name in ('sei',):
@@ -538,6 +654,41 @@ class CodeGenerator:
     def _emit_expr_to_y(self, node, comment=''):
         self._emit_expr_to_a(node)
         self.e.imp('TAY', comment)
+
+    def _emit_word_to_fb_fc(self, node):
+        if node['k'] == 'Literal':
+            val = node['value']
+            self.e.imm('LDA', val & 0xFF)
+            self.e.zp('STA', 0xFB)
+            self.e.imm('LDA', (val >> 8) & 0xFF)
+            self.e.zp('STA', 0xFC)
+        elif node['k'] == 'Ident':
+            var = self._var(node['name'])
+            if var:
+                if var['isZP']:
+                    self.e.zp('LDA', var['addr'])
+                    self.e.zp('STA', 0xFB)
+                    if self._is_16(node):
+                        self.e.zp('LDA', var['addr'] + 1)
+                        self.e.zp('STA', 0xFC)
+                    else:
+                        self.e.imm('LDA', 0)
+                        self.e.zp('STA', 0xFC)
+                else:
+                    addr = var.get('addr') or var.get('bss_label', 0)
+                    self.e.abs('LDA', addr)
+                    self.e.zp('STA', 0xFB)
+                    if self._is_16(node):
+                        self.e.abs('LDA', addr + 1)
+                        self.e.zp('STA', 0xFC)
+                    else:
+                        self.e.imm('LDA', 0)
+                        self.e.zp('STA', 0xFC)
+        else:
+            self._emit_expr_to_a(node)
+            self.e.zp('STA', 0xFB)
+            self.e.imm('LDA', 0)
+            self.e.zp('STA', 0xFC)
 
     def get_bytecode(self):
         return self.e.buf
