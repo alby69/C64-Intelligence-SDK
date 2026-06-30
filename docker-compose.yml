@@ -1,26 +1,25 @@
-version: '3.8'
-
 services:
-  # Il Core basato su C64-LLM
-  c64-core:
+  # Interfaccia Gradio (C64-LLM AI Assistant)
+  c64-ui:
     build:
       context: ./core
       dockerfile: Dockerfile
     container_name: c64_intelligence_core
     volumes:
       - ./core:/app
-      - ./tools:/app/tools          # Integrazione PYC64
-      - ./tutorial:/app/tutorial    # Integrazione C64GameTutorial
+      - ./tools:/app/tools
+      - ./tutorial:/app/tutorial
       - ./data:/app/data
-      - ./plugins:/app/plugins      # Logica di integrazione "Cheshire-style"
+      - ./plugins:/app/plugins
     ports:
       - "7860:7860"
     environment:
       - PYTHONPATH=/app:/app/tools:/app/plugins
       - GGUF_MODEL_PATH=/app/data/models/qwen2.5-coder-1.5b.Q4_K_M.gguf
+    command: python agent/agent_pro.py
     restart: unless-stopped
 
-  # Servizio opzionale per la pipeline di indicizzazione (WebCrawler/RAG)
+  # Pipeline di indicizzazione (WebCrawler/RAG)
   c64-pipeline:
     build:
       context: ./core
@@ -34,3 +33,20 @@ services:
     environment:
       - PYTHONPATH=/app:/app/tools
     command: python agent/knowledge_base.py
+
+  # Training LoRA
+  c64-train:
+    build:
+      context: ./core
+      dockerfile: Dockerfile
+    volumes:
+      - ./core:/app
+      - ./data:/app/data
+    environment:
+      - PYTHONUNBUFFERED=1
+      - OUTPUT_DIR=/app/data/models/c64-lora-pro
+    deploy:
+      resources:
+        limits:
+          memory: 16G
+    command: python pipeline/train_lora.py /app/data/output/dataset_unified.jsonl

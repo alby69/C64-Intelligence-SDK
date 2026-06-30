@@ -99,10 +99,7 @@ wget -O data/models/qwen2.5-coder-1.5b.Q4_K_M.gguf \
 docker compose build
 
 # 3. Avvia interfaccia Gradio (AI Assistant)
-docker compose up c64-core
-
-# 4. Avvia PYC64 TUI (Compilatore)
-docker compose run --rm pyc64
+docker compose up c64-ui
 ```
 
 L'interfaccia AI sarà disponibile su `http://localhost:7860`.
@@ -215,22 +212,22 @@ C64-Intelligence-SDK/
 
 ```bash
 # AI Assistant (Gradio UI su :7860)
-docker compose up c64-core
+docker compose up c64-ui
 
-# Pipeline dati (PDF → dataset → KB)
+# Pipeline dati: ricostruisci Knowledge Base (RAG)
 docker compose run c64-pipeline
 
 # Training LoRA
-docker compose up c64-train
-
-# PYC64 TUI (compilatore)
-docker compose run --rm pyc64
+docker compose run c64-train
 
 # Pipeline manuale
 docker compose run c64-pipeline python pipeline/pdf2marker.py /app/data/input/manuale.pdf /app/data/output/manuale
 docker compose run c64-pipeline python pipeline/text_cleaner.py /app/data/output/manuale.txt /app/data/output/manuale_clean.txt
 docker compose run c64-pipeline python pipeline/build_dataset.py /app/data /app/data/output/dataset_unified.jsonl
 docker compose run c64-pipeline python agent/knowledge_base.py
+
+# Per PYC64 TUI (usa docker-compose.yml separato in tools/)
+docker compose -f tools/docker-compose.yml run --rm pyc64
 ```
 
 ---
