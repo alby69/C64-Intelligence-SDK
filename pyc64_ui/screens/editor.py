@@ -29,6 +29,7 @@ class EditorScreen(Screen):
         Binding('ctrl+o', 'browse_files', 'Browse'),
         Binding('ctrl+t', 'show_tutorial', 'Tutorial'),
         Binding('ctrl+d', 'show_dashboard', 'Dashboard'),
+        Binding('ctrl+r', 'show_simulator', 'Run/Sim'),
         Binding('ctrl+q', 'quit', 'Quit'),
 
         Binding('ctrl+left', 'shrink_editor', '←'),
@@ -108,10 +109,11 @@ class EditorScreen(Screen):
         with Horizontal(id='main-split'):
             with Vertical(id='editor-panel'):
                 yield Static('[bold]Source (.c64)[/]', id='source-label')
-                yield TextArea(
+                t = TextArea(
                     '', id='editor', language='python',
                     show_line_numbers=True, highlight_cursor_line=True,
                 )
+                yield t
                 yield EditorStatusBar(id='status-bar')
             yield Static(id='h-divider')
             with Vertical(id='output-panel'):
@@ -415,6 +417,16 @@ class EditorScreen(Screen):
                 metrics=engine_res.metrics,
                 diagnostics=engine_res.diagnostics
             ))
+
+    def action_show_simulator(self) -> None:
+        if self._last_compile_result and self._last_compile_result.ok:
+            from pyc64_ui.screens.simulator import SimulatorScreen
+            self.app.push_screen(SimulatorScreen(
+                prg=self._last_compile_result.prg,
+                labels=self._last_compile_result.labels
+            ))
+        else:
+            self.notify("Compile successfully before running simulation", severity="error")
 
     def action_quit(self) -> None:
         self.app.exit()

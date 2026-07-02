@@ -16,6 +16,7 @@ from pyc64_ui.screens.editor import EditorScreen
 from pyc64_ui.screens.about import AboutScreen
 from pyc64_ui.screens.dashboard import DashboardScreen
 from pyc64_ui.screens.tutorial import TutorialScreen
+from pyc64_ui.screens.simulator import SimulatorScreen
 
 
 class PYC64App(App):
@@ -29,6 +30,7 @@ class PYC64App(App):
         'about': AboutScreen,
         'dashboard': DashboardScreen,
         'tutorial': TutorialScreen,
+        'simulator': SimulatorScreen,
     }
 
     BINDINGS = [
