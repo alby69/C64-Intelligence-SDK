@@ -133,6 +133,14 @@ def compile_source(src):
     if parser.errors:
         return result
 
+    # 2b. Optimize
+    from .optimizer import optimize_ast
+    try:
+        ast = optimize_ast(ast)
+        result.ast = ast
+    except Exception as e:
+        pass
+
     # 3. Analyze
     try:
         qk = analyze_ast(ast)

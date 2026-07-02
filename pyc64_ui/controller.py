@@ -1,13 +1,11 @@
 """Controller — pure orchestration between UI and compiler.
 
-Zero UI imports.  One job: take source text, run the pipeline,
-return structured results.  The UI only calls compile_source()
-and renders whatever comes back.
+The UI only calls the engine and renders whatever comes back.
 """
 
 from dataclasses import dataclass, field
-from typing import Optional
-from pyc64c.compiler import compile_to_prg, compile_source
+from typing import Optional, List, Dict
+from pyc64c.engine import run_pipeline, hex_dump
 
 
 @dataclass
@@ -21,57 +19,41 @@ class CompileResult:
     listing: list = field(default_factory=list)
     labels: dict = field(default_factory=dict)
     hex_lines: list = field(default_factory=list)
-
-
-def hex_dump(data: bytes, addr: int = 0x0801, width: int = 16) -> list:
-    """Return list of (offset, hex_str, ascii_str) tuples."""
-    lines = []
-    for i in range(0, len(data), width):
-        chunk = data[i:i + width]
-        hex_str = ' '.join(f'{b:02X}' for b in chunk)
-        ascii_str = ''.join(chr(b) if 32 <= b < 127 else '.' for b in chunk)
-        lines.append((addr + i, hex_str, ascii_str))
-    return lines
+    metrics: dict = field(default_factory=dict)
 
 
 def compile_source_text(source: str, filename: str = 'untitled') -> CompileResult:
-    """Run full pyc64c pipeline.  Returns CompileResult."""
+    """Run full pyc64c pipeline via engine. Returns CompileResult."""
+    engine_res = run_pipeline(source, {"generate_symbols": True})
+
     res = CompileResult()
+    res.ok = engine_res.success
+    res.prg = engine_res.prg
+    res.prg_size = engine_res.metrics.get("binary_size_bytes", 0)
+    res.basic_code = engine_res.basic_code
+    res.listing = engine_res.listing
+    res.labels = engine_res.labels
+    res.metrics = engine_res.metrics
 
-    prg, cres = compile_to_prg(source)
-    if cres.lex_errors:
-        res.errors = [f'Lexer [{e.get("line","?")}:{e.get("col","?")}]: {e["msg"]}'
-                      for e in cres.lex_errors]
-        return res
-    if cres.parse_errors:
-        res.errors = [f'Parser [{e.get("line","?")}:{e.get("col","?")}]: {e["msg"]}'
-                      for e in cres.parse_errors]
-        return res
+    if engine_res.prg:
+        res.hex_lines = hex_dump(engine_res.prg)
 
-    if prg is None:
-        if cres.builder and cres.builder.fixup_errs:
-            res.errors = [f'Fixup: {e}' for e in cres.builder.fixup_errs]
+    for diag in engine_res.diagnostics:
+        msg = diag["message"]
+        line = diag.get("line")
+        col = diag.get("column")
+        src = diag.get("source", "engine")
+
+        formatted = f"{src.capitalize()} [{line if line else '?'}:{col if col else '?'}] {msg}"
+        if diag["severity"] == "error":
+            res.errors.append(formatted)
         else:
-            res.errors.append('Compilation failed: no PRG produced')
-        return res
-
-    res.ok = True
-    res.prg = prg
-    res.prg_size = len(prg)
-    res.basic_code = getattr(cres, 'basic_code', '')
-
-    # Extract listing and labels from builder if available
-    builder = getattr(cres, 'builder', None)
-    if builder:
-        res.listing = getattr(builder.e, 'listing', [])
-        res.labels = getattr(builder.e, 'labels', {})
-
-    res.hex_lines = hex_dump(prg)
+            res.warnings.append(formatted)
 
     return res
 
 
 def compile_source_basic(source: str) -> str:
-    """BASIC-only pipeline.  Returns BASIC source string."""
-    cres = compile_source(source)
-    return getattr(cres, 'basic_code', '')
+    """BASIC-only pipeline. Returns BASIC source string."""
+    engine_res = run_pipeline(source)
+    return engine_res.basic_code

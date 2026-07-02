@@ -14,6 +14,8 @@ from textual.binding import Binding
 
 from pyc64_ui.screens.editor import EditorScreen
 from pyc64_ui.screens.about import AboutScreen
+from pyc64_ui.screens.dashboard import DashboardScreen
+from pyc64_ui.screens.tutorial import TutorialScreen
 
 
 class PYC64App(App):
@@ -25,6 +27,8 @@ class PYC64App(App):
     SCREENS = {
         'editor': EditorScreen,
         'about': AboutScreen,
+        'dashboard': DashboardScreen,
+        'tutorial': TutorialScreen,
     }
 
     BINDINGS = [
