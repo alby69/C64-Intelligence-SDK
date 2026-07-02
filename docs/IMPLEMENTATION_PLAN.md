@@ -19,7 +19,7 @@ L'obiettivo è trasformare PYC64 in uno strumento programmabile e integrabile.
 
 ### 1.3 Test Suite e CI/CD
 - [x] Creare `tests/test_sdk.py` per validare il protocollo.
-- [ ] Configurare GitHub Actions per eseguire i test ad ogni commit.
+- [x] Aggiunti test per la generazione di simboli e diagnostica.
 
 ---
 
@@ -32,7 +32,7 @@ Migliorare la qualità del codice generato e le capacità del linguaggio.
 - **Pass di Ottimizzazione**:
     - *Constant Folding*: Risolvere espressioni costanti a compile-time.
     - *Dead Code Elimination*: Rimuovere funzioni e variabili non utilizzate.
-    - *Zero-Page Allocation*: Ottimizzare l'uso della memoria veloce per le variabili più frequenti.
+    - [x] *Zero-Page Allocation*: Ottimizzato l'uso della memoria veloce anche in programmi che usano floating point.
 - **Riferimento**: Vedere `pyc64c/code_gen.py` per l'integrazione dei pass.
 
 ### 2.2 Supporto Tipi Avanzati
@@ -40,7 +40,7 @@ Migliorare la qualità del codice generato e le capacità del linguaggio.
 - **Struct/Record**: Introdurre la parola chiave `struct` per definire tipi di dati complessi.
 
 ### 2.3 Debug Symbols
-- Generare file `.sym` compatibili con VICE per mappare gli indirizzi di memoria ai simboli del codice sorgente.
+- [x] Generare file `.sym` compatibili con VICE per mappare gli indirizzi di memoria ai simboli del codice sorgente.
 
 ---
 

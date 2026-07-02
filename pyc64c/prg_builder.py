@@ -159,6 +159,17 @@ class PRGBuilder:
         return False
 
     def _emit_bss(self):
+        # Register ZP globals as labels for symbols
+        for g in self.planner.globals:
+            if g['isZP']:
+                self.e.labels[f'_{g["name"]}'] = g['addr'] - self.e.base
+
+        # Register ZP locals as labels
+        for fname, layout in self.planner.func_layouts.items():
+            for v in layout['locals']:
+                if v.get('isZP') and v.get('addr') is not None:
+                    self.e.labels[f'_{fname}_{v["name"]}'] = v['addr'] - self.e.base
+
         bss_vars = [g for g in self.planner.globals if not g['isZP']]
         if bss_vars or self.planner.uses_float:
             self.e.label('__bss')

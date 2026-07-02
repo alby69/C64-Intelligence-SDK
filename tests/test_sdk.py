@@ -42,5 +42,21 @@ class TestSDKProtocol(unittest.TestCase):
         self.assertEqual(response["status"], "error")
         self.assertTrue(len(response["diagnostics"]) > 0)
 
+    def test_symbols_generation(self):
+        request = {
+            "version": "1.0",
+            "source_code": "x: byte = 10\ndef main():\n    y: byte = 5\n    print(x + y)",
+            "options": {"target": "c64", "generate_symbols": True}
+        }
+        response_json = process_sdk_request(json.dumps(request))
+        response = json.loads(response_json)
+
+        self.assertEqual(response["status"], "success")
+        self.assertIn("symbols", response["artifacts"])
+        symbols = response["artifacts"]["symbols"]
+        self.assertIn(".main", symbols)
+        self.assertIn("._x", symbols)
+        self.assertIn("._main_y", symbols)
+
 if __name__ == '__main__':
     unittest.main()

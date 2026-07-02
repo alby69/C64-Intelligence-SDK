@@ -261,3 +261,11 @@ class CodeEmitter:
 
     def byte_count(self):
         return len(self.buf)
+
+    def generate_symbols(self):
+        """Generate VICE-compatible symbol file content."""
+        lines = []
+        for name, offset in self.labels.items():
+            addr = (self.base + offset) & 0xFFFF
+            lines.append(f"al {addr:04X} .{name}")
+        return "\n".join(lines)

@@ -237,7 +237,7 @@ def compile_to_prg(src):
                 size = base * max(arr_cnt, 1) if g.get('isArr') else base
                 addr = None
                 is_zp = False
-                if not self.uses_float and not g.get('isArr') and t != 'string':
+                if not g.get('isArr') and t != 'string' and t != 'float':
                     addr = self._zp_alloc(size)
                     if addr is not None:
                         is_zp = True
@@ -254,7 +254,7 @@ def compile_to_prg(src):
                 locals_ = []
                 for p in f.get('params', []):
                     p_size = TYPE_SIZE.get(p['type'], 1)
-                    p_addr = None if self.uses_float else self._zp_alloc(p_size)
+                    p_addr = self._zp_alloc(p_size) if p['type'] != 'float' else None
                     locals_.append({
                         'name': p['name'], 'type': p['type'], 'size': p_size,
                         'kind': 'param', 'addr': p_addr, 'isZP': p_addr is not None
@@ -262,7 +262,7 @@ def compile_to_prg(src):
                 self._collect_locals(f.get('body', {}), locals_)
                 for v in locals_:
                     if v['kind'] == 'local' and not v.get('isArr') and v['addr'] is None:
-                        if not self.uses_float:
+                        if v['type'] != 'float':
                             v['addr'] = self._zp_alloc(v['size'])
                             v['isZP'] = v['addr'] is not None
                 frame = sum(v['size'] for v in locals_ if not v.get('isArr'))

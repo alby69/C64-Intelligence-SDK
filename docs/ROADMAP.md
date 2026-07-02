@@ -37,21 +37,21 @@ L'obiettivo strategico è trasformare PYC64 da compilatore standalone a **motore
 
 ### Fase 1 — Fondamenta di Integrazione (Q3 2026)
 
-| ID | Obiettivo | Priorità | Complessità |
-|---|---|---|---|
-| F1.1 | **API programmatica** — Esporre il compilatore come libreria importabile (`from pyc64c import compile_source`) con interfaccia stabile | 🔴 Alta | Media |
-| F1.2 | **Protocollo SDK** — Definire formato JSON di scambio dati con C64-LLM (input: codice .c64 + metadati; output: PRG binary + listing + errori + metriche) | 🔴 Alta | Media |
-| F1.3 | **Contract Testing** — Test di integrazione con C64-LLM che verificano la compatibilità del formato di scambio | 🟡 Media | Media |
-| F1.4 | **Documentazione API** — Generare documentazione Sphinx/ReadTheDocs per `pyc64c/` | 🟡 Media | Bassa |
+| ID | Obiettivo | Priorità | Complessità | Stato |
+|---|---|---|---|---|
+| F1.1 | **API programmatica** — Esporre il compilatore come libreria importabile (`from pyc64c import compile_source`) con interfaccia stabile | 🔴 Alta | Media | ✅ Completato |
+| F1.2 | **Protocollo SDK** — Definire formato JSON di scambio dati con C64-LLM (input: codice .c64 + metadati; output: PRG binary + listing + errori + metriche) | 🔴 Alta | Media | ✅ Completato |
+| F1.3 | **Contract Testing** — Test di integrazione con C64-LLM che verificano la compatibilità del formato di scambio | 🟡 Media | Media | ✅ Completato |
+| F1.4 | **Documentazione API** — Generare documentazione Sphinx/ReadTheDocs per `pyc64c/` | 🟡 Media | Bassa | 🟡 In Corso |
 
 ### Fase 2 — Potenziamento del Compilatore (Q4 2026)
 
-| ID | Obiettivo | Priorità | Complessità |
-|---|---|---|---|
-| F2.1 | **Ottimizzatore 6502** — Implementare pass di ottimizzazione: constant folding, dead code elimination, zero-page allocation, loop unrolling | 🔴 Alta | Alta |
-| F2.2 | **Supporto tipi avanzati** — Array multidimensionali, struct/record, puntatori, gestione memoria dinamica (heap) | 🟡 Media | Alta |
-| F2.3 | **Libreria standard C64** — Wrappers Python-like per KERNAL, SID, VIC-II, CIA (es. `sid.play(freq)`, `sprite.set(x, y, frame)`) | 🔴 Alta | Alta |
-| F2.4 | **Debug symbols** — Generare file `.sym` compatibili con VICE per il debugging step-by-step | 🟡 Media | Media |
+| ID | Obiettivo | Priorità | Complessità | Stato |
+|---|---|---|---|---|
+| F2.1 | **Ottimizzatore 6502** — Implementare pass di ottimizzazione: constant folding, dead code elimination, zero-page allocation, loop unrolling | 🔴 Alta | Alta | 🟡 In Corso |
+| F2.2 | **Supporto tipi avanzati** — Array multidimensionali, struct/record, puntatori, gestione memoria dinamica (heap) | 🟡 Media | Alta | ⏳ Pianificato |
+| F2.3 | **Libreria standard C64** — Wrappers Python-like per KERNAL, SID, VIC-II, CIA (es. `sid.play(freq)`, `sprite.set(x, y, frame)`) | 🔴 Alta | Alta | ⏳ Pianificato |
+| F2.4 | **Debug symbols** — Generare file `.sym` compatibili con VICE per il debugging step-by-step | 🟡 Media | Media | ✅ Completato |
 
 ### Fase 3 — Integrazione AI-Nativa (Q1 2027)
 
