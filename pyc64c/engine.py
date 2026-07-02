@@ -10,6 +10,7 @@ import base64
 from dataclasses import dataclass, field
 from typing import Optional, Dict, List, Any
 from .compiler import compile_to_prg, analyze_ast
+from .simulation_engine import C64Simulator
 
 @dataclass
 class EngineResult:
@@ -21,6 +22,8 @@ class EngineResult:
     symbols: str = ""
     metrics: Dict[str, Any] = field(default_factory=dict)
     diagnostics: List[Dict[str, Any]] = field(default_factory=list)
+    simulation_output: str = ""
+    simulation_history: List[Dict[str, Any]] = field(default_factory=list)
 
 def hex_dump(data: bytes, addr: int = 0x0801, width: int = 16) -> List[tuple]:
     """Return list of (offset, hex_str, ascii_str) tuples."""
@@ -96,6 +99,13 @@ def run_pipeline(source: str, options: Optional[Dict[str, Any]] = None) -> Engin
         if result.ast:
             stats = analyze_ast(result.ast)
             res.metrics.update(stats)
+
+        if options.get("simulate"):
+            sim = C64Simulator(res.prg, symbols=res.labels)
+            max_steps = options.get("sim_max_steps", 1000)
+            sim.run(max_steps=max_steps)
+            res.simulation_output = sim.output_buffer
+            res.simulation_history = sim.history
 
     # AI self-healing suggestions
     if not res.success:
