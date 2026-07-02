@@ -1,0 +1,50 @@
+# Sound Test Example
+
+def main():
+    clear_screen()
+    println("SOUND TEST")
+
+    # Set volume to maximum
+    sid_volume(15)
+
+    # Setup Voice 0 (ADSR)
+    # Attack: 5 (56ms), Decay: 5 (168ms), Sustain: 10, Release: 8 (300ms)
+    sid_setup(0, 5, 5, 10, 8)
+
+    # Play a note (C-4 approx freq 2145)
+    println("PLAYING NOTE...")
+    sid_freq(0, 2145)
+    sid_gate(0, 33, 1) # Sawtooth + Gate ON
+
+    wait_frames(100)
+
+    # Release
+    println("RELEASE...")
+    sid_gate(0, 33, 0) # Sawtooth + Gate OFF
+
+    wait_frames(100)
+
+    # Test Voice 1 with Pulse Wave
+    println("PULSE WAVE...")
+    sid_setup(1, 0, 9, 15, 5)
+    sid_freq(1, 4291) # approx C-5
+    sid_pw(1, 2048)  # 50% duty cycle
+    sid_gate(1, 65, 1) # Pulse + Gate ON
+
+    wait_frames(100)
+    sid_gate(1, 65, 0)
+
+    # Test Filter
+    println("FILTER TEST...")
+    sid_volume(15)
+    sid_setup(2, 0, 0, 15, 0)
+    sid_freq(2, 1000)
+    # Filter Voice 3 (bit 2) with Low Pass (bit 4) -> mode = 4 | 16 = 20
+    # Cutoff 1000, Resonance 10
+    sid_filter(1000, 10, 20)
+    sid_gate(2, 129, 1) # Noise + Gate ON
+
+    wait_frames(100)
+    sid_gate(2, 129, 0)
+
+    println("DONE.")

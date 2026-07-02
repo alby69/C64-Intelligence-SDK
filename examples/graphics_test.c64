@@ -48,4 +48,19 @@ def main():
         sprite_pos(0, i, i)
         wait_frames(1)
 
+    # Test scrolling
+    println("SCROLLING...")
+    for i in range(0, 8):
+        scroll_x(i)
+        scroll_y(i)
+        wait_frames(5)
+    scroll_x(0)
+    scroll_y(0)
+
+    # Test screen size
+    println("SCREEN SIZE...")
+    screen_size(38, 24)
+    wait_frames(50)
+    screen_size(40, 25)
+
     println("DONE.")

@@ -188,12 +188,68 @@ class BASICGenerator:
             idx = self._expr(args[0])
             ptr = self._expr(args[1])
             self.add(f'POKE 2040+{idx},{ptr}')
+        elif name == 'sid_volume':
+            self.add(f'POKE 54296,(PEEK(54296) AND 240) OR ({self._expr(args[0])} AND 15)')
+        elif name == 'sid_setup':
+            voice = self._expr(args[0])
+            a = self._expr(args[1])
+            d = self._expr(args[2])
+            s = self._expr(args[3])
+            r = self._expr(args[4])
+            self.add(f'POKE 54277+{voice}*7,({a}*16)+{d}:POKE 54278+{voice}*7,({s}*16)+{r}')
+        elif name == 'sid_freq':
+            voice = self._expr(args[0])
+            freq = self._expr(args[1])
+            self.add(f'POKE 54272+{voice}*7,{freq} AND 255:POKE 54273+{voice}*7,{freq}/256')
+        elif name == 'sid_pw':
+            voice = self._expr(args[0])
+            pw = self._expr(args[1])
+            self.add(f'POKE 54274+{voice}*7,{pw} AND 255:POKE 54275+{voice}*7,{pw}/256')
+        elif name == 'sid_gate':
+            voice = self._expr(args[0])
+            wf = self._expr(args[1])
+            on = self._expr(args[2])
+            self.add(f'POKE 54276+{voice}*7,{wf} OR {on}')
+        elif name == 'sid_filter':
+            cutoff = self._expr(args[0])
+            res = self._expr(args[1])
+            mode = self._expr(args[2])
+            self.add(f'POKE 54293,{cutoff} AND 7:POKE 54294,{cutoff}/8')
+            self.add(f'POKE 54295,({res}*16) OR (PEEK(54295) AND 15)')
+            # mode also contains voices to filter in lower 4 bits
+            self.add(f'POKE 54296,(PEEK(54296) AND 15) OR ({mode} AND 240)')
+            self.add(f'POKE 54295,(PEEK(54295) AND 240) OR ({mode} AND 15)')
+        elif name == 'sid_clear':
+            self.add('FOR I=54272 TO 54296:POKE I,0:NEXT')
+        elif name == 'vic_bank':
+            bank = self._expr(args[0])
+            self.add(f'POKE 56576,(PEEK(56576) AND 252) OR (3-({bank} AND 3))')
+        elif name == 'screen_memory':
+            addr = self._expr(args[0])
+            self.add(f'POKE 53272,(PEEK(53272) AND 15) OR (({addr}/1024) AND 15)*16')
+        elif name == 'character_memory':
+            addr = self._expr(args[0])
+            self.add(f'POKE 53272,(PEEK(53272) AND 240) OR (({addr}/1024) AND 14)')
         elif name == 'sprite_collision_sprite':
             self.add('V=PEEK(53278)')
         elif name == 'sprite_collision_data':
             self.add('V=PEEK(53279)')
         elif name == 'raster_line':
             self.add('V=PEEK(53266)')
+        elif name == 'sid_random':
+            self.add('V=PEEK(54299)')
+        elif name == 'raster_irq':
+            line = self._expr(args[0])
+            self.add(f'POKE 53266,{line} AND 255:V=PEEK(53265):IF {line}>255 THEN POKE 53265,V OR 128 ELSE POKE 53265,V AND 127')
+        elif name == 'scroll_x':
+            self.add(f'POKE 53270,(PEEK(53270) AND 248) OR ({self._expr(args[0])} AND 7)')
+        elif name == 'scroll_y':
+            self.add(f'POKE 53265,(PEEK(53265) AND 248) OR ({self._expr(args[0])} AND 7)')
+        elif name == 'screen_size':
+            cols = self._expr(args[0])
+            rows = self._expr(args[1])
+            self.add(f'V=PEEK(53270):IF {cols}=40 THEN POKE 53270,V OR 8 ELSE POKE 53270,V AND 247')
+            self.add(f'V=PEEK(53265):IF {rows}=25 THEN POKE 53265,V OR 8 ELSE POKE 53265,V AND 247')
         elif name in ('peek',):
             self.add(f'PEEK({self._expr(args[0])})')
         else:
@@ -233,6 +289,8 @@ class BASICGenerator:
             return 'PEEK(53279)'
         if name == 'raster_line':
             return 'PEEK(53266)'
+        if name == 'sid_random':
+            return 'PEEK(54299)'
         return '0'
 
     def _expr_binary(self, e):

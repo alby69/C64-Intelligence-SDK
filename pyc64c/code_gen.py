@@ -386,6 +386,54 @@ class CodeGenerator:
             self.e.abs('LDA', 0xD012, 'raster line')
             return
 
+        if name == 'sid_random':
+            self.e.abs('LDA', 0xD41B, 'sid random')
+            return
+
+        if name == 'raster_irq':
+            if args:
+                # line -> $FB/FC
+                self._emit_word_to_fb_fc(args[0])
+                self.e.zp('LDA', 0xFB); self.e.abs('STA', 0xD012)
+                self.e.abs('LDA', 0xD011); self.e.imm('AND', 0x7F); self.e.zp('STA', 0xFD)
+                self.e.zp('LDA', 0xFC); self.e.acc('ASL'); self.e.acc('ASL'); self.e.acc('ASL'); self.e.acc('ASL'); self.e.acc('ASL'); self.e.acc('ASL'); self.e.acc('ASL')
+                self.e.zp('ORA', 0xFD); self.e.abs('STA', 0xD011)
+            return
+
+        if name == 'scroll_x':
+            if args:
+                self.e.abs('LDA', 0xD016); self.e.imm('AND', 0xF8); self.e.zp('STA', 0xFB)
+                self._emit_expr_to_a(args[0]); self.e.imm('AND', 0x07); self.e.zp('ORA', 0xFB)
+                self.e.abs('STA', 0xD016)
+            return
+
+        if name == 'scroll_y':
+            if args:
+                self.e.abs('LDA', 0xD011); self.e.imm('AND', 0xF8); self.e.zp('STA', 0xFB)
+                self._emit_expr_to_a(args[0]); self.e.imm('AND', 0x07); self.e.zp('ORA', 0xFB)
+                self.e.abs('STA', 0xD011)
+            return
+
+        if name == 'screen_size':
+            if len(args) >= 2:
+                # cols
+                self._emit_expr_to_a(args[0])
+                self.e.imm('CMP', 40); self.e.abs('LDA', 0xD016)
+                lbl_c38 = self.e.uniq('_sc38')
+                self.e.branch('BNE', lbl_c38)
+                self.e.imm('ORA', 0x08); self.e.abs('STA', 0xD016); lbl_cend = self.e.uniq('_sce')
+                self.e.jmp(lbl_cend)
+                self.e.label(lbl_c38); self.e.imm('AND', 0xF7); self.e.abs('STA', 0xD016); self.e.label(lbl_cend)
+                # rows
+                self._emit_expr_to_a(args[1])
+                self.e.imm('CMP', 25); self.e.abs('LDA', 0xD011)
+                lbl_r24 = self.e.uniq('_sr24')
+                self.e.branch('BNE', lbl_r24)
+                self.e.imm('ORA', 0x08); self.e.abs('STA', 0xD011); lbl_rend = self.e.uniq('_sre')
+                self.e.jmp(lbl_rend)
+                self.e.label(lbl_r24); self.e.imm('AND', 0xF7); self.e.abs('STA', 0xD011); self.e.label(lbl_rend)
+            return
+
         if name == 'sprite_enable':
             if len(args) >= 2:
                 # reg $D015 -> $FC/FD
@@ -484,6 +532,112 @@ class CodeGenerator:
                 self.e.abs('STA', 0xD025, 'sprite multicolor 0')
                 self._emit_expr_to_a(args[1])
                 self.e.abs('STA', 0xD026, 'sprite multicolor 1')
+            return
+
+        if name == 'sid_volume':
+            if args:
+                self.e.abs('LDA', 0xD418)
+                self.e.imm('AND', 0xF0)
+                self.e.zp('STA', 0xFB)
+                self._emit_expr_to_a(args[0])
+                self.e.imm('AND', 0x0F)
+                self.e.zp('ORA', 0xFB)
+                self.e.abs('STA', 0xD418)
+            return
+
+        if name == 'sid_setup':
+            if len(args) >= 5:
+                # attack/decay
+                # A*16 + D -> Y
+                self._emit_expr_to_a(args[1]); self.e.acc('ASL'); self.e.acc('ASL'); self.e.acc('ASL'); self.e.acc('ASL')
+                self.e.zp('STA', 0xFD)
+                self._emit_expr_to_a(args[2]); self.e.zp('ORA', 0xFD); self.e.imp('TAY')
+                self._emit_expr_to_a(args[0]); self.e.imm('LDX', 5)
+                self.e.jsr('_set_sid_reg')
+                # sustain/release
+                self._emit_expr_to_a(args[3]); self.e.acc('ASL'); self.e.acc('ASL'); self.e.acc('ASL'); self.e.acc('ASL')
+                self.e.zp('STA', 0xFD)
+                self._emit_expr_to_a(args[4]); self.e.zp('ORA', 0xFD); self.e.imp('TAY')
+                self._emit_expr_to_a(args[0]); self.e.imm('LDX', 6)
+                self.e.jsr('_set_sid_reg')
+            return
+
+        if name == 'sid_freq':
+            if len(args) >= 2:
+                self._emit_word_to_fb_fc(args[1])
+                # low
+                self.e.zp('LDA', 0xFB); self.e.imp('TAY')
+                self._emit_expr_to_a(args[0]); self.e.imm('LDX', 0)
+                self.e.jsr('_set_sid_reg')
+                # high
+                self.e.zp('LDA', 0xFC); self.e.imp('TAY')
+                self._emit_expr_to_a(args[0]); self.e.imm('LDX', 1)
+                self.e.jsr('_set_sid_reg')
+            return
+
+        if name == 'sid_pw':
+            if len(args) >= 2:
+                self._emit_word_to_fb_fc(args[1])
+                # low
+                self.e.zp('LDA', 0xFB); self.e.imp('TAY')
+                self._emit_expr_to_a(args[0]); self.e.imm('LDX', 2)
+                self.e.jsr('_set_sid_reg')
+                # high
+                self.e.zp('LDA', 0xFC); self.e.imp('TAY')
+                self._emit_expr_to_a(args[0]); self.e.imm('LDX', 3)
+                self.e.jsr('_set_sid_reg')
+            return
+
+        if name == 'sid_gate':
+            if len(args) >= 3:
+                # wf OR on -> Y
+                self._emit_expr_to_a(args[1]); self.e.zp('STA', 0xFD)
+                self._emit_expr_to_a(args[2]); self.e.zp('ORA', 0xFD); self.e.imp('TAY')
+                self._emit_expr_to_a(args[0]); self.e.imm('LDX', 4)
+                self.e.jsr('_set_sid_reg')
+            return
+
+        if name == 'sid_clear':
+            # Fast clear with loop
+            self.e.imm('LDA', 0); self.e.imm('LDX', 24)
+            lbl_l = self.e.uniq('_sidc')
+            self.e.label(lbl_l); self.e.abx('STA', 0xD400); self.e.imp('DEX'); self.e.branch('BPL', lbl_l)
+            return
+
+        if name == 'vic_bank':
+            if args:
+                # bits 0-1 of $DD00. 11=bank0, 10=bank1, 01=bank2, 00=bank3. Pattern is 3-bank.
+                self._emit_expr_to_a(args[0]); self.e.zp('STA', 0xFB)
+                self.e.imm('LDA', 3); self.e.imp('SEC'); self.e.zp('SBC', 0xFB)
+                self.e.imm('AND', 0x03); self.e.zp('STA', 0xFB)
+                self.e.abs('LDA', 0xDD00); self.e.imm('AND', 0xFC); self.e.zp('ORA', 0xFB)
+                self.e.abs('STA', 0xDD00)
+            return
+
+        if name == 'sid_filter':
+            if len(args) >= 3:
+                # cutoff -> $FB/FC
+                self._emit_word_to_fb_fc(args[0])
+                # LOW 3 bits of cutoff to $D415
+                self.e.zp('LDA', 0xFB); self.e.imm('AND', 0x07); self.e.abs('STA', 0xD415)
+                # HI 8 bits (cutoff/8) to $D416
+                self.e.zp('LDA', 0xFB); self.e.acc('LSR'); self.e.acc('LSR'); self.e.acc('LSR'); self.e.zp('STA', 0xFD)
+                self.e.zp('LDA', 0xFC); self.e.acc('ASL'); self.e.acc('ASL'); self.e.acc('ASL'); self.e.acc('ASL'); self.e.acc('ASL')
+                self.e.zp('ORA', 0xFD); self.e.abs('STA', 0xD416)
+
+                # resonance -> bits 4-7 of $D417
+                self._emit_expr_to_a(args[1]); self.e.acc('ASL'); self.e.acc('ASL'); self.e.acc('ASL'); self.e.acc('ASL')
+                self.e.zp('STA', 0xFD)
+                self.e.abs('LDA', 0xD417); self.e.imm('AND', 0x0F); self.e.zp('ORA', 0xFD); self.e.abs('STA', 0xD417)
+
+                # mode -> bits 4-6 of $D418, bits 0-3 of $D417
+                self._emit_expr_to_a(args[2]); self.e.zp('STA', 0xFE)
+                # voices to filter (bits 0-3 of mode -> $D417)
+                self.e.zp('LDA', 0xFE); self.e.imm('AND', 0x0F); self.e.zp('STA', 0xFD)
+                self.e.abs('LDA', 0xD417); self.e.imm('AND', 0xF0); self.e.zp('ORA', 0xFD); self.e.abs('STA', 0xD417)
+                # mode (bits 4-6 of mode -> $D418)
+                self.e.zp('LDA', 0xFE); self.e.imm('AND', 0x70); self.e.zp('STA', 0xFD)
+                self.e.abs('LDA', 0xD418); self.e.imm('AND', 0x8F); self.e.zp('ORA', 0xFD); self.e.abs('STA', 0xD418)
             return
 
         if name in ('sei',):
