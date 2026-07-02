@@ -105,14 +105,25 @@ class CodeGenerator:
 
     def _emit_var_decl(self, s):
         if s.get('init'):
-            self._emit_expr_to_a(s['init'])
             var = self._var(s['name'])
-            if var:
+            if not var:
+                return
+            if self._is_16(s):
+                self._emit_word_to_zp(s['init'], 0xFB)
+                self.e.zp('LDA', 0xFB)
+                self._st_var_byte(var, f'{s["name"]} lo')
+                self.e.zp('LDA', 0xFC)
+                if var['isZP']:
+                    self.e.zp('STA', var['addr'] + 1, f'{s["name"]} hi')
+                else:
+                    addr = var.get('addr') or var.get('bss_label', 0)
+                    if isinstance(addr, str):
+                        self.e.abs('STA', f"{addr}+1", f'{s["name"]} hi')
+                    else:
+                        self.e.abs('STA', addr + 1, f'{s["name"]} hi')
+            else:
+                self._emit_expr_to_a(s['init'])
                 self._st_var_byte(var, f'{s["name"]} = ...')
-                if self._is_16(s):
-                    self.e.zp('STA', var['addr'] if var['isZP'] else var.get('bss_label', 0), f'{s["name"]} lo')
-                if self._is_32(s):
-                    pass
 
     def _emit_assign(self, s):
         if self._is_16(s['target']) or self._is_32(s['target']):
@@ -130,42 +141,40 @@ class CodeGenerator:
         if not var:
             return
         rhs = s['value']
-        if rhs['k'] == 'BinaryOp' and rhs['op'] == '+':
-            lo_label = self.e.uniq('_asm')
-            hi_label = self.e.uniq('_asm')
-            self.e.imm('LDA', 0, f'word {lhs_name}+= init lo')
+
+        # Special case for x = x + ... or x += ...
+        if (rhs['k'] == 'BinaryOp' and rhs['op'] == '+' and
+            rhs['left']['k'] == 'Ident' and rhs['left']['name'] == lhs_name):
+            self._emit_word_to_fb_fc(rhs['right'])
+            self.e.imp('CLC')
             if var['isZP']:
-                self.e.zp('STA', var['addr'], f'{lhs_name} lo')
+                self.e.zp('LDA', var['addr'])
+                self.e.zp('ADC', 0xFB)
+                self.e.zp('STA', var['addr'])
+                self.e.zp('LDA', var['addr'] + 1)
+                self.e.zp('ADC', 0xFC)
+                self.e.zp('STA', var['addr'] + 1)
             else:
-                self.e.abs('STA', var.get('bss_label', 0), f'{lhs_name} lo')
-            self.e.imm('LDA', 0, f'hi')
-            if var['isZP']:
-                self.e.zp('STA', var['addr'] + 1, f'{lhs_name} hi')
-            else:
-                self.e.abs('STA', var.get('bss_label', 0) + 1, f'{lhs_name} hi')
+                addr = var.get('addr') or var.get('bss_label', 0)
+                self.e.abs('LDA', addr)
+                self.e.zp('ADC', 0xFB)
+                self.e.abs('STA', addr)
+                self.e.abs('LDA', addr + 1)
+                self.e.zp('ADC', 0xFC)
+                self.e.abs('STA', addr + 1)
             return
-        if rhs['k'] == 'Literal':
-            val = rhs['value']
-            lo = val & 0xFF
-            hi = (val >> 8) & 0xFF
-            self.e.imm('LDA', lo, f'{lhs_name}=${val:04X} lo')
-            if var['isZP']:
-                self.e.zp('STA', var['addr'], f'{lhs_name} lo')
-            else:
-                self.e.abs('STA', var.get('bss_label', 0), f'{lhs_name} lo')
-            self.e.imm('LDA', hi, f'{lhs_name} hi')
-            if var['isZP']:
-                self.e.zp('STA', var['addr'] + 1, f'{lhs_name} hi')
-            else:
-                self.e.abs('STA', var.get('bss_label', 0) + 1, f'{lhs_name} hi')
-            return
-        if rhs['k'] == 'UnaryOp':
-            pass
-        self._emit_expr_to_a(rhs)
+
+        self._emit_word_to_zp(rhs, 0xFB)
+        self.e.zp('LDA', 0xFB)
         if var['isZP']:
-            self.e.zp('STA', var['addr'], f'{lhs_name} lo')
+            self.e.zp('STA', var['addr'])
+            self.e.zp('LDA', 0xFC)
+            self.e.zp('STA', var['addr'] + 1)
         else:
-            self.e.abs('STA', var.get('bss_label', 0), f'{lhs_name} lo')
+            addr = var.get('addr') or var.get('bss_label', 0)
+            self.e.abs('STA', addr)
+            self.e.zp('LDA', 0xFC)
+            self.e.abs('STA', addr + 1)
 
     def _emit_if(self, s):
         end_lbl = self.e.uniq('_endif')
@@ -303,15 +312,44 @@ class CodeGenerator:
             byte_val = None
             if len(args) > 1 and args[1]['k'] == 'Literal':
                 byte_val = args[1]['value']
-            if byte_val is not None:
-                self.e.imm('LDA', byte_val & 0xFF, f'poke val ${byte_val:02X}')
-            else:
-                self._emit_expr_to_a(args[1])
+
             if addr_val is not None:
+                if byte_val is not None:
+                    self.e.imm('LDA', byte_val & 0xFF, f'poke val ${byte_val:02X}')
+                else:
+                    self._emit_expr_to_a(args[1])
                 if addr_val < 0x100:
                     self.e.zp('STA', addr_val & 0xFF, f'poke ${addr_val:04X}')
                 else:
                     self.e.abs('STA', addr_val & 0xFFFF, f'poke ${addr_val:04X}')
+            else:
+                # Dynamic address: use stack to avoid scratchpad collisions
+                self._emit_expr_to_a(args[1]) # value to A
+                self.e.imp('PHA')
+                self._emit_word_to_fd_fe(args[0]) # address to FD/FE
+                self.e.imm('LDY', 0)
+                self.e.imp('PLA')
+                self.e.iny('STA', 0xFD) # STA ($FD),Y
+            return
+
+        if name in ('poke16',):
+            if args[0]['k'] == 'Literal':
+                addr = args[0]['value']
+                self._emit_word_to_fb_fc(args[1]) # value -> FB/FC
+                self.e.zp('LDA', 0xFB)
+                self.e.abs('STA', addr)
+                self.e.zp('LDA', 0xFC)
+                self.e.abs('STA', addr + 1)
+            else:
+                # Dynamic address: use stack to preserve the 16-bit value
+                self._emit_word_to_zp(args[1], 0xFB) # value to FB/FC
+                self.e.zp('LDA', 0xFC); self.e.imp('PHA')
+                self.e.zp('LDA', 0xFB); self.e.imp('PHA')
+                self._emit_word_to_fd_fe(args[0]) # address to FD/FE
+                self.e.imm('LDY', 0)
+                self.e.imp('PLA'); self.e.iny('STA', 0xFD) # STA ($FD),Y  (lo)
+                self.e.imp('INY')
+                self.e.imp('PLA'); self.e.iny('STA', 0xFD) # STA ($FD),Y  (hi)
             return
 
         if name in ('peek',):
@@ -323,6 +361,29 @@ class CodeGenerator:
                     self.e.zp('LDA', addr_val & 0xFF, f'peek ${addr_val:04X}')
                 else:
                     self.e.abs('LDA', addr_val & 0xFFFF, f'peek ${addr_val:04X}')
+            else:
+                self._emit_word_to_fb_fc(args[0])
+                self.e.imm('LDY', 0)
+                self.e.iny('LDA', 0xFB)
+            return
+
+        if name in ('peek16',):
+            if args[0]['k'] == 'Literal':
+                addr = args[0]['value']
+                self.e.abs('LDA', addr)
+                self.e.zp('STA', 0xFB)
+                self.e.abs('LDA', addr + 1)
+                self.e.zp('STA', 0xFC)
+            else:
+                self._emit_word_to_fb_fc(args[0])
+                self.e.imm('LDY', 0)
+                self.e.iny('LDA', 0xFB)
+                self.e.zp('STA', 0xFD) # temp lo
+                self.e.imp('INY')
+                self.e.iny('LDA', 0xFB)
+                self.e.zp('STA', 0xFC) # hi
+                self.e.zp('LDA', 0xFD)
+                self.e.zp('STA', 0xFB) # restore lo to FB
             return
 
         if name in ('print',):
@@ -366,6 +427,12 @@ class CodeGenerator:
             if args:
                 self._emit_expr_to_a(args[0])
                 self.e.abs('STA', 0xD021, 'screen color')
+            return
+
+        if name in ('text_color',):
+            if args:
+                self._emit_expr_to_a(args[0])
+                self.e.abs('STA', 0x0286, 'text color')
             return
 
         if name in ('wait_frames',):
@@ -648,6 +715,16 @@ class CodeGenerator:
             self.e.imp('CLI', 'cli')
             return
 
+        if name == 'kernal_chrout':
+            if args:
+                self._emit_expr_to_a(args[0])
+                self.e.jsr(0xFFD2, 'CHROUT')
+            return
+
+        if name == 'kernal_chrin':
+            self.e.jsr(0xFFCF, 'CHRIN')
+            return
+
         if name in ('print_at',):
             if len(args) >= 2:
                 self._emit_expr_to_x(args[0], 'col -> X')
@@ -810,39 +887,50 @@ class CodeGenerator:
         self.e.imp('TAY', comment)
 
     def _emit_word_to_fb_fc(self, node):
+        self._emit_word_to_zp(node, 0xFB)
+
+    def _emit_word_to_fd_fe(self, node):
+        self._emit_word_to_zp(node, 0xFD)
+
+    def _emit_word_to_zp(self, node, zp_addr):
         if node['k'] == 'Literal':
             val = node['value']
             self.e.imm('LDA', val & 0xFF)
-            self.e.zp('STA', 0xFB)
+            self.e.zp('STA', zp_addr)
             self.e.imm('LDA', (val >> 8) & 0xFF)
-            self.e.zp('STA', 0xFC)
+            self.e.zp('STA', zp_addr + 1)
         elif node['k'] == 'Ident':
             var = self._var(node['name'])
             if var:
                 if var['isZP']:
                     self.e.zp('LDA', var['addr'])
-                    self.e.zp('STA', 0xFB)
+                    self.e.zp('STA', zp_addr)
                     if self._is_16(node):
                         self.e.zp('LDA', var['addr'] + 1)
-                        self.e.zp('STA', 0xFC)
+                        self.e.zp('STA', zp_addr + 1)
                     else:
                         self.e.imm('LDA', 0)
-                        self.e.zp('STA', 0xFC)
+                        self.e.zp('STA', zp_addr + 1)
                 else:
                     addr = var.get('addr') or var.get('bss_label', 0)
                     self.e.abs('LDA', addr)
-                    self.e.zp('STA', 0xFB)
+                    self.e.zp('STA', zp_addr)
                     if self._is_16(node):
                         self.e.abs('LDA', addr + 1)
-                        self.e.zp('STA', 0xFC)
+                        self.e.zp('STA', zp_addr + 1)
                     else:
                         self.e.imm('LDA', 0)
-                        self.e.zp('STA', 0xFC)
+                        self.e.zp('STA', zp_addr + 1)
         else:
             self._emit_expr_to_a(node)
-            self.e.zp('STA', 0xFB)
-            self.e.imm('LDA', 0)
-            self.e.zp('STA', 0xFC)
+            # node might be 16-bit, so it might have put hi byte in $FC
+            self.e.zp('STA', zp_addr)
+            if self._is_16(node):
+                self.e.zp('LDA', 0xFC)
+                self.e.zp('STA', zp_addr + 1)
+            else:
+                self.e.imm('LDA', 0)
+                self.e.zp('STA', zp_addr + 1)
 
     def get_bytecode(self):
         return self.e.buf

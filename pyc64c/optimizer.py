@@ -68,18 +68,33 @@ def fold_constants(node):
             op = node['op']
 
             # Simple integer folding
-            if isinstance(lval, int) and isinstance(rval, int):
+            if isinstance(lval, (int, float)) and isinstance(rval, (int, float)):
                 res = None
                 if op == '+': res = lval + rval
                 elif op == '-': res = lval - rval
                 elif op == '*': res = lval * rval
                 elif op == '/': res = lval // rval if rval != 0 else 0
-                elif op == '&': res = lval & rval
-                elif op == '|': res = lval | rval
-                elif op == '^': res = lval ^ rval
+                elif op == '//': res = lval // rval if rval != 0 else 0
+                elif op == '%': res = lval % rval if rval != 0 else 0
+                elif op == '&': res = int(lval) & int(rval)
+                elif op == '|': res = int(lval) | int(rval)
+                elif op == '^': res = int(lval) ^ int(rval)
+                elif op == '<<': res = int(lval) << int(rval)
+                elif op == '>>': res = int(lval) >> int(rval)
+                elif op == '==': res = 1 if lval == rval else 0
+                elif op == '!=': res = 1 if lval != rval else 0
+                elif op == '<': res = 1 if lval < rval else 0
+                elif op == '>': res = 1 if lval > rval else 0
+                elif op == '<=': res = 1 if lval <= rval else 0
+                elif op == '>=': res = 1 if lval >= rval else 0
+                elif op == 'and': res = 1 if (lval and rval) else 0
+                elif op == 'or': res = 1 if (lval or rval) else 0
 
                 if res is not None:
-                    return {'k': 'Literal', 'value': res, 'kind': 'int', '_type': node.get('_type', 'int')}
+                    kind = 'float' if isinstance(res, float) else 'int'
+                    if op in ('==', '!=', '<', '>', '<=', '>=', 'and', 'or'):
+                        kind = 'bool'
+                    return {'k': 'Literal', 'value': res, 'kind': kind, '_type': node.get('_type', kind)}
 
     elif node['k'] == 'UnaryOp':
         node['operand'] = fold_constants(node['operand'])
