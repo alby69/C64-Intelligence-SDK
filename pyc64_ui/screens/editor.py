@@ -27,6 +27,8 @@ class EditorScreen(Screen):
     BINDINGS = [
         Binding('ctrl+s', 'save_compile', 'Save+Compile'),
         Binding('ctrl+o', 'browse_files', 'Browse'),
+        Binding('ctrl+t', 'show_tutorial', 'Tutorial'),
+        Binding('ctrl+d', 'show_dashboard', 'Dashboard'),
         Binding('ctrl+q', 'quit', 'Quit'),
 
         Binding('ctrl+left', 'shrink_editor', '←'),
@@ -97,6 +99,7 @@ class EditorScreen(Screen):
         super().__init__()
         self.current_path = Path(filepath) if filepath else None
         self._saved_text = ''
+        self._last_compile_result = None
 
     # ── Compose ─────────────────────────────────────────────────────
 
@@ -261,6 +264,7 @@ class EditorScreen(Screen):
     def _compile_and_save_outputs(self) -> None:
         source = self.query_one('#editor', TextArea).text
         result = compile_source_text(source)
+        self._last_compile_result = result
         sb = self.query_one('#status-bar', EditorStatusBar)
 
         self.query_one('#errors', ErrorPanel).errors = result.errors
@@ -376,6 +380,41 @@ class EditorScreen(Screen):
                 self._compile_and_save_outputs()
 
         self.app.push_screen(SaveAsScreen(), on_save)
+
+    def action_show_tutorial(self) -> None:
+        from pyc64_ui.screens.tutorial import TutorialScreen
+
+        def on_select(content):
+            if content:
+                self.query_one('#editor', TextArea).text = content
+                self._saved_text = content
+                self.action_compile()
+
+        self.app.push_screen(TutorialScreen(), on_select)
+
+    def action_show_dashboard(self) -> None:
+        if self._last_compile_result:
+            from pyc64_ui.screens.dashboard import DashboardScreen
+            # Map result back to engine-like structure for dashboard if needed,
+            # but we can also pass the result directly or enhance CompileResult.
+            # For now, let's just use the metrics and errors from result.
+            diag = []
+            for e in self._last_compile_result.errors:
+                diag.append({"severity": "error", "message": e})
+            # Dashboard handles AI suggestions if we pass them.
+            # compile_source_text currently only returns errors/warnings strings.
+            # We might want to pass more structured data.
+
+            # Actually, let's re-run engine to get full structured data for dashboard
+            # to be truly decoupled and accurate.
+            from pyc64c.engine import run_pipeline
+            source = self.query_one('#editor', TextArea).text
+            engine_res = run_pipeline(source)
+
+            self.app.push_screen(DashboardScreen(
+                metrics=engine_res.metrics,
+                diagnostics=engine_res.diagnostics
+            ))
 
     def action_quit(self) -> None:
         self.app.exit()
