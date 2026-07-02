@@ -99,6 +99,10 @@ class PRGBuilder:
             'sprite_pos': '_set_sprite_pos',
             'sprite_multicolor': '_set_sprite_bit',
             'sprite_stretch': '_set_sprite_bit',
+            'sid_setup': '_set_sid_reg',
+            'sid_freq': '_set_sid_reg',
+            'sid_pw': '_set_sid_reg',
+            'sid_gate': '_set_sid_reg',
         }
         runtime_names = set()
         for builtin, rt in builtin_to_runtime.items():
