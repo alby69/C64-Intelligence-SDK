@@ -63,6 +63,8 @@ def process_sdk_request(request_json):
     if prg_data:
         response["artifacts"]["prg_base64"] = base64.b64encode(prg_data).decode('ascii')
         response["artifacts"]["basic_code"] = result.basic_code
+        if options.get("generate_symbols"):
+            response["artifacts"]["symbols"] = result.builder.e.generate_symbols()
         response["metrics"]["binary_size_bytes"] = len(prg_data)
 
         # Analyze AST for more metrics
