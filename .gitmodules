@@ -7,3 +7,6 @@
 [submodule "core"]
 	path = core
 	url = https://github.com/alby69/C64-LLM
+[submodule "scraper"]
+	path = scraper
+	url = https://github.com/alby69/C64-Scrapy
