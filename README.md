@@ -1,8 +1,15 @@
 # PYC64 — Python-to-C64 Cross-Compiler & TUI IDE
 
-Compiles **Python-like** code into native **Commodore 64** machine code,
-assembles **6502** assembly into `.PRG` files,
-and provides a **TUI** (Terminal User Interface) editor — all in pure Python.
+PYC64 is a powerful development toolkit for the Commodore 64, providing a Python-like language that compiles directly to 6502 machine code.
+
+**This project is a core component of the [C64-Intelligence-SDK](https://github.com/alby69/C64-Intelligence-SDK), acting as the primary compilation engine and developer interface (`tools/` pillar).**
+
+It provides:
+- A high-level **Python-like** language with type annotations.
+- A built-in **6502 Macro Assembler**.
+- A modern **TUI (Terminal User Interface)** IDE built with Textual.
+- Seamless integration with **C64-LLM** for AI-assisted programming.
+- An integrated **6502 Simulator** for rapid testing.
 
 ---
 
