@@ -15,11 +15,16 @@ L'obiettivo è trasformare PYC64 in uno strumento programmabile e integrabile.
 ### 1.2 Protocollo JSON SDK
 - [x] Implementare `pyc64c/sdk.py` per gestire richieste/risposte strutturate.
 - [x] Includere metriche (tempo di compilazione, dimensione binario) e diagnostica dettagliata.
-- [x] Creare un prototipo di Agent (`scripts/compiler_agent_prototype.py`) per testare il flusso via CLI/Stdin.
+- [x] Integrazione con `IntegrationBridge` per feedback loop.
 
 ### 1.3 Test Suite e CI/CD
 - [x] Creare `tests/test_sdk.py` per validare il protocollo.
 - [x] Aggiunti test per la generazione di simboli e diagnostica.
+
+### 1.4 Refactoring Disaccoppiamento
+- [x] Implementato `IntegrationBridge` con autodiscovery e dipendenze opzionali.
+- [x] Supporto per variabili d'ambiente per configurazione paths.
+- [x] Documentazione integrazione SDK completata in `docs/SDK_INTEGRATION.md`.
 
 ---
 

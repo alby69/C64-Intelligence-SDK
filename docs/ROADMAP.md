@@ -42,7 +42,8 @@ L'obiettivo strategico è trasformare PYC64 da compilatore standalone a **motore
 | F1.1 | **API programmatica** — Esporre il compilatore come libreria importabile (`from pyc64c import compile_source`) con interfaccia stabile | 🔴 Alta | Media | ✅ Completato |
 | F1.2 | **Protocollo SDK** — Definire formato JSON di scambio dati con C64-LLM (input: codice .c64 + metadati; output: PRG binary + listing + errori + metriche) | 🔴 Alta | Media | ✅ Completato |
 | F1.3 | **Contract Testing** — Test di integrazione con C64-LLM che verificano la compatibilità del formato di scambio | 🟡 Media | Media | ✅ Completato |
-| F1.4 | **Documentazione API** — Generare documentazione Sphinx/ReadTheDocs per `pyc64c/` | 🟡 Media | Bassa | 🟡 In Corso |
+| F1.4 | **Integrazione Decoupled** — Refactoring del bridge di integrazione per gestione dinamica delle dipendenze SDK | 🔴 Alta | Media | ✅ Completato |
+| F1.5 | **Documentazione API/SDK** — Generare documentazione per integrazione e API pubblica | 🟡 Media | Bassa | ✅ Completato |
 
 ### Fase 2 — Potenziamento del Compilatore (Q4 2026)
 
