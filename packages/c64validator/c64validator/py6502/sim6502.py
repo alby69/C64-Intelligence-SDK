@@ -110,39 +110,39 @@ class sim6502(object):
         self.hexcodes[0xE1] = ("sbc", "zeropageindexedindirectx")
         self.hexcodes[0xF1] = ("sbc", "zeropageindexedindirecty")
 
-        self.hexcodes[0x02] = ("", "")
+        self.hexcodes[0x02] = ("jam", "implicit")
         self.hexcodes[0x12] = ("ora", "zeropageindirect")
-        self.hexcodes[0x22] = ("", "")
+        self.hexcodes[0x22] = ("jam", "implicit")
         self.hexcodes[0x32] = ("and", "zeropageindirect")
-        self.hexcodes[0x42] = ("", "")
+        self.hexcodes[0x42] = ("jam", "implicit")
         self.hexcodes[0x52] = ("eor", "zeropageindirect")
-        self.hexcodes[0x62] = ("", "")
+        self.hexcodes[0x62] = ("jam", "implicit")
         self.hexcodes[0x72] = ("adc", "zeropageindirect")
-        self.hexcodes[0x82] = ("", "")
+        self.hexcodes[0x82] = ("jam", "implicit")
         self.hexcodes[0x92] = ("sta", "zeropageindirect")
         self.hexcodes[0xA2] = ("ldx", "immediate")
         self.hexcodes[0xB2] = ("lda", "zeropageindirect")
-        self.hexcodes[0xC2] = ("", "")
+        self.hexcodes[0xC2] = ("jam", "implicit")
         self.hexcodes[0xD2] = ("cmp", "zeropageindirect")
-        self.hexcodes[0xE2] = ("", "")
+        self.hexcodes[0xE2] = ("jam", "implicit")
         self.hexcodes[0xF2] = ("sbc", "zeropageindirect")
 
-        self.hexcodes[0x03] = ("", "")
-        self.hexcodes[0x13] = ("", "")
-        self.hexcodes[0x23] = ("", "")
-        self.hexcodes[0x33] = ("", "")
-        self.hexcodes[0x43] = ("", "")
-        self.hexcodes[0x53] = ("", "")
-        self.hexcodes[0x63] = ("", "")
-        self.hexcodes[0x73] = ("", "")
-        self.hexcodes[0x83] = ("", "")
-        self.hexcodes[0x93] = ("", "")
-        self.hexcodes[0xA3] = ("", "")
-        self.hexcodes[0xB3] = ("", "")
-        self.hexcodes[0xC3] = ("", "")
-        self.hexcodes[0xD3] = ("", "")
-        self.hexcodes[0xE3] = ("", "")
-        self.hexcodes[0xF3] = ("", "")
+        self.hexcodes[0x03] = ("aso", "zeropageindexedindirectx")
+        self.hexcodes[0x13] = ("aso", "zeropageindexedindirecty")
+        self.hexcodes[0x23] = ("rla", "zeropageindexedindirectx")
+        self.hexcodes[0x33] = ("rla", "zeropageindexedindirecty")
+        self.hexcodes[0x43] = ("lse", "zeropageindexedindirectx")
+        self.hexcodes[0x53] = ("lse", "zeropageindexedindirecty")
+        self.hexcodes[0x63] = ("rra", "zeropageindexedindirectx")
+        self.hexcodes[0x73] = ("rra", "zeropageindexedindirecty")
+        self.hexcodes[0x83] = ("sax", "zeropageindexedindirectx")
+        self.hexcodes[0x93] = ("sha", "zeropageindexedindirecty")
+        self.hexcodes[0xA3] = ("lax", "zeropageindexedindirectx")
+        self.hexcodes[0xB3] = ("lax", "zeropageindexedindirecty")
+        self.hexcodes[0xC3] = ("dcp", "zeropageindexedindirectx")
+        self.hexcodes[0xD3] = ("dcp", "zeropageindexedindirecty")
+        self.hexcodes[0xE3] = ("ins", "zeropageindexedindirectx")
+        self.hexcodes[0xF3] = ("ins", "zeropageindexedindirecty")
 
         self.hexcodes[0x04] = ("tsb", "zeropage")
         self.hexcodes[0x14] = ("trb", "zeropage")
@@ -263,22 +263,22 @@ class sim6502(object):
         self.hexcodes[0xEA] = ("nop", "implicit")
         self.hexcodes[0xFA] = ("plx", "implicit")
 
-        self.hexcodes[0x0B] = ("", "")
-        self.hexcodes[0x1B] = ("", "")
-        self.hexcodes[0x2B] = ("", "")
-        self.hexcodes[0x3B] = ("", "")
-        self.hexcodes[0x4B] = ("", "")
-        self.hexcodes[0x5B] = ("", "")
-        self.hexcodes[0x6B] = ("", "")
-        self.hexcodes[0x7B] = ("", "")
-        self.hexcodes[0x8B] = ("", "")
-        self.hexcodes[0x9B] = ("", "")
-        self.hexcodes[0xAB] = ("", "")
-        self.hexcodes[0xBB] = ("", "")
-        self.hexcodes[0xCB] = ("", "")
-        self.hexcodes[0xDB] = ("", "")
-        self.hexcodes[0xEB] = ("", "")
-        self.hexcodes[0xFB] = ("", "")
+        self.hexcodes[0x0B] = ("anc", "immediate")
+        self.hexcodes[0x1B] = ("aso", "absolutey")
+        self.hexcodes[0x2B] = ("anc", "immediate")
+        self.hexcodes[0x3B] = ("rla", "absolutey")
+        self.hexcodes[0x4B] = ("alr", "immediate")
+        self.hexcodes[0x5B] = ("lse", "absolutey")
+        self.hexcodes[0x6B] = ("arr", "immediate")
+        self.hexcodes[0x7B] = ("rra", "absolutey")
+        self.hexcodes[0x8B] = ("xaa", "immediate")
+        self.hexcodes[0x9B] = ("tas", "absolutey")
+        self.hexcodes[0xAB] = ("lax", "immediate")
+        self.hexcodes[0xBB] = ("las", "absolutey")
+        self.hexcodes[0xCB] = ("axs", "immediate")
+        self.hexcodes[0xDB] = ("dcp", "absolutey")
+        self.hexcodes[0xEB] = ("sbc", "immediate")
+        self.hexcodes[0xFB] = ("ins", "absolutey")
 
         self.hexcodes[0x0C] = ("tsb", "absolute")
         self.hexcodes[0x1C] = ("trb", "absolute")
@@ -1601,3 +1601,117 @@ class sim6502(object):
         self.a = self.y
         self.make_flags_nz(self.y)
         return None
+
+    # Illegal Opcodes (basic support)
+    def instr_anc(self, addrmode, opcode, operand8, operand16):
+        operand, addr, length = self.get_operand(addrmode, opcode, operand8, operand16)
+        self.a &= operand
+        self.make_flags_nz(self.a)
+        self.set_c(self.a & 0x80)
+        self.pc += length - 1
+        return None
+
+    def instr_aso(self, addrmode, opcode, operand8, operand16):
+        # ASO (also known as SLO) = ASL operand + ORA A
+        operand, addr, length = self.get_operand(addrmode, opcode, operand8, operand16)
+        self.set_c(operand & 0x80)
+        result = ((operand << 1) & 0xff)
+        self.memory_map.Write(addr, result)
+        self.a |= result
+        self.make_flags_nz(self.a)
+        self.pc += length - 1
+        return ("w", addr)
+
+    def instr_rla(self, addrmode, opcode, operand8, operand16):
+        # RLA = ROL operand + AND A
+        operand, addr, length = self.get_operand(addrmode, opcode, operand8, operand16)
+        carryin = self.cc & Flags.CARRY
+        carryout = operand & 0x80
+        result = ((operand << 1) & 0xff) | carryin
+        self.memory_map.Write(addr, result)
+        self.set_c(carryout)
+        self.a &= result
+        self.make_flags_nz(self.a)
+        self.pc += length - 1
+        return ("w", addr)
+
+    def instr_lse(self, addrmode, opcode, operand8, operand16):
+        # LSE (also known as SRE) = LSR operand + EOR A
+        operand, addr, length = self.get_operand(addrmode, opcode, operand8, operand16)
+        self.set_c(operand & 0x01)
+        result = (operand >> 1) & 0xff
+        self.memory_map.Write(addr, result)
+        self.a ^= result
+        self.make_flags_nz(self.a)
+        self.pc += length - 1
+        return ("w", addr)
+
+    def instr_rra(self, addrmode, opcode, operand8, operand16):
+        # RRA = ROR operand + ADC A
+        operand, addr, length = self.get_operand(addrmode, opcode, operand8, operand16)
+        carryin = self.cc & Flags.CARRY
+        carryout = operand & 0x01
+        result = (operand >> 1) | (0x80 if carryin else 0)
+        self.memory_map.Write(addr, result)
+        self.set_c(carryout)
+        # ADC A (simplified, no BCD support for RRA usually)
+        carryin_adc = self.cc & Flags.CARRY
+        acc_before = self.a
+        sum_val = self.a + result + carryin_adc
+        self.a = sum_val & 0xff
+        self.set_c(sum_val > 0xff)
+        self.set_v(((acc_before ^ self.a) & (result ^ self.a) & 0x80) == 0x80)
+        self.make_flags_nz(self.a)
+        self.pc += length - 1
+        return ("w", addr)
+
+    def instr_dcp(self, addrmode, opcode, operand8, operand16):
+        # DCP = DEC operand + CMP A
+        operand, addr, length = self.get_operand(addrmode, opcode, operand8, operand16)
+        result = (operand - 1) & 0xff
+        self.memory_map.Write(addr, result)
+        self.set_c(self.a >= result)
+        test = (self.a - result) & 0xff
+        self.make_flags_nz(test)
+        self.pc += length - 1
+        return ("w", addr)
+
+    def instr_ins(self, addrmode, opcode, operand8, operand16):
+        # INS (also known as ISB) = INC operand + SBC A
+        operand, addr, length = self.get_operand(addrmode, opcode, operand8, operand16)
+        result = (operand + 1) & 0xff
+        self.memory_map.Write(addr, result)
+        # SBC A (simplified)
+        carryin_sbc = 1 if (self.cc & Flags.CARRY) else 0
+        acc_before = self.a
+        diff = acc_before - result - (1 - carryin_sbc)
+        self.a = diff & 0xff
+        self.set_c(diff >= 0)
+        self.set_v(((acc_before ^ self.a) & ((result ^ 0xff) ^ self.a) & 0x80) == 0x80)
+        self.make_flags_nz(self.a)
+        self.pc += length - 1
+        return ("w", addr)
+
+    def instr_jam(self, addrmode, opcode, operand8, operand16):
+        print(f"CPU JAMMED at {hex(self.pc-1)} by opcode {hex(opcode)}")
+        return ("jam", self.pc - 1)
+
+    def instr_nop_illegal(self, addrmode, opcode, operand8, operand16):
+        _, _, length = self.get_operand(addrmode, opcode, operand8, operand16)
+        self.pc += length - 1
+        return None
+
+    def instr_lax(self, addrmode, opcode, operand8, operand16):
+        operand, addr, length = self.get_operand(addrmode, opcode, operand8, operand16)
+        self.a = operand
+        self.x = operand
+        self.make_flags_nz(operand)
+        self.pc += length - 1
+        return None
+
+    def instr_sax(self, addrmode, opcode, operand8, operand16):
+        operand, addr, length = self.get_operand(addrmode, opcode, operand8, operand16)
+        result = self.a & self.x
+        self.memory_map.Write(addr, result)
+        self.pc += length - 1
+        return ("w", addr)

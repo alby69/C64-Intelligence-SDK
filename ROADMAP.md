@@ -9,13 +9,13 @@ Questo documento delinea il futuro dell'ecosistema C64, consolidando gli obietti
 - [x] **Integrazione py6502**: Simulazione e disassemblaggio pure-Python integrati per validazione veloce senza dipendenze esterne.
 - [x] **Playground Didattico**: Implementato ambiente REPL per l'apprendimento dell'assembly 6502.
 - [x] **Centralizzazione Data Acquisition**: Integrato `C64-Scrapy` come unico fornitore di dati web, eliminando i crawler duplicati nel core.
+- [x] **Supporto Illegal Opcodes**: Implementato il supporto per gli opcode non documentati del 6502 (LAX, SAX, DCP, ecc.) in `c64validator`.
 
 ## 2. Obiettivi a Breve Termine (Fase 2: Consolidamento)
 
-- [ ] **Uniformità Toolchain**: Assicurarsi che tutti i repository (C64-LLM, PYC64, C64GameTutorial) utilizzino esclusivamente i package `c64validator` e `c64extractor`.
-- [ ] **Integrazione IDE**: Portare `c64validator` all'interno della TUI di PYC64 per fornire feedback immediato su errori di branch e stima dei cicli.
+- [ ] **Uniformità Toolchain**: Completare il refactoring dei repository (C64-LLM, PYC64, C64GameTutorial) per utilizzare esclusivamente i package `c64validator` e `c64extractor`.
+- [ ] **Integrazione IDE**: Portare `c64validator` all'interno della TUI di PYC64 per fornire feedback immediato su errori di branch e stima dei cicli. (Patch di integrazione preparata).
 - [ ] **Mappatura Memoria**: Estendere l'adapter py6502 per mappare le locazioni di memoria C64 più comuni (VIC-II, SID, CIA) per simulazioni più accurate.
-- [ ] **Supporto Illegal Opcodes**: Implementare il supporto per gli opcode non documentati del 6502, essenziali per l'analisi di demo e giochi commerciali.
 
 ## 3. Obiettivi a Lungo Termine (Fase 3: Servizi Centralizzati)
 
