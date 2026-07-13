@@ -1,18 +1,24 @@
 [submodule "tools"]
 	path = tools
 	url = https://github.com/alby69/PYC64
+	branch = main
 [submodule "tutorial"]
 	path = tutorial
 	url = https://github.com/alby69/C64GameTutorial
+	branch = main
 [submodule "core"]
 	path = core
 	url = https://github.com/alby69/C64-LLM
+	branch = main
 [submodule "scraper"]
 	path = scraper
 	url = https://github.com/alby69/C64-Scrapy
+	branch = main
 [submodule "debugger"]
 	path = debugger
 	url = https://github.com/alby69/C64-Debugger
+	branch = main
 [submodule "kb-agent"]
 	path = kb-agent
 	url = https://github.com/alby69/C64-KB-Agent
+	branch = main
