@@ -10,3 +10,9 @@
 [submodule "scraper"]
 	path = scraper
 	url = https://github.com/alby69/C64-Scrapy
+[submodule "debugger"]
+	path = debugger
+	url = https://github.com/alby69/C64-Debugger
+[submodule "kb-agent"]
+	path = kb-agent
+	url = https://github.com/alby69/C64-KB-Agent

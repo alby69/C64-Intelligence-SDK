@@ -50,3 +50,33 @@ services:
         limits:
           memory: 16G
     command: python pipeline/train_lora.py /app/data/output/dataset_unified.jsonl
+
+  # Centralized RAG / Knowledge Base Service (C64-KB-Agent)
+  c64-kb-agent:
+    build:
+      context: ./kb-agent
+      dockerfile: Dockerfile
+    container_name: c64_kb_agent_service
+    volumes:
+      - ./kb-agent:/app
+      - ./data:/app/data
+    ports:
+      - "8000:8000"
+    environment:
+      - PORT=8000
+    command: uvicorn main:app --host 0.0.0.0 --port 8000
+    restart: unless-stopped
+
+  # Visual Debugger & Simulation service (C64-Debugger)
+  c64-debugger:
+    build:
+      context: ./debugger
+      dockerfile: Dockerfile
+    container_name: c64_debugger_service
+    volumes:
+      - ./debugger:/app
+      - ./data:/app/data
+    ports:
+      - "5000:5000"
+    command: python main_debugger.py
+    restart: unless-stopped
