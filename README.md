@@ -77,6 +77,73 @@ docker compose up c64-ui
 
 ---
 
+## Automazione Submodule
+
+Questo pacchetto automatizza il workflow multi-repo descritto nel documento **IMPLEMENTATION_SPEC_AND_GUIDE.md** (Paragrafo 2), eliminando la necessità di comandi git manuali per spostarsi tra i repository dei sottomoduli.
+
+### Prerequisito: `.gitmodules`
+Il file `.gitmodules` è pre-configurato con il parametro `branch = main` per tracciare correttamente i branch remoti.
+
+### Comandi Principali
+
+#### Scenario B — Aggiornamento da remoto (documento, par. 2)
+Hai lavorato su un repo separato (es. C64-LLM), hai fatto push su GitHub e ora vuoi "riagganciare" le modifiche nel collettore:
+
+```bash
+# Via Docker (consigliato)
+docker compose run --rm sdk-updater update
+
+# Aggiorna e pusha il collettore
+docker compose run --rm sdk-updater update --push
+
+# Forza l'update anche se ci sono modifiche locali non committate (esegue lo stash automatico)
+docker compose run --rm sdk-updater update --force
+```
+
+#### Scenario A — Sviluppo locale nei submodule (documento, par. 2)
+Hai modificato i file direttamente dentro `core/` o `tools/` e vuoi committare e pushare tutto:
+
+```bash
+# Commit e push automatici di tutti i sottomoduli dirty, poi aggiorna il parent
+docker compose run --rm sdk-updater dev-sync -m "feat: nuova integrazione VICE"
+
+# Come sopra ma pusha anche il collettore
+docker compose run --rm sdk-updater dev-sync -m "feat: nuova integrazione VICE" --push
+```
+
+#### Utility di Stato e Manutenzione
+
+```bash
+# Stato di tutti i sottomoduli (branch, commit, modifiche)
+docker compose run --rm sdk-updater status
+
+# Sincronizza gli URL da .gitmodules
+docker compose run --rm sdk-updater sync
+
+# Reset di emergenza (torna ai commit tracciati dal parent)
+docker compose run --rm sdk-updater reset
+docker compose run --rm sdk-updater reset --hard
+```
+
+#### Esecuzione nativa (senza Docker)
+
+Se preferisci non usare Docker, puoi lanciare lo script direttamente dal tuo terminale:
+```bash
+./scripts/update-submodules.sh status
+./scripts/update-submodules.sh update --push
+./scripts/update-submodules.sh dev-sync -m "fix: bug raster"
+```
+
+### Cosa fa automaticamente lo script
+1. **Rileva detached HEAD**: se un sottomodulo è in stato detached, lo script esegue il checkout del branch corretto impostando il tracking con `origin/<branch>`.
+2. **Fetch remoto**: esegue `git fetch origin` per ciascun sottomodulo.
+3. **Merge**: esegue `git merge origin/<branch>` per importare i nuovi commit.
+4. **Gestione conflitti**: se un merge fallisce, abortisce automaticamente e segnala l'errore senza lasciare il repository sporco.
+5. **Commit parent**: esegue `git add <submodule>` nel collettore e crea un commit con messaggio standardizzato (`chore(submodules): update <path> to <commit>`).
+6. **Push opzionale**: se usi `--push`, effettua il push del collettore su origin.
+
+---
+
 ## Struttura del Repository
 
 ```
@@ -88,6 +155,11 @@ C64-Intelligence-SDK/
 ├── packages/                # Package Python Condivisi
 │   ├── c64validator/        # Validazione e Simulazione
 │   └── c64extractor/        # Estrazione e Disassembly
+├── scripts/                 # Script di automazione e gestione submodule
+│   ├── submodule-manager.py # Logica Python per l'automazione
+│   └── update-submodules.sh # Wrapper shell di compatibilità
+├── Dockerfile.updater       # Dockerfile per il servizio sdk-updater
+├── docker-compose.override.yml # Servizio sdk-updater
 ├── data/                    # Dati condivisi (Volume Docker)
 ├── docker-compose.yml       # Orchestrazione ecosistema
 └── ROADMAP.md               # Evoluzione futura
