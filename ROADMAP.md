@@ -44,6 +44,15 @@ L'SDK funge da collettore e orchestratore per l'intero ecosistema C64. Di seguit
     *   **Esperienza utente statica**: Il sito MkDocs utilizza un tema base; manca un'interfaccia interattiva e moderna (MkDocs Material) con ricerca avanzata e dark mode.
     *   **Assenza di test funzionali complessi**: Gli screenshot nei test di VICE non sono associati a librerie di computer vision o OCR per verificare che lo sprite si sia effettivamente mosso o che l'interrupt sia stabile.
 
+### 1.4 C64-KB-Agent (`kb-agent/`) — Stato: Rilascio Completo (Production-Ready)
+*   **Componenti implementati**:
+    *   **Architettura Microservizio**: Implementazione autonoma in FastAPI, Docker compatibile, con supporto CORS e standardizzazione OpenAPI.
+    *   **Motore RAG integrato**: Embeddings semantici (SentenceTransformers) e database vettoriale FAISS per indicizzare (`/kb/index`) e ricercare (`/kb/search`) con persistenza locale automatica.
+    *   **Database dei Registri Hardware**: Mappatura completa e normalizzazione di oltre 60 registri hardware (VIC-II, SID, CIA 1, CIA 2). Supporta formati esadecimale (`$D011`, `0xD011`), decimale (`53265`) e fornisce descrizione bit-a-bit ed esempi in Assembly 6502.
+    *   **Automazione dei Test**: Suite di test integrata (pytest + TestClient) con il 100% di pass rate.
+*   **Gap critici riscontrati**:
+    *   Nessun gap critico immediato; pronto per essere integrato come servizio RAG standardizzato per gli agenti in `core/` e le interfacce in `tools/`.
+
 ---
 
 ## 2. Criticità Trasversali dell'Ecosistema

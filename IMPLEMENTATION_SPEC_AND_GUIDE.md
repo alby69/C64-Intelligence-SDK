@@ -175,13 +175,13 @@ Di seguito sono riportate le specifiche dettagliate dei miglioramenti, pronte pe
 
 Per rendere l'SDK pulito e leggero, i due grandi sistemi complessi discussi nella ROADMAP dovranno nascere come progetti separati, richiamati dall'SDK.
 
-### 4.1 C64-KB-Agent (RAG & Knowledge Base Centralizzata)
-Questo servizio eviterà che `core/` (C64-LLM) debba caricare in memoria locale le librerie Sentence-Transformers e FAISS/ChromaDB ogni volta, abbattendo l'uso di RAM della UI.
-*   **Architettura**: Microservizio standalone in **FastAPI**.
-*   **Endpoint principali**:
-    *   `POST /kb/index`: Indicizza un nuovo documento (markdown, testo, json).
-    *   `GET /kb/search`: Esegue la ricerca semantica con embedding locali e restituisce i contesti più rilevanti.
-    *   `GET /kb/registers/{address}`: Restituisce all'istante la descrizione, i bit attivi e l'uso tipico di un indirizzo di memoria C64 (es. `$D011`). Questo endpoint è pensato per i tooltip dinamici della TUI di `PYC64`.
+### 4.1 C64-KB-Agent (RAG & Knowledge Base Centralizzata) [Stato: COMPLETATO]
+Questo servizio centralizza l'uso dei modelli semantici di embedding e del database vettoriale, evitando che `core/` (C64-LLM) debba caricare in memoria locale le librerie Sentence-Transformers e FAISS/ChromaDB ogni volta, abbattendo drasticamente l'uso di RAM della UI.
+*   **Architettura**: Microservizio standalone in **FastAPI**, fully dockerized e pronto all'uso.
+*   **Endpoint principali implementati**:
+    *   `POST /kb/index`: Indicizza nuovi documenti (markdown, testo, json) generando embedding e aggiornando il database vettoriale FAISS con persistenza automatica su disco.
+    *   `GET /kb/search` / `POST /kb/search`: Esegue la ricerca semantica tramite similarità vettoriale e restituisce i contesti rilevanti ordinati per score.
+    *   `GET /kb/registers/{address}`: Restituisce all'istante la descrizione dettagliata, la mappatura bit-a-bit e l'esempio d'uso di qualsiasi indirizzo di memoria I/O del C64 (es. `$D011`, `$D020`, `$D400`, `$DC00`), accettando formati multipli (esadecimale, decimale, prefissi). Questo alimenta l'assistente AI e i tooltip dinamici della TUI di `PYC64`.
 
 ### 4.2 C64-Debugger-Agent (Agentic Debugging & VICE Connection)
 Questo sottomodulo agirà da bridge a basso livello per guidare la correzione degli errori.

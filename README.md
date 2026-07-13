@@ -36,7 +36,10 @@ Manuale didattico completo (Italiano + Inglese) per creare videogiochi arcade su
 ### 4. C64-Scrapy — Data Acquisition Framework (`scraper/`)
 Framework basato su Scrapy per estrarre documentazione tecnica, sorgenti e metadata da portali specializzati (C64-Wiki, Codebase64, Archive.org), alimentando la Knowledge Base dell'AI.
 
-### 5. Shared Packages (`packages/`)
+### 5. C64-KB-Agent — RAG & Knowledge Base Centralizzata (`kb-agent/`)
+Microservizio autonomo basato su **FastAPI**, **Sentence-Transformers** e **FAISS** per ospitare ed eseguire interrogazioni semantiche (RAG) e ospitare il database dei registri hardware, alleggerendo l'uso di memoria RAM delle UI locali.
+
+### 6. Shared Packages (`packages/`)
 - **c64validator**: Motore di validazione universale. Include simulatore py6502, stima cicli di clock e wrapper per assembler ACME.
 - **c64extractor**: Suite di estrazione dati per formati C64 (PRG, D64, G64) con detokenizer BASIC v2 e disassemblatore automatico.
 
@@ -152,6 +155,8 @@ C64-Intelligence-SDK/
 ├── tools/                   # PYC64 — IDE e Compilatore (Submodule)
 ├── tutorial/                # C64GameTutorial — Manuale (Submodule)
 ├── scraper/                 # C64-Scrapy — Crawler (Submodule)
+├── kb-agent/                # C64-KB-Agent — RAG & Knowledge Base (Submodule)
+├── debugger/                # C64-Debugger — Debugger a basso livello (Submodule)
 ├── packages/                # Package Python Condivisi
 │   ├── c64validator/        # Validazione e Simulazione
 │   └── c64extractor/        # Estrazione e Disassembly
