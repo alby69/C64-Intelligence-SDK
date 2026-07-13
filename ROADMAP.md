@@ -87,7 +87,7 @@ L'SDK raccoglie diversi repository collegati tramite sottomoduli Git. Di seguito
 
 ### 3.2 C64AIToolChain (by dexmac221)
 *   **Punti di forza**: Integrazione con la suite standard cc65, connessione socket bidirezionale al Remote Monitor di VICE (porta 6510), feedback visivo tramite VLM.
-*   **Azioni per l'SDK**: Sfruttare il protocollo di Remote Monitor di VICE in Python (strutturato come modulo condiviso in `packages/c64debugger`).
+*   **Azioni per l'SDK**: Sfruttare il protocollo di Remote Monitor di VICE in Python (strutturato as modulo condiviso in `packages/c64debugger`).
 
 ---
 

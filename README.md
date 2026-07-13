@@ -164,6 +164,31 @@ docker compose run --rm sdk-updater reset --hard
 
 ---
 
+## Struttura del Repository
+
+```
+C64-Intelligence-SDK/
+├── core/                    # C64-LLM — Assistente AI (Submodule)
+├── tools/                   # PYC64 — IDE e Compilatore (Submodule)
+├── tutorial/                # C64GameTutorial — Manuale (Submodule)
+├── scraper/                 # C64-Scrapy — Crawler (Submodule)
+├── kb-agent/                # C64-KB-Agent — RAG & Knowledge Base (Submodule)
+├── debugger/                # C64-Debugger — Debugger a basso livello (Submodule)
+├── packages/                # Package Python Condivisi
+│   ├── c64validator/        # Validazione e Simulazione
+│   └── c64extractor/        # Estrazione e Disassembly
+├── scripts/                 # Script di automazione e gestione submodule
+│   ├── submodule-manager.py # Logica Python per l'automazione
+│   └── update-submodules.sh # Wrapper shell di compatibilità
+├── Dockerfile.updater       # Dockerfile per il servizio sdk-updater
+├── docker-compose.override.yml # Servizio sdk-updater
+├── data/                    # Dati condivisi (Volume Docker)
+├── docker-compose.yml       # Orchestrazione ecosistema
+└── ROADMAP.md               # Evoluzione futura
+```
+
+---
+
 ## Licenza
 
 L'ecosistema utilizza licenze Open Source (GPL v3.0, MIT, CC BY 4.0) a seconda del sottomodulo specifico. Consultare i singoli repository per i dettagli.
