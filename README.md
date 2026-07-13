@@ -1,6 +1,6 @@
 # C64 Intelligence SDK
 
-**Piattaforma integrata per lo sviluppo su Commodore 64** — un ecosistema completo che combina AI generativa, compilazione cross-platform e formazione tecnica.
+**Piattaforma integrata per lo sviluppo su Commodore 64** — un ecosistema completo che unisce AI generativa, compilazione cross-platform, ricerca semantica (RAG) e debug low-level in emulatore.
 
 ```
 ┌─────────────────────────────────────────────────────────────────────────────┐
@@ -12,8 +12,16 @@
 │  │  Multi-Agente   │  │  Python→C64  │  │  Esercizi ASM    │  │ Crawler   │  │
 │  └────────┬────────┘  └──────┬───────┘  └────────┬────────┘  └─────┬─────┘  │
 │           │                  │                   │                 │        │
-│           └──────────────────┼───────────────────┼─────────────────┘        │
-│                              ▼                   ▼                          │
+│           │            ┌─────┴───────────────────┴──────────┐      │        │
+│           │            │  C64-KB-Agent (kb-agent/)          │      │        │
+│           │            │  RAG & Registers Microservice (API)│◄─────┘        │
+│           │            └─────────────────┬──────────────────┘               │
+│           │                              │                                  │
+│           │            ┌─────────────────┴──────────────────┐               │
+│           └───────────►│  C64-Debugger (debugger/)          │               │
+│                        │  VICE Monitor Bridge (Socket API)  │               │
+│                        └────────────────────────────────────┘               │
+│                                                                             │
 │        ┌──────────────────────────────────────────────────────────┐         │
 │        │        Shared Logic Packages (c64validator, c64extractor)│         │
 │        └──────────────────────────────────────────────────────────┘         │
@@ -22,153 +30,142 @@
 
 ---
 
-## Componenti dell'Ecosistema
+## Componenti dell'Ecosistema (Submoduli)
 
 ### 1. C64-LLM — Assistente AI Multi-Agente (`core/`)
-Assistente alla programmazione specializzato per Commodore 64 basato su **Qwen2.5-Coder**, capace di generare codice **Assembly 6502** e **BASIC v2** con architettura multi-agente e sistema RAG.
+Assistente alla programmazione specializzato per Commodore 64 basato su **Qwen2.5-Coder**, capace di generare codice **Assembly 6502** e **BASIC v2** con architettura multi-agente e sistema RAG con Self-Healing ricorsivo.
 
 ### 2. PYC64 — Compilatore Python→C64 (`tools/`)
 Cross-compilatore che traduce codice **Python-like** in **Assembly 6502** e lo assembla in file `.PRG` nativi per Commodore 64. Include una TUI IDE completa.
 
 ### 3. C64GameTutorial — Manuale di Programmazione Arcade (`tutorial/`)
-Manuale didattico completo (Italiano + Inglese) per creare videogiochi arcade su Commodore 64, con decine di esempi e soluzioni.
+Manuale didattico completo (Italiano + Inglese) per creare videogiochi arcade su Commodore 64, con decine di esempi, soluzioni e automazione di test in VICE.
 
 ### 4. C64-Scrapy — Data Acquisition Framework (`scraper/`)
-Framework basato su Scrapy per estrarre documentazione tecnica, sorgenti e metadata da portali specializzati (C64-Wiki, Codebase64, Archive.org), alimentando la Knowledge Base dell'AI.
+Framework basato su Scrapy per estrarre documentazione tecnica, sorgenti e metadata da portali specializzati (C64-Wiki, Codebase64, Archive.org), alimentando in streaming la base di conoscenza.
 
-### 5. Shared Packages (`packages/`)
-- **c64validator**: Motore di validazione universale. Include simulatore py6502, stima cicli di clock e wrapper per assembler ACME.
+### 5. C64-KB-Agent — RAG & Knowledge Base Centralizzata (`kb-agent/`)
+Microservizio centralizzato basato su **FastAPI**, **Sentence-Transformers** e **FAISS**. Fornisce API per l'indicizzazione semantica, la ricerca vettoriale e la risoluzione di indirizzi di memoria e registri hardware (VIC-II, SID, CIA 1, CIA 2) con bit-breakdown ed esempi di codice.
+
+### 6. C64-Debugger-Agent — Debugging Low-Level (`debugger/`)
+Subprogetto dedicato all'interfaccia a basso livello con l'emulatore. Implementa un client socket binario monitor per la connessione diretta a VICE (porta 6510) per estrarre lo stato dei registri, effettuare step e diagnosticare i crash.
+
+### 7. Shared Packages (`packages/`)
+Librerie Python condivise per standardizzare l'esecuzione in tutti i moduli:
+- **c64validator**: Motore di validazione. Include simulatore py6502, stima cicli di clock e wrapper per assembler ACME.
 - **c64extractor**: Suite di estrazione dati per formati C64 (PRG, D64, G64) con detokenizer BASIC v2 e disassemblatore automatico.
+- **c64debugger**: Shared debugging logic con supporto al monitor socket di VICE.
 
 ---
 
 ## Architettura Decoupled
 
-L'SDK implementa una strategia di disaccoppiamento dove le logiche core sono estratte in package indipendenti. Questo permette:
-- **Modularità**: I toolchain di compilazione e l'AI usano le stesse librerie di validazione.
-- **Affidabilità**: Validazione del codice tramite simulazione pure-Python (py6502) senza dipendenze esterne.
-- **Efficienza**: Acquisizione dati centralizzata tramite lo scraper dedicato.
+L'SDK implementa una strategia di disaccoppiamento dove le logiche complesse sono isolate in sottomoduli e pacchetti indipendenti. Questo garantisce:
+- **Modularità**: I sottomoduli di compilazione, dell'AI e del debugger consumano le stesse librerie condivise (`packages/`).
+- **Ottimizzazione di Memoria**: Centralizzando la computazione vettoriale (RAG) nel microservizio `C64-KB-Agent`, l'interfaccia utente dell'AI (`core`) e il compilatore (`tools`) rimangono leggeri e veloci.
+- **Interoperabilità**: Qualsiasi modulo dell'ecosistema può interrogare l'API di `C64-KB-Agent` per ottenere tooltip e informazioni dettagliate sui registri fisici del C64.
 
-Per i dettagli sulla visione a lungo termine, consulta il file [ROADMAP.md](ROADMAP.md).
+Per i dettagli sulla visione di sviluppo e sul piano d'azione globale, consulta il file [ROADMAP.md](ROADMAP.md).
 
 ---
 
 ## Guida Rapida all'Installazione
 
 ### Prerequisiti
-- Docker + Docker Compose
+- Docker e Docker Compose
 - Python 3.10+
-- ACME Assembler (opzionale per validazione nativa)
+- ACME Assembler (opzionale per validazione nativa senza Docker)
 
-### Setup rapido (Docker)
+### Setup Completo (Docker)
+
+La suite Docker Compose orchestra l'intero ecosistema in modo centralizzato:
+
+1. **Scarica il modello GGUF per CPU (AI Assistant)**:
+   ```bash
+   mkdir -p data/models
+   wget -O data/models/qwen2.5-coder-1.5b.Q4_K_M.gguf \
+     https://huggingface.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF/resolve/main/qwen2.5-coder-1.5b-instruct-q4_k_m.gguf
+   ```
+
+2. **Compilazione delle immagini**:
+   ```bash
+   docker compose build
+   ```
+
+3. **Avvio del microservizio RAG & Knowledge Base (`kb-agent`)**:
+   ```bash
+   docker compose up -d kb-agent
+   ```
+
+4. **Avvio dell'interfaccia Gradio (C64 AI Assistant UI)**:
+   ```bash
+   docker compose up c64-ui
+   ```
+
+### Avvio Nativo Locale (Senza Docker)
+
+È possibile installare e testare individualmente ciascun componente. Ad esempio, per il microservizio Knowledge Base:
 
 ```bash
-# 1. Scarica il modello GGUF per CPU
-mkdir -p data/models
-wget -O data/models/qwen2.5-coder-1.5b.Q4_K_M.gguf \
-  https://huggingface.co/Qwen/Qwen2.5-Coder-1.5B-Instruct-GGUF/resolve/main/qwen2.5-coder-1.5b-instruct-q4_k_m.gguf
+# Entra nel sottomodulo
+cd kb-agent
 
-# 2. Build dell'immagine
-docker compose build
+# Crea ed attiva l'ambiente virtuale
+python3 -m venv venv
+source venv/bin/activate
 
-# 3. Avvia interfaccia Gradio (AI Assistant)
-docker compose up c64-ui
+# Installa in modalità editable
+pip install -r requirements.txt
+pip install -e .
+
+# Esegui i test di validazione
+python3 -m pytest kb_agent/tests/ -v
+
+# Avvia l'applicazione
+uvicorn kb_agent.main:app --reload --host 0.0.0.0 --port 8000
 ```
 
 ---
 
-## Automazione Submodule
+## Automazione e Gestione Submodule
 
-Questo pacchetto automatizza il workflow multi-repo descritto nel documento **IMPLEMENTATION_SPEC_AND_GUIDE.md** (Paragrafo 2), eliminando la necessità di comandi git manuali per spostarsi tra i repository dei sottomoduli.
-
-### Prerequisito: `.gitmodules`
-Il file `.gitmodules` è pre-configurato con il parametro `branch = main` per tracciare correttamente i branch remoti.
+Questo pacchetto integra uno script avanzato per automatizzare la gestione e l'allineamento dei sottomoduli Git, evitando errori di detached HEAD o conflitti di puntatori.
 
 ### Comandi Principali
 
-#### Scenario B — Aggiornamento da remoto (documento, par. 2)
-Hai lavorato su un repo separato (es. C64-LLM), hai fatto push su GitHub e ora vuoi "riagganciare" le modifiche nel collettore:
-
+#### 1. Stato di tutti i sottomoduli (active branch, commit, dirty status)
 ```bash
-# Via Docker (consigliato)
+docker compose run --rm sdk-updater status
+# Oppure localmente:
+./scripts/update-submodules.sh status
+```
+
+#### 2. Aggiornamento automatico da remoto (Scenario B)
+Sincronizza, scarica gli ultimi aggiornamenti di ciascun sottomodulo e riallinea i puntatori nel collettore principale:
+```bash
+# Esegue update e merge dei sottomoduli
 docker compose run --rm sdk-updater update
 
-# Aggiorna e pusha il collettore
+# Sincronizza ed effettua anche il push del collettore principale
 docker compose run --rm sdk-updater update --push
-
-# Forza l'update anche se ci sono modifiche locali non committate (esegue lo stash automatico)
-docker compose run --rm sdk-updater update --force
 ```
 
-#### Scenario A — Sviluppo locale nei submodule (documento, par. 2)
-Hai modificato i file direttamente dentro `core/` o `tools/` e vuoi committare e pushare tutto:
-
+#### 3. Sviluppo e Sincronizzazione locale (Scenario A)
+Se stai modificando il codice direttamente all'interno delle cartelle dei sottomoduli (es. `core/` o `kb-agent/`), puoi eseguire il commit e push automatico nei rispettivi sottomoduli avanzandone il puntatore nell'SDK:
 ```bash
-# Commit e push automatici di tutti i sottomoduli dirty, poi aggiorna il parent
-docker compose run --rm sdk-updater dev-sync -m "feat: nuova integrazione VICE"
-
-# Come sopra ma pusha anche il collettore
-docker compose run --rm sdk-updater dev-sync -m "feat: nuova integrazione VICE" --push
+docker compose run --rm sdk-updater dev-sync -m "feat: aggiunte rotte per registri SID" --push
 ```
 
-#### Utility di Stato e Manutenzione
-
+#### 4. Ripristino di emergenza
+Se vuoi riportare tutti i sottomoduli allo stato esatto tracciato dall'SDK (annullando modifiche locali):
 ```bash
-# Stato di tutti i sottomoduli (branch, commit, modifiche)
-docker compose run --rm sdk-updater status
-
-# Sincronizza gli URL da .gitmodules
-docker compose run --rm sdk-updater sync
-
-# Reset di emergenza (torna ai commit tracciati dal parent)
-docker compose run --rm sdk-updater reset
 docker compose run --rm sdk-updater reset --hard
-```
-
-#### Esecuzione nativa (senza Docker)
-
-Se preferisci non usare Docker, puoi lanciare lo script direttamente dal tuo terminale:
-```bash
-./scripts/update-submodules.sh status
-./scripts/update-submodules.sh update --push
-./scripts/update-submodules.sh dev-sync -m "fix: bug raster"
-```
-
-### Cosa fa automaticamente lo script
-1. **Rileva detached HEAD**: se un sottomodulo è in stato detached, lo script esegue il checkout del branch corretto impostando il tracking con `origin/<branch>`.
-2. **Fetch remoto**: esegue `git fetch origin` per ciascun sottomodulo.
-3. **Merge**: esegue `git merge origin/<branch>` per importare i nuovi commit.
-4. **Gestione conflitti**: se un merge fallisce, abortisce automaticamente e segnala l'errore senza lasciare il repository sporco.
-5. **Commit parent**: esegue `git add <submodule>` nel collettore e crea un commit con messaggio standardizzato (`chore(submodules): update <path> to <commit>`).
-6. **Push opzionale**: se usi `--push`, effettua il push del collettore su origin.
-
----
-
-## Struttura del Repository
-
-```
-C64-Intelligence-SDK/
-├── core/                    # C64-LLM — Assistente AI (Submodule)
-├── tools/                   # PYC64 — IDE e Compilatore (Submodule)
-├── tutorial/                # C64GameTutorial — Manuale (Submodule)
-├── scraper/                 # C64-Scrapy — Crawler (Submodule)
-├── packages/                # Package Python Condivisi
-│   ├── c64validator/        # Validazione e Simulazione
-│   └── c64extractor/        # Estrazione e Disassembly
-├── scripts/                 # Script di automazione e gestione submodule
-│   ├── submodule-manager.py # Logica Python per l'automazione
-│   └── update-submodules.sh # Wrapper shell di compatibilità
-├── Dockerfile.updater       # Dockerfile per il servizio sdk-updater
-├── docker-compose.override.yml # Servizio sdk-updater
-├── data/                    # Dati condivisi (Volume Docker)
-├── docker-compose.yml       # Orchestrazione ecosistema
-└── ROADMAP.md               # Evoluzione futura
 ```
 
 ---
 
 ## Licenza
 
-L'ecosistema utilizza licenze Open Source (GPL v3.0, MIT, CC BY 4.0) a seconda del modulo. Consultare i singoli repository per i dettagli.
+L'ecosistema utilizza licenze Open Source (GPL v3.0, MIT, CC BY 4.0) a seconda del sottomodulo specifico. Consultare i singoli repository per i dettagli.
 
-*Progetto sviluppato da Alberto Abate (@alby69) per preservare e potenziare l'arte della programmazione su sistemi 8-bit.*
+*Progetto ideato e sviluppato da Alberto Abate (@alby69) per preservare e potenziare l'arte della programmazione su sistemi 8-bit.*
