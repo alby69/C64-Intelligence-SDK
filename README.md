@@ -1,98 +1,64 @@
-# PYC64 — Python-to-C64 Cross-Compiler & TUI IDE
+# C64 Intelligence SDK
 
-PYC64 is a powerful development toolkit for the Commodore 64, providing a Python-like language that compiles directly to 6502 machine code.
+Un SDK modulare per lo sviluppo su Commodore 64, che integra compilatore C64PY,
+simulatore 6502, TUI editor, agenti AI, knowledge base, scraping e debugger.
 
-**This project is a core component of the [C64-Intelligence-SDK](https://github.com/alby69/C64-Intelligence-SDK), acting as the primary compilation engine and developer interface (`tools/` pillar).**
+## Architettura
 
-It provides:
-- A high-level **Python-like** language with type annotations.
-- A built-in **6502 Macro Assembler**.
-- A modern **TUI (Terminal User Interface)** IDE built with Textual.
-- Seamless integration with **C64-LLM** for AI-assisted programming.
-- An integrated **6502 Simulator** for rapid testing.
+```
+C64-Intelligence-SDK/
+├── core/          → C64-LLM        — AI agents, pipeline, knowledge base
+├── tools/         → PYC64          — Compilatore C64PY, TUI, simulatore 6502
+├── tutorial/      → C64GameTutorial — Tutorial e soluzioni assembly
+├── scraper/       → C64-Scrapy     — Scraping documentazione C64
+├── kb-agent/      → C64-KB-Agent   — Agente knowledge base specializzato
+├── debugger/      → C64-Debugger   — Debugger per C64
+│
+├── pyc64c.py      → Wrapper: importa tools.pyc64c (compilatore)
+├── pyc64_ui.py    → Wrapper: importa tools.pyc64_ui (TUI)
+├── run_c64.py     → CLI compilatore + emulatore c64py
+└── Makefile       → Docker compose per build e run
+```
 
----
+## Submoduli
 
-## Quick Start with Docker
+| Percorso | Repository | Ruolo |
+|----------|-----------|-------|
+| `core/` | [C64-LLM](https://github.com/alby69/C64-LLM) | Agenti AI, pipeline, ciclo di validazione |
+| `tools/` | [PYC64](https://github.com/alby69/PYC64) | Compilatore C64PY, TUI, simulatore 6502 |
+| `tutorial/` | [C64GameTutorial](https://github.com/alby69/C64GameTutorial) | Tutorial C64 assembler |
+| `scraper/` | [C64-Scrapy](https://github.com/alby69/C64-Scrapy) | Scraping documentazione |
+| `kb-agent/` | [C64-KB-Agent](https://github.com/alby69/C64-KB-Agent) | Agente knowledge base |
+| `debugger/` | [C64-Debugger](https://github.com/alby69/C64-Debugger) | Debugger C64 |
+
+## Quick Start
 
 ```bash
-# First build (only once)
-docker compose build
+# Inizializza tutti i submoduli
+git submodule update --init --recursive
 
-# Launch TUI: editor, compilation, BASIC/listing/hex tabs
-docker compose run --rm pyc64
+# Build e run con Docker
+make build
+make run
 ```
 
-Or using Make:
+## Comandi CLI
 
 ```bash
-make build   # docker compose build
-make run     # docker compose run --rm pyc64
+# Compila un file .c64 in .prg
+python run_c64.py compile input.c64
+
+# Compila ed esegui in c64py
+python run_c64.py run input.c64
+
+# Genera solo BASIC
+python run_c64.py basic input.c64
 ```
 
----
+## Autore
 
-## Useful Commands
+**Alberto Abate** — alberto.abate@gmail.com
 
-```bash
-# Compile test_python.c64 → output/test_python.prg
-docker compose run --rm compile
+## Licenza
 
-# Assemble examples/hello.asm → output/hello.prg
-docker compose run --rm asm
-
-# Clean output directory
-rm -rf output/*
-```
-
----
-
-## TUI (Textual) — Features
-
-```
-┌────────── Header ───────────╮
-│ ┌─ Editor ───┐ ┌─ Tabs ───┐ │
-│ │ Source     │ │ BASIC    │ │
-│ │ .c64       │ │ Listing  │ │
-│ │            │ │ Hex      │ │
-│ └────────────┘ └──────────┘ │
-│ ┌── Error Panel ───────────┐│
-│ │ ✓ No errors              ││
-│ └──────────────────────────┘│
-└────────── Footer ───────────┘
-```
-
-| Key | Action |
-|-------|--------|
-| `Ctrl+S` | Save and compile |
-| `Ctrl+O` | Open file |
-| `F1` | Help |
-| `Ctrl+Q` | Quit |
-
----
-
-## Project Structure
-
-| Path         | Description |
-|--------------|-------------|
-| `pyc64c/`    | Compiler core (Lexer, Parser, Codegen, Runtime, Assembler) |
-| `pyc64_ui/`  | Textual-based TUI (Editor, Tabs, Controller) |
-| `examples/`  | Example source files (.c64 and .asm) |
-
----
-
-## Authors & Credits
-
-**Author:** Alberto Abate
-**Email:** alberto.abate@gmail.com
-**Repository:** (https://github.com/alby69/pyc64)
-
-Original concept by Leonardo Boselli.
-Developed with the assistance of Claude (Anthropic).
-
----
-
-## License
-
-This project is licensed under the **GNU General Public License v3.0**.
-Respect all third-party code licenses included in this repository.
+GNU General Public License v3.0

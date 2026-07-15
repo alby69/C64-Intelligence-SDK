@@ -6,3 +6,7 @@ output/
 *.prg
 *.bas
 *.asm
+
+# PYC64 è un submodule (tools/), non duplicare qui
+pyc64c/
+pyc64_ui/
