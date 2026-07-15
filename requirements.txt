@@ -1,0 +1,5 @@
+# PYC64 - Python-to-C64 Cross-Compiler
+textual>=0.41.0
+c64py>=1.0.0
+# pytest per sviluppo
+pytest>=7.0.0
