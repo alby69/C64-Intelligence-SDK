@@ -1,27 +1,61 @@
-"""Compiler Architecture Documentation."""
+# Architettura del Compilatore PYC64
 
-# Compiler Architecture
+Questa sezione descrive l'architettura interna del compilatore **`PYC64`** (`pyc64c`), il motore di compilazione integrato nel **`C64-Intelligence-SDK`** per compilare programmi scritti nel linguaggio **`C64PY`** (Python-like) in binari nativi Commodore 64 (`.PRG`).
 
-The PYC64 compiler translates a Python-inspired language into Commodore 64 machine code (6502).
+---
 
-## Pipeline
+## 1. La Pipeline di Compilazione
 
-1.  **Lexer (`lexer.py`)**: Converts source text into tokens. Handles indentation-based scoping.
-2.  **Parser (`parser.py`)**: Converts tokens into an Abstract Syntax Tree (AST).
-3.  **Memory Planner (`compiler.py`)**: Analyzes the AST and allocates memory for global and local variables. It decides whether to use Zero Page or BSS segments.
-4.  **Code Generator (`code_gen.py`)**: Traverses the AST and emits 6502 instructions.
-5.  **Runtime Library (`runtime.py`)**: Provides pre-assembled 6502 routines for common tasks (printing, math, screen control).
-6.  **PRG Builder (`prg_builder.py`)**: Combines the generated code, a BASIC stub (`SYS 2061`), and the runtime library into a final `.PRG` file.
+La compilazione si sviluppa lungo 6 fasi sequenziali:
 
-## Built-in Functions
+```
+Sorgente (.c64)
+    │
+    ▼
+1. Lexer (lexer.py) ────────► Genera token e gestisce scope basati su indentazione
+    │
+    ▼
+2. Parser (parser.py) ──────► Genera l'AST (Abstract Syntax Tree)
+    │
+    ▼
+3. Memory Planner ──────────► Alloca locazioni globali/locali in Zero Page o RAM
+    │
+    ▼
+4. Optimizer (optimizer.py) ► Svolge Constant Folding, Dead Code Elimination, ecc.
+    │
+    ▼
+5. Code Generator ──────────► Converte l'AST ottimizzato in istruzioni assembly 6502
+    │
+    ▼
+6. PRG Builder ─────────────► Assembla con il BASIC stub (SYS 2061) e la Runtime Library
+    │
+    ▼
+File Binario (.PRG)
+```
 
-- `print(val)`: Prints a string or a byte.
-- `println(val)`: Same as print, with a newline.
-- `print_at(x, y, text)`: Positions the cursor and prints text.
-- `poke(addr, val)`: Writes a byte to memory.
-- `peek(addr)`: Reads a byte from memory.
-- `clear_screen()`: Clears the screen.
-- `border_color(color)`: Sets the border color.
-- `screen_color(color)`: Sets the screen color.
-- `wait_frames(n)`: Waits for `n` frames.
-- `sei()` / `cli()`: Disables/Enables interrupts.
+### Dettaglio dei Componenti
+
+1. **Lexer (`lexer.py`)**: Converte il codice sorgente testuale in token sintattici. Gestisce l'indentazione tipica di Python inserendo token fittizi `INDENT` e `DEDENT` per definire i blocchi di codice.
+2. **Parser (`parser.py`)**: Costruisce l'Albero Sintattico Astratto (AST) applicando regole grammaticali sui token generati dal lexer.
+3. **Memory Planner (`compiler.py` / `memory_map.py`)**: Analizza le variabili globali e locali per mappare gli indirizzi di memoria fisica sul Commodore 64. Ottimizza l'uso della Zero Page (indirizzi veloci da `$02` a `$FF`) e della RAM libera (generalmente a partire da `$080D` / `$0801`).
+4. **Optimizer (`optimizer.py`)**: Svolge passaggi di ottimizzazione sul codice per garantire un'elevata efficienza dell'assembly generato (ad esempio, pre-calcolo delle costanti).
+5. **Code Generator (`code_gen.py` / `code_emitter.py`)**: Esegue il traversal dell'AST ed emette le corrispondenti istruzioni macchina 6502.
+6. **Runtime Library (`runtime.py`)**: Fornisce macro e subroutine 6502 pre-compilate per facilitare operazioni ricorrenti come matematica avanzata, manipolazione dello schermo PETSCII, ed entrate/uscite hardware.
+7. **PRG Builder (`prg_builder.py`)**: Unisce il codice generato, la libreria di runtime e un blocco BASIC iniziale (es. `10 SYS 2061`) in un unico file `.PRG` direttamente caricabile su Commodore 64 o emulatore VICE.
+
+---
+
+## 2. Funzioni Built-in del Linguaggio `C64PY`
+
+Il compilatore offre out-of-the-box diverse funzioni built-in per interfacciarsi con l'hardware del C64:
+
+*   `print(val)`: Stampa a schermo una stringa o un valore numerico (byte).
+*   `println(val)`: Stampa il valore seguito da un carattere di a capo.
+*   `print_at(x, y, testo)`: Posiziona il cursore alle coordinate specificate (0-39, 0-24) e stampa il testo.
+*   `poke(addr, val)`: Scrive direttamente un byte in memoria.
+*   `peek(addr)`: Legge direttamente un byte dalla memoria.
+*   `clear_screen()`: Pulisce lo schermo PETSCII.
+*   `border_color(color)`: Cambia il colore del bordo del C64 (registro `$D020`).
+*   `screen_color(color)`: Cambia il colore dello sfondo dello schermo (registro `$D021`).
+*   `wait_frames(n)`: Sospende l'esecuzione per `n` quadri video (sfrutta l'interrupt raster).
+*   `sei()` / `cli()`: Disabilita/Abilita gli interrupt della CPU 6510.

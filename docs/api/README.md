@@ -1,25 +1,25 @@
-# PYC64 Programmatic API Documentation
+# Documentazione delle API Programmatiche di PYC64
 
-## Overview
+## Panoramica
 
-PYC64 provides a Python API for compiling Python-like source code into Commodore 64 machine code (`.PRG`) and BASIC.
+Il modulo **`PYC64`** fornisce un'API Python per compilare codice sorgente scritto in **`C64PY`** (Python-like) direttamente in formato binario nativo Commodore 64 (`.PRG`) e BASIC.
 
-Per una visione d'insieme della strategia di sviluppo a lungo termine, consultare il [Piano di Implementazione](../IMPLEMENTATION_PLAN.md).
+Per una visione d'insieme della strategia di sviluppo a lungo termine e dell'integrazione, consultare la [Guida all'Integrazione](../SDK_INTEGRATION.md) e il [Piano di Implementazione](../IMPLEMENTATION_PLAN.md).
 
-## Main Modules
+## Moduli Principali
 
 ### `pyc64c.compiler`
 
-- `compile_source(src: str) -> CompileResult`: Performs lexing and parsing of the source code.
-- `compile_to_prg(src: str) -> (bytes, CompileResult)`: Compiles the source code directly to PRG bytes.
+*   `compile_source(src: str) -> CompileResult`: Esegue l'analisi lessicale e sintattica del codice sorgente `C64PY`.
+*   `compile_to_prg(src: str) -> (bytes, CompileResult)`: Compila il codice sorgente direttamente in byte prg pronti per l'esecuzione.
 
 ### `pyc64c.sdk`
 
-- `process_sdk_request(request_json: str) -> str`: Processes a JSON request according to the C64-Intelligence-SDK protocol.
+*   `process_sdk_request(request_json: str) -> str`: Elabora le richieste JSON in arrivo dagli altri agenti del `C64-Intelligence-SDK` secondo il protocollo stabilito.
 
-## Data Formats
+## Formato dei Dati di Scambio
 
-### SDK JSON Request
+### Richiesta JSON SDK (da C64-LLM / C64-GUI ──► PYC64)
 
 ```json
 {
@@ -31,7 +31,7 @@ Per una visione d'insieme della strategia di sviluppo a lungo termine, consultar
 }
 ```
 
-### SDK JSON Response
+### Risposta JSON SDK (da PYC64 ──► C64-LLM / C64-GUI)
 
 ```json
 {
