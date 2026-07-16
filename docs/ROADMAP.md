@@ -1,17 +1,17 @@
 # C64-Intelligence-SDK — Master Roadmap & Evolution Plan
 
-> **Versione:** 2.0-strategic
-> **Data:** 2026-07-02  
-> **Autore:** Team di Architettura C64-Intelligence-SDK
-> **Stato:** Proposta di Evoluzione Strategica (Approvata)
+> **Versione:** 2.1-strategic
+> **Data:** 2026-07-16
+> **Autore:** Team di Architettura C64-Intelligence-SDK & Alberto Abate
+> **Stato:** Approvata & Inizializzata
 
 ---
 
 ## 1. Visione di Insieme dell'Ecosistema
 
-Il **C64-Intelligence-SDK** si sta evolvendo da un insieme di strumenti e script sparsi a una piattaforma integrata di sviluppo assistito da intelligenza artificiale per il Commodore 64, posizionandosi come una sorta di **CBM Studio o VSCode di nuova generazione (AI-Native)**.
+Il **C64-Intelligence-SDK** si sta evolvendo da un insieme di strumenti e script sparsi a una piattaforma integrata di sviluppo assistito da intelligenza artificiale per il Commodore 64, posizionandosi come un **ambiente di sviluppo integrato (IDE) "AI-Native" di nuova generazione**, ispirato al glorioso **CBM .prg Studio** ma proiettato verso il futuro grazie a funzionalità AI profondamente integrate nel workflow dello sviluppatore.
 
-La filosofia cardine del progetto è il **disaccoppiamento forte (loose coupling)**. Ogni componente dell'ecosistema è un'unità autonoma (gestita come sottomodulo Git) che espone API ben definite. Questa separazione garantisce la manutenibilità e permette a ciascun modulo di evolvere in modo indipendente o di essere eseguito come servizio standalone.
+La filosofia cardine del progetto rimane il **disaccoppiamento forte (loose coupling)**. Ogni componente dell'ecosistema è un'unità autonoma (gestita come sottomodulo Git) che espone API ben definite. Questa separazione garantisce la manutenibilità e permette a ciascun modulo di evolvere in modo indipendente o di essere eseguito come servizio standalone.
 
 ### Componenti dell'Ecosistema Attuale
 
@@ -24,150 +24,182 @@ La filosofia cardine del progetto è il **disaccoppiamento forte (loose coupling
 
 ---
 
-## 2. Analisi SWOT dell'Ecosistema
+## 2. Analisi Comparativa: C64 Intelligence SDK (Stato Attuale) vs CBM .prg Studio (Target)
 
-| **Punti di Forza (Strengths)** | **Punti di Debolezza (Weaknesses)** |
-|---|---|
-| Architettura a submoduli Git pulita e modularità spinta delle responsabilità. | Interfacce grafiche frammentate (TUI in Textual per `tools/`, Gradio UI in `core/`). |
-| Pipeline di self-healing avanzata per la correzione automatica del codice generato. | Mancanza di un orchestratore visivo centralizzato che connetta l'AI con il compilatore e il debugger in tempo reale. |
-| Knowledge Base robusta con indici vettoriali locali e ricerca semantica. | Dipendenza parziale da terminali o container Docker multipli per l'esecuzione dei vari agenti. |
-
-| **Opportunità (Opportunities)** | **Minacce (Threats)** |
-|---|---|
-| Creazione di un agente **`C64-GUI`** centralizzato (stile VSCode/CBM Studio) come frontend unificato. | Possibile accoppiamento stretto se l'interfaccia grafica chiama direttamente le classi interne anziché le API di rete. |
-| Esposizione di ogni agente come microservizio REST/WebSocket (Docker). | Sovraccarico di configurazione o latenza se i protocolli IPC/Rete non sono altamente efficienti. |
-| Offrire un'esperienza di sviluppo "low-code/AI-assisted" per programmatori retrò. | Frammentazione della documentazione e disallineamento dei contratti delle API. |
+| Area | C64 Intelligence SDK (Stato Attuale) | CBM .prg Studio (Target) | Gap Critico / Strategia di Copertura |
+|------|--------------------------------------|--------------------------|--------------------------------------|
+| **IDE** | Gradio UI (web semplice) + TUI Textual | IDE desktop MDI, tabbed, project-based | 🔴 **Mancanza di IDE grafico**: Sviluppo di un client desktop desktop-class basato su Tauri + React. |
+| **Editor Codice** | Editor testuale base nella TUI | Syntax highlighting, formatting, renumbering | 🔴 Monaco Editor integrato con grammatiche custom per C64PY, BASIC e 6502 ASM. |
+| **Sprite/Char** | Non presente | Editor visuale sprite (con export) + character + screen designer | 🔴 **Mancanza di tool visuali**: Integrazione di editor grafici HTML5 Canvas pixel-perfect con export ASM/BASIC. |
+| **Debugger** | Validator sintattico + cycle counter | Debugger 6510/65816 step-by-step, breakpoints, memory view | 🔴 Connessione bidirezionale WebSocket con il protocollo monitor di VICE (x64sc). |
+| **Emulazione** | Nessuna integrazione diretta | Nessuna integrazione nativa (ma produce .prg) | 🟡 Integrazione trasparente con VICE e supporto per simulatori WASM per testing rapido. |
+| **Multi-piattaforma** | Solo C64 | C64/128, VIC20, C16/Plus4, PET, Mega65 | 🟡 PYC64 è nativo C64, ma l'architettura supporta target multipli modificando il code generator. |
+| **AI** | ✅ Multi-agente, RAG, LoRA, Codegen | ❌ Assente | ✅ **Questo è il nostro vantaggio competitivo principale.** |
+| **Gestione Progetti**| Nessuna | Progetti multi-file, build system | 🔴 Introduzione del formato di progetto standardizzato `.c64proj`. |
+| **Formati Disk** | Estrazione D64/G64/PRG | Creazione/import/export D64/D71/D81/T64 | 🟡 Implementazione di tools di creazione/manipolazione dei formati disk di Commodore. |
+| **SID Tool** | Non presente | Editor/viewer SID con MIDI | 🔴 Sviluppo di un SID Workbench con visualizzazione envelope ADSR ed export. |
+| **Git** | Non presente | Integrazione Git nativa | 🟡 Mappatura trasparente del workspace con Git. |
+| **Compilatore** | PYC64 (Python→6502) + ACME | Kick Assembler, assembler nativo | 🟡 PYC64 è unico, evoluzione verso un linguaggio ad alto livello completo. |
 
 ---
 
-## 3. Proposta di Evoluzione: Il Submodulo `C64-GUI`
+## 3. Spunti di Miglioramento Strategici
 
-Per risolvere la frammentazione delle interfacce attuali (Textual TUI e Gradio Web UI) e fornire un ambiente di sviluppo integrato coeso, si propone l'introduzione di un nuovo agente/submodulo: **`C64-GUI`**.
+### A. Trasformare l'AI da "Chatbot" a "Copilot Integrato"
+L'AI deve passare da assistente conversazionale a parte integrante del flusso di digitazione:
+- **Inline Completion**: mentre l'utente scrive ASM, BASIC o C64PY, l'AI suggerisce in tempo reale le istruzioni successive (stile GitHub Copilot).
+- **Smart Refactor**: refactoring del codice guidato dall'AI (es. "Ottimizza questa routine per risparmiare cicli CPU").
+- **Bug Prediction**: il Validator/Linter preemptive evidenzia errori logici o di temporizzazione prima ancora del build.
+- **Knowledge Graph Visuale**: navigatore interattivo che collega concetti hardware (es. registri VIC-II) a esempi e documentazione estratti semanticamente dal RAG.
 
-### 3.1 Ruolo di `C64-GUI`
-`C64-GUI` agirà esclusivamente come **Frontend Orchestrator e Client Visivo**. Non conterrà logica di compilazione, modellazione AI o esecuzione diretta del codice. Interagirà con gli altri moduli esclusivamente tramite protocolli di rete standardizzati (REST, WebSockets, gRPC), garantendo il mantenimento del disaccoppiamento forte.
+### B. Evoluzione del Linguaggio C64PY (PYC64)
+Sviluppare il compilatore Python-to-6502 per renderlo un linguaggio ad alto livello maturo:
+- **Type System**: aggiunta di tipi espliciti (`uint8`, `uint16`, `zp_ptr`) per forzare la generazione di codice 6502 altamente ottimizzato.
+- **Standard Library**: routine pre-ottimizzate per grafica (sprites, scroll, collisioni) e audio.
+- **Inline Assembly**: supporto nativo per blocchi `asm:` direttamente all'interno delle funzioni Python.
+- **Memory Allocator**: gestione automatica avanzata della Zero Page e della memoria RAM alta.
+
+### C. Strumenti Visivi (Visual Tools)
+Replicare e superare l'esperienza dei tool visuali di CBM .prg Studio:
+- **Sprite Editor**: disegno pixel-perfect multicor/hi-res con preview animata in tempo reale ed export immediato in dati per assembler o BASIC.
+- **Character Editor**: creazione di charset personalizzati con tool di manipolazione (rotazione, flip, inversione).
+- **Screen Designer**: griglia visuale 40x25 per posizionare caratteri e definire colori, con generazione automatica di codice di setup.
+- **SID Workbench**: editor di inviluppi ADSR con riproduttore integrato basato su WebAudio/WASM SID.
+- **Memory Map Visualizer**: mappa interattiva colorata che rappresenta l'occupazione di RAM, ROM e registri di I/O.
+
+---
+
+## 4. Architettura Target del "C64 Intelligence Studio"
+
+L'architettura garantisce il mantenimento del disaccoppiamento forte: l'IDE comunica esclusivamente tramite protocolli di rete standardizzati (REST, WebSockets, gRPC).
 
 ```
-                  ┌──────────────────────────────────────────┐
-                  │                C64-GUI                   │
-                  │   (Frontend: Electron / VSCode-like /    │
-                  │         Flet / PySide / WebApp)          │
-                  └────┬──────────────┬──────────────┬───────┘
-                       │              │              │
-             JSON/REST │    WebSocket │    JSON/REST │
-             /gRPC     │    /Socket   │    /gRPC     │
-                       ▼              ▼              ▼
-                ┌────────────┐ ┌────────────┐ ┌────────────┐
-                │  C64-LLM   │ │C64-Debugger│ │   PYC64    │
-                │  (core/)   │ │ (debugger/)│ │  (tools/)  │
-                └────────────┘ └────────────┘ └────────────┘
-                       │                             ▲
-             JSON/REST │                             │
-                       ▼                             │
-                ┌────────────┐                       │
-                │C64-KB-Agent│───────────────────────┘
-                │ (kb-agent/)│       Query RAG
-                └────────────┘
+┌─────────────────────────────────────────────────────────────┐
+│                  C64 Intelligence Studio                     │
+│              (Tauri Desktop App - React/TS)                │
+├─────────────┬─────────────┬─────────────┬─────────────────┤
+│  Editor     │  Visual     │  Debugger   │  AI Copilot     │
+│  (Monaco)   │  Tools      │  (VICE)     │  (Chat/Inline)  │
+└──────┬──────┴──────┬──────┴──────┬──────┴────────┬────────┘
+       │             │             │               │
+       └─────────────┴─────────────┴───────────────┘
+                         │
+                    WebSocket/REST
+                         │
+┌────────────────────────┼──────────────────────────────────┐
+│              C64 Intelligence Core (Python)                │
+│  ┌──────────────┐ ┌─────────────┐ ┌─────────────────────┐ │
+│  │  AI Engine   │ │  PYC64      │ │  Build/Assembler    │ │
+│  │  (C64-LLM)   │ │  Compiler   │ │  (ACME/Kick/CA65)   │ │
+│  │  RAG/FAISS   │ │  Python→6502│ │                     │ │
+│  └──────────────┘ └─────────────┘ └─────────────────────┘ │
+│  ┌──────────────┐ ┌─────────────┐ ┌─────────────────────┐ │
+│  │  Debugger    │ │  Disk Tools │ │  Project Manager    │ │
+│  │  (VICE Mon.) │ │  (D64/PRG)  │ │  (Git/Assets)       │ │
+│  └──────────────┘ └─────────────┘ └─────────────────────┘ │
+└─────────────────────────────────────────────────────────────┘
+       │
+       ▼
+┌─────────────────────────────────────────────────────────────┐
+│              Data Layer                                      │
+│  SQLite (projects) │ FAISS (RAG) │ FileSystem (assets)      │
+└─────────────────────────────────────────────────────────────┘
 ```
 
-### 3.2 Architettura Tecnologica Proposta per `C64-GUI`
-Si valutano due strade principali per l'implementazione del client visivo:
+---
 
-1. **Approccio Electron / VSCode Extension (Raccomandato per scalabilità)**:
-   - Sviluppare un'estensione VSCode avanzata o un IDE standalone basato su Electron/Vite.
-   - Sfrutta l'ecosistema VSCode esistente (syntax highlighting, file manager, terminale integrato, pannelli personalizzabili).
-   - Comunica tramite un Language Server Protocol (LSP) personalizzato o WebSocket con i servizi backend in esecuzione (PYC64 compiler, C64-LLM agent, C64-Debugger).
-2. **Approccio Python-Native (Flet / PySide6 / PyQt)**:
-   - Sviluppare la GUI in puro Python utilizzando Flet (basato su Flutter) o PySide6 (Qt).
-   - Vantaggio: mantiene la codebase interamente in Python, facilitando l'installazione tramite pacchetti `pip`.
-   - Implementa un'architettura asincrona (`asyncio`) per gestire la reattività della GUI rispetto alle risposte di rete dei sottomoduli.
+## 5. Piano di Migrazione Dettagliato (12 Mesi)
+
+### 🏗️ FASE 1: Fondamenta e Architettura (Mesi 1-3)
+**Obiettivo**: Trasformare l'SDK in un framework modulare multi-servizio.
+- **Re-architecture (F1.1)**: Separazione backend (Python) da frontend (Tauri/React). Il backend diventa un Language Server + AI Engine.
+- **Plugin System (F1.2)**: Definizione di protocolli standard per strumenti (`IEditorTool`, `IBuildTool`, `IDebugger`).
+- **Project Format (F1.3)**: Implementazione del formato `.c64proj` (JSON/YAML) per gestire configurazioni multi-file, target di compilazione, percorsi di asset e compilatori.
+- **Monorepo (F1.4)**: Riorganizzazione in workspace (core, ide, tools, ai).
+- **CI/CD (F1.5)**: Configurazione di workflow GitHub Actions per la build cross-platform su Windows, macOS e Linux.
+
+### 💻 FASE 2: IDE Core (Mesi 3-6)
+**Obiettivo**: Costruzione della shell desktop unificata.
+- **Shell Desktop (F2.1)**: Applicazione desktop con Tauri (Rust) e React/TypeScript.
+- **Code Editor (F2.2)**: Integrazione di Monaco Editor con evidenziazione sintattica avanzata per C64PY, BASIC v2 e 6502 ASM.
+- **File Explorer (F2.3)**: Gestione ad albero del workspace di progetto con drag & drop.
+- **Tab & Terminal System (F2.4)**: Interfaccia multi-scheda e terminale integrato tramite XTerm.js per visualizzare l'output del build.
+
+### 🎨 FASE 3: Strumenti Visivi (Mesi 4-7)
+**Obiettivo**: Sviluppo degli editor grafici e sonori integrati.
+- **Sprite Editor (F3.1)**: Interfaccia visuale Canvas per sprite 24x21 (hi-res) / 12x21 (multicolor) con esportazione ASM/BASIC e supporto animazione.
+- **Character & Tile Editor (F3.2)**: Disegno di charset custom 8x8 pixel.
+- **Screen Designer (F3.3)**: Griglia visuale 40x25 per posizionare i caratteri sullo schermo ed esportazione in blocchi `POKE` o istruzioni assembly.
+- **Memory Map (F3.4)**: Visualizzatore grafico della memoria del C64 con colori dinamici per aree di sistema, variabili e codice utente.
+
+### 🐛 FASE 4: Debugger e Runtime (Mesi 6-8)
+**Obiettivo**: Chiusura del gap di diagnostica ed esecuzione.
+- **Emulator Bridge (F4.1)**: Connessione asincrona a VICE via protocollo monitor binary su socket TCP.
+- **Debugger UI (F4.2)**: Pannelli per visualizzare i registri CPU (A, X, Y, SP, PC, Flags), stack, e dump di memoria in tempo reale.
+- **Controllo Flusso (F4.3)**: Stepping controllato (step-into, step-over, break, run to cursor).
+
+### 🤖 FASE 5: AI Integration Nativa (Mesi 7-10)
+**Obiettivo**: Raggiungere l'esperienza di sviluppo "AI-Native".
+- **Inline Copilot (F5.1)**: Completamento di codice inline assistito da LLM locali (es. Qwen-Coder via llama.cpp).
+- **AI Sidebar (F5.2)**: Chat interattiva con il contesto del codice attivo e query sul RAG di documentazione C64.
+- **Self-Healing UI (F5.3)**: Visualizzazione grafica asincrona del processo di auto-correzione quando la build fallisce.
+
+### 🚀 FASE 6: Multi-piattaforma, Gestione Dischi e Rilascio (Mesi 9-12)
+- **Multi-target (F6.1)**: Configurazione compilation per C128, VIC20, PET, Mega65.
+- **Disk Tools (F6.2)**: Manipolazione e creazione di immagini disco (.D64, .D71, .D81, .T64).
+- **Git & Package Manager (F6.3)**: Controllo di versione e gestione pacchetti/librerie riusabili.
 
 ---
 
-## 4. Piano di Evoluzione in 5 Fasi
+## 6. Stack Tecnologico Consigliato
 
-### Fase 1: Consolidamento e Standardizzazione delle API (Q3-Q4 2026)
-L'obiettivo è garantire che ogni sottomodulo esistente sia esponibile come servizio di rete indipendente con contratti API rigidamente definiti.
-
-- **F1.1: Standardizzazione Nomenclatura**: Eliminare ogni riferimento a "C64PY" come nome del compilatore, mantenendo `C64PY` per indicare il *linguaggio* di programmazione e `PYC64` per indicare il *compilatore/IDE testuale* sotto `tools/`.
-- **F1.2: Esposizione di PYC64 come Servizio**: Implementare un wrapper REST/gRPC (es. FastAPI) per il compilatore in `tools/pyc64c/sdk.py`.
-- **F1.3: Consolidamento C64-KB-Agent**: Completare la transizione di `kb-agent/` a microservizio autonomo (FastAPI) con API per indicizzazione, RAG vettoriale e risoluzione di registri hardware.
-- **F1.4: Esposizione C64-Debugger**: Creare un server di debugging WebSocket sopra `debugger/` che gestisca la connessione con l'emulatore VICE e invii eventi di esecuzione (register states, memory dump) alla rete.
-
-### Fase 2: Architettura Multi-Servizio Dockerizzata (Q1 2027)
-Configurare l'ambiente di runtime dell'SDK in modo che ogni agente venga eseguito in un container Docker dedicato, orchestrato tramite `docker-compose`.
-
-- **F2.1: Docker Compose Unificato**: Aggiornare il file `docker-compose.yml` nella root del progetto per avviare:
-  - `c64-kb-agent` (porta 8001)
-  - `c64-llm-core` (porta 8000)
-  - `c64-compiler` (porta 8002)
-  - `c64-debugger` (porta 8003)
-- **F2.2: Test di Integrazione End-to-End**: Creare contratti di integrazione automatici in `tests/` per verificare la comunicazione continua tra i servizi Docker.
-
-### Fase 3: Sviluppo di `C64-GUI` Core (Q2 2027)
-Avviare lo sviluppo dell'interfaccia grafica centralizzata mantenendo il disaccoppiamento totale.
-
-- **F3.1: Progettazione Layout IDE**: Un layout a tre pannelli stile VSCode/CBM Studio:
-  - *Sinistra*: Workspace/File Explorer + Pannello AI (Chat interattiva, suggerimenti di self-healing).
-  - *Centro*: Editor di codice con syntax highlighting per `C64PY` e assembly 6502.
-  - *Destra/Sotto*: Pannello di controllo compilazione (BASIC/Listing/Hex) e Tab Debugger (Registri CPU, Memory map, Watchpoints, Schermo emulatore integrato o connesso).
-- **F3.2: Implementazione Client di Rete**: Sviluppare il middleware della GUI per inviare codice al compilatore, ricevere pacchetti binari, richiedere suggerimenti di codice a `C64-LLM` e monitorare l'esecuzione in `C64-Debugger`.
-
-### Fase 4: Integrazione AI Avanzata nella GUI (Q3 2027)
-Portare la potenza di `C64-LLM` direttamente all'interno dell'esperienza visiva dello sviluppatore.
-
-- **F4.1: Interfaccia Copilot/Chat Integrata**: Visualizzare i suggerimenti dell'agente AI a lato dell'editor di codice. Abilitare il refactoring con un click direttamente dal pannello GUI.
-- **F4.2: Visualizzazione del Self-Healing**: Quando la compilazione fallisce, la GUI mostra in modo interattivo il processo asincrono di self-healing condotto dall'Orchestrator di `C64-LLM`, indicando i tentativi e le correzioni applicate sul codice prima di presentare la soluzione finale.
-- **F4.3: Memory Map Visualizer**: Sfruttare l'API di `C64-KB-Agent` per mostrare graficamente una mappa della memoria del C64, evidenziando le aree occupate dalle variabili generate dal compilatore `PYC64` e le locazioni dei registri hardware (VIC-II, SID, CIA).
-
-### Fase 5: Consolidamento e Rilascio di "CBM-Studio AI" (Q4 2027)
-Rilasciare l'ecosistema completo come un ambiente di sviluppo chiavi in mano.
-
-- **F5.1: Installatore Monolitico (opzionale)**: Fornire uno script o un installer che configuri l'intero ecosistema con una singola azione, nascondendo la complessità dei container Docker sotto la GUI.
-- **F5.2: Pipeline CI/CD**: Abilitare il rilascio automatico dei sottomoduli con versioning allineato.
+| Layer | Tecnologia | Motivazione |
+|-------|------------|-------------|
+| **Frontend IDE** | Tauri (Rust) + React + TypeScript + Tailwind | Prestazioni eccellenti, bundle compatto (<5MB), sicurezza nativa Rust. |
+| **Editor di Codice** | Monaco Editor | Standard di mercato (lo stesso di VS Code), supporto LSP integrato. |
+| **Backend API** | FastAPI + Uvicorn | Prestazioni asincrone elevate, OpenAPI auto-generato, integrazione nativa con Python. |
+| **Motore AI** | llama.cpp (GGUF locale) + sentence-transformers | Approccio local-first, privacy garantita, nessuna chiave API esterna richiesta. |
+| **Emulazione** | VICE (x64sc) & WASM Emulator | Emulatore di riferimento con protocollo di debug maturo su socket TCP. |
+| **Compilazione** | PYC64 Compiler + ACME / KickAssembler | Flessibilità multi-assemblatore. |
 
 ---
 
-## 5. Protocolli di Rete e Contratti d'Interfaccia
+## 7. Protocolli di Rete e Contratti d'Interfaccia
 
-Per garantire che la GUI e gli agenti rimangano rigorosamente disaccoppiati, tutte le interazioni avvengono tramite messaggi JSON standardizzati. Di seguito sono definiti i contratti principali.
+Le interazioni avvengono tramite messaggi JSON standardizzati. Di seguito sono definiti i contratti principali.
 
-### 5.1 Protocollo di Compilazione (GUI ──► PYC64 Compiler Service)
-*Richiesta di compilazione di un sorgente .c64 in formato PRG con simboli di debug.*
+### 7.1 Protocollo di Progetto (`.c64proj` schema JSON)
+Ogni progetto viene descritto da un file `.c64proj` posizionato nella cartella radice:
 
 ```json
 {
-  "request_id": "req_comp_001",
-  "source_code": "def main() -> byte:\n    poke(53280, 0)\n    return 0",
-  "options": {
+  "project_name": "MyRetroGame",
+  "version": "1.0.0",
+  "author": "Alberto Abate",
+  "target": "C64",
+  "entry_point": "src/main.c64",
+  "output_name": "game.prg",
+  "build_config": {
     "optimize": true,
-    "generate_symbols": true
-  }
-}
-```
-
-*Risposta di successo dal compilatore:*
-
-```json
-{
-  "request_id": "req_comp_001",
-  "status": "success",
-  "artifacts": {
-    "prg_base64": "S3l...[truncated]...",
-    "listing": "; Listing generated...\nORG $080D\n...",
-    "symbols": {
-      "main": "080d"
-    }
+    "assembler": "acme",
+    "load_address": "0x0801"
   },
-  "metrics": {
-    "compile_time_ms": 32,
-    "binary_size_bytes": 15
-  }
+  "assets": [
+    {
+      "type": "sprite",
+      "path": "assets/player.spr",
+      "build_action": "generate_asm"
+    },
+    {
+      "type": "sid",
+      "path": "assets/music.sid",
+      "build_action": "inject"
+    }
+  ]
 }
 ```
 
-### 5.2 Protocollo Assistente AI (GUI ──► C64-LLM Agent Service)
-*Invia una richiesta di spiegazione di codice o generazione assistita con contesto RAG.*
+### 7.2 Protocollo Assistente AI (GUI ──► C64-LLM Agent Service)
 
 ```json
 {
@@ -181,67 +213,10 @@ Per garantire che la GUI e gli agenti rimangano rigorosamente disaccoppiati, tut
 }
 ```
 
-*Risposta dell'AI Orchestrator (con suggerimento di codice strutturato):*
-
-```json
-{
-  "session_id": "session_user_456",
-  "status": "completed",
-  "response": "Per configurare un raster interrupt in C64PY, puoi utilizzare i registri del chip VIC-II ($D011, $D012). Ecco il codice:",
-  "generated_code": "def setup_raster():\n    sei()\n    # Imposta la linea di interrupt\n    poke(53266, 150) \n    # Attiva l'interrupt del raster\n    poke(53282, 1) \n    cli()",
-  "sources": [
-    {
-      "title": "VIC-II Raster Interrupts",
-      "source": "C64 Programmer's Reference Guide",
-      "url": "https://github.com/alby69/C64-KB-Agent/..."
-    }
-  ]
-}
-```
-
-### 5.3 Protocollo di Controllo Debugger (GUI ──► C64-Debugger WebSocket)
-*Invia comandi di controllo al debugger e riceve aggiornamenti sullo stato dei registri.*
-
-*Messaggio inviato dalla GUI (Set Breakpoint):*
-
-```json
-{
-  "command": "set_breakpoint",
-  "address": "080d",
-  "enabled": true
-}
-```
-
-*Messaggio inviato dal Debugger Service alla GUI (Breakpoint Hit):*
-
-```json
-{
-  "event": "breakpoint_hit",
-  "address": "080d",
-  "cpu_state": {
-    "pc": "080d",
-    "a": "00",
-    "x": "ff",
-    "y": "00",
-    "sp": "f6",
-    "flags": {
-      "n": 0, "v": 0, "b": 1, "d": 0, "i": 1, "z": 1, "c": 0
-    }
-  }
-}
-```
-
 ---
 
-## 6. Indicatori di Successo e Qualità
+## 8. Considerazioni Critiche e Gestione Rischi
 
-Per valutare il successo dell'evoluzione dell'ecosistema e del nuovo sottomodulo `C64-GUI`:
-
-1. **Grado di Disaccoppiamento**: 100% delle chiamate tra la GUI e gli agenti deve transitare via API di rete (nessun import diretto di moduli Python tra i sottomoduli Git).
-2. **Reattività della GUI**: Latenza dell'interfaccia grafica inferiore a 50ms per interazioni locali, e tempi di risposta di autocompletamento (LSP) inferiori a 150ms.
-3. **Robustezza dei Contratti**: Copertura al 100% dei test di integrazione dei protocolli JSON definiti sopra.
-4. **Usabilità dell'AI**: Percentuale di correzione automatica di codice errato (self-healing) superiore all'85% in ambiente controllato di compilazione.
-
----
-
-*Questo piano rappresenta la visione strategica unitaria per convertire il C64-Intelligence-SDK nel più sofisticato ecosistema di sviluppo assistito per sistemi vintage a 8-bit.*
+1. **Complessità del Debugger**: L'integrazione con VICE richiede comunicazione socket TCP robusta. Nelle prime fasi, supporteremo un emulatore 6502 minimale scritto in Python/WASM per il debug di base prima di connettere VICE.
+2. **Reattività dell'AI**: Modelli locali come Qwen2.5-Coder-1.5B/3B offrono buone performance su CPU. Prevediamo opzioni di quantizzazione spinta (Q4_K_M o Q2_K) per garantire fluidità.
+3. **Controllo di Regressione**: Ogni estensione del compilatore `PYC64` e del gestore di progetto deve superare la suite di test automatizzati per evitare regressioni.
