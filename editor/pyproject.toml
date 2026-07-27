@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=61.0.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "readycode-py"
+version = "1.0.0"
+description = "Python port of READYCode (C64Code) logic"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "httpx>=0.20.0"
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=7.0.0"
+]
