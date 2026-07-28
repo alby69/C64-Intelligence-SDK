@@ -5,12 +5,12 @@ WORKDIR /app
 # Install runtime deps
 RUN apt-get update && apt-get install -y git && rm -rf /var/lib/apt/lists/*
 
-# Copy all project modules
-COPY pyc64c/ pyc64c/
-COPY pyc64_ui/ pyc64_ui/
-COPY run_c64.py .
-COPY scripts/ scripts/
-COPY examples/ examples/
+# Copy all project modules from tools/ submodule
+COPY tools/pyc64c/ pyc64c/
+COPY tools/pyc64_ui/ pyc64_ui/
+COPY tools/run_c64.py .
+COPY tools/scripts/ scripts/
+COPY tools/examples/ examples/
 
 # Create output directory
 RUN mkdir -p output

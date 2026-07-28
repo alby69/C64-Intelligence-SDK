@@ -9,11 +9,11 @@ services:
     environment:
       - TERM=${TERM:-xterm-256color}
     volumes:
-      - ./pyc64c:/app/pyc64c:ro
-      - ./pyc64_ui:/app/pyc64_ui:ro
+      - ./tools/pyc64c:/app/pyc64c:ro
+      - ./tools/pyc64_ui:/app/pyc64_ui:ro
       - .:/app/source
       - ./output:/app/output
-    command: python3 -m pyc64_ui.app /app/source/test_python.c64
+    command: python3 -m pyc64_ui.app /app/source/tools/test_python.c64
 
   # ── Solo compilazione batch ──
   compile:
@@ -34,7 +34,7 @@ services:
       - .:/app/source:ro
       - ./output:/app/output
     entrypoint: ["python3", "/app/asm6502.py"]
-    command: ["/app/source/examples/hello.asm", "-o", "/app/output/hello.prg", "-l"]
+    command: ["/app/source/tools/examples/hello.asm", "-o", "/app/output/hello.prg", "-l"]
 
   # ── Emulatore VICE (opzionale) ──
   vice:
