@@ -4,6 +4,7 @@ import json
 import logging
 from typing import List, Optional, Dict, Any
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 from pyc64c.compiler import compile_to_prg
@@ -16,6 +17,15 @@ app = FastAPI(
     title="C64 Intelligence Core Service",
     description="Backend API and LSP for the C64 Intelligence Studio",
     version="1.0.0"
+)
+
+# Allow CORS for Vite dev server and Tauri
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173", "http://localhost:1420", "tauri://localhost", "https://tauri.localhost"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 # REST Models
