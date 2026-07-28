@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "readycode-py"
 version = "1.0.0"
-description = "Python port of READYCode (C64Code) logic"
+description = "Python port of READYCode (C64-Code) logic"
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [

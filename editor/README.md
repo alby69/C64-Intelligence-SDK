@@ -1,6 +1,6 @@
 # C64-ReadyCode-Py (`readycode_py`)
 
-Questo modulo Python è un porting nativo delle logiche core di **READYCode (C64Code)**, originariamente sviluppato in C#/.NET da Moonspace Labs, LLC e jbramwell.
+Questo modulo Python è un porting nativo delle logiche core di **READYCode (C64-Code)**, originariamente sviluppato in C#/.NET da Moonspace Labs, LLC e jbramwell.
 
 ## Caratteristiche Portate
 - **Tokenizer & PRG Converter**: Tokenizzazione di sorgenti C64 BASIC V2, supporto delle abbreviazioni di tastiera (shift-abbreviations), detokenizzazione e rilevamento di file BASIC reali tramite validazione della struttura dei puntatori.
@@ -13,5 +13,5 @@ Questo modulo Python è un porting nativo delle logiche core di **READYCode (C64
 
 ## Crediti e Licenze
 - **Progetto Originale**: [READYCode](https://github.com/jbramwell/READYCode) (Moonspace Labs, LLC), licenza MIT.
-- **Fork di Riferimento**: [C64Code](https://github.com/alby69/C64Code) (Alberto Abate), licenza MIT.
+- **Fork di Riferimento**: [C64-Code](https://github.com/alby69/C64-Code) (Alberto Abate), licenza MIT.
 - **Questo Modulo**: Rilasciato sotto licenza GPLv3 all'interno del progetto **C64-Intelligence-SDK**. Il porting mantiene la compatibilità di licenza ed esprime i dovuti crediti agli autori originali.

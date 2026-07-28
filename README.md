@@ -30,7 +30,7 @@ C64-Intelligence-SDK/
 | `core/` | [C64-LLM](https://github.com/alby69/C64-LLM) | Agenti AI, pipeline, ciclo di validazione |
 | `tools/` | [PYC64](https://github.com/alby69/PYC64) | Compilatore C64PY, TUI, simulatore 6502 |
 | `editor/` | [READYCode-Py](https://github.com/alby69/C64-Intelligence-SDK/tree/main/editor) | Tokenizer BASIC V2, .d64/.d81, minify/prettify, bridge C64U/VICE |
-| `editor-src/` | [C64Code](https://github.com/alby69/C64Code) | READYCode originale (C#/.NET, reference) |
+| `editor-src/` | [C64-Code](https://github.com/alby69/C64-Code) | READYCode originale (C#/.NET, reference) |
 | `tutorial/` | [C64GameTutorial](https://github.com/alby69/C64GameTutorial) | Tutorial C64 assembler |
 | `scraper/` | [C64-Scrapy](https://github.com/alby69/C64-Scrapy) | Scraping documentazione |
 | `kb-agent/` | [C64-KB-Agent](https://github.com/alby69/C64-KB-Agent) | Agente knowledge base |
