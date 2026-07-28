@@ -1,0 +1,25 @@
+{
+  "name": "compiler",
+  "version": "1.0.0",
+  "description": "C64PY Compiler — compila codice .c64 in BASIC, ASM e PRG",
+  "category": "build",
+  "icon": "🔨",
+  "entry_point": "run_c64.py",
+  "commands": [
+    {
+      "name": "compile",
+      "label": "Compila",
+      "description": "Compila .c64 → .prg + .bas + .asm",
+      "args": ["input"],
+      "options": {
+        "basic_only": { "type": "flag", "description": "Genera solo BASIC" }
+      }
+    },
+    {
+      "name": "basic",
+      "label": "Genera BASIC",
+      "description": "Genera solo BASIC da .c64",
+      "args": ["input"]
+    }
+  ]
+}

@@ -1,0 +1,40 @@
+{
+  "name": "disk-tools",
+  "version": "1.0.0",
+  "description": "Disk Tools — gestione immagini disco D64/D81",
+  "category": "tools",
+  "icon": "💾",
+  "entry_point": "run_c64.py",
+  "commands": [
+    {
+      "name": "list",
+      "label": "Lista file",
+      "description": "Mostra i file su un'immagine disco",
+      "args": ["image"]
+    },
+    {
+      "name": "inject",
+      "label": "Inserisci file",
+      "description": "Inserisce un file su un'immagine disco",
+      "args": ["image", "file"]
+    },
+    {
+      "name": "extract",
+      "label": "Estrai file",
+      "description": "Estrae un file da un'immagine disco",
+      "args": ["image", "name"],
+      "options": {
+        "output": { "type": "string", "description": "File output" }
+      }
+    },
+    {
+      "name": "create",
+      "label": "Crea disco",
+      "description": "Crea un'immagine disco vuota",
+      "options": {
+        "format": { "type": "choice", "choices": ["d64", "d81"], "default": "d64" },
+        "output": { "type": "string", "description": "File output" }
+      }
+    }
+  ]
+}

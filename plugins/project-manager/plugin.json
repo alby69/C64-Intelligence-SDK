@@ -1,0 +1,22 @@
+{
+  "name": "project-manager",
+  "version": "1.0.0",
+  "description": "Project Manager — gestione progetti .c64proj",
+  "category": "project",
+  "icon": "📁",
+  "entry_point": "pyc64_project.py",
+  "commands": [
+    {
+      "name": "load",
+      "label": "Apri progetto",
+      "description": "Carica un file .c64proj",
+      "args": ["path"]
+    },
+    {
+      "name": "build",
+      "label": "Build progetto",
+      "description": "Compila l'intero progetto (assets + entry point)",
+      "args": ["path"]
+    }
+  ]
+}

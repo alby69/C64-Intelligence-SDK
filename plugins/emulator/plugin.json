@@ -1,0 +1,21 @@
+{
+  "name": "emulator",
+  "version": "1.0.0",
+  "description": "Emulator — esegui PRG in c64py o VICE",
+  "category": "run",
+  "icon": "🎮",
+  "entry_point": "run_c64.py",
+  "commands": [
+    {
+      "name": "run",
+      "label": "Esegui",
+      "description": "Compila ed esegui in c64py emulator",
+      "args": ["input"],
+      "options": {
+        "sid": { "type": "flag", "description": "Abilita SID" },
+        "resid": { "type": "flag", "description": "Abilita reSID" },
+        "timeout": { "type": "int", "default": 30, "description": "Timeout secondi" }
+      }
+    }
+  ]
+}

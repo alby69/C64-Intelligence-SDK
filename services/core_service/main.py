@@ -6,6 +6,7 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from pydantic import BaseModel
 
 from pyc64c.compiler import compile_to_prg
+from plugin_loader import get_loader, reload as reload_plugins
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("core-service")
@@ -189,3 +190,37 @@ async def websocket_ai_copilot(websocket: WebSocket):
                 await websocket.send_text(json.dumps({"error": str(e), "done": True}))
     except WebSocketDisconnect:
         logger.info("AI Copilot WebSocket disconnected")
+
+
+# ── Plugin API ──
+
+class PluginExecRequest(BaseModel):
+    command: str
+    args: List[str] = []
+    options: Dict[str, Any] = {}
+
+@app.get("/api/v1/plugins")
+def list_plugins():
+    loader = get_loader()
+    return {"plugins": loader.list_plugins()}
+
+@app.post("/api/v1/plugins/reload")
+def reload_all_plugins():
+    plugins = reload_plugins()
+    return {"plugins": [p.to_dict() for p in plugins.values()]}
+
+@app.get("/api/v1/plugins/{plugin_name}")
+def get_plugin(plugin_name: str):
+    loader = get_loader()
+    plugin = loader.get_plugin(plugin_name)
+    if not plugin:
+        raise HTTPException(status_code=404, detail=f"Plugin '{plugin_name}' not found")
+    return plugin.to_dict()
+
+@app.post("/api/v1/plugins/{plugin_name}/exec")
+def exec_plugin_command(plugin_name: str, req: PluginExecRequest):
+    loader = get_loader()
+    result = loader.exec_command(plugin_name, req.command, req.args, req.options)
+    if not result["success"] and "not found" in result.get("error", ""):
+        raise HTTPException(status_code=404, detail=result["error"])
+    return result

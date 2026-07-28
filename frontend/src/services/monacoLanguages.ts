@@ -2,7 +2,7 @@ import { Monaco } from '@monaco-editor/react';
 
 export function registerC64Languages(monaco: Monaco) {
   // Registra il linguaggio C64PY (Python-like per 6502)
-  if (!monaco.languages.getLanguages().some(lang => lang.id === 'c64py')) {
+  if (!monaco.languages.getLanguages().some((lang: { id: string }) => lang.id === 'c64py')) {
     monaco.languages.register({ id: 'c64py' });
     monaco.languages.setMonarchTokensProvider('c64py', {
       keywords: [
@@ -50,7 +50,7 @@ export function registerC64Languages(monaco: Monaco) {
   }
 
   // Registra il linguaggio BASIC V2 Commodore
-  if (!monaco.languages.getLanguages().some(lang => lang.id === 'basic64')) {
+  if (!monaco.languages.getLanguages().some((lang: { id: string }) => lang.id === 'basic64')) {
     monaco.languages.register({ id: 'basic64' });
     monaco.languages.setMonarchTokensProvider('basic64', {
       keywords: [

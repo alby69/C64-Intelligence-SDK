@@ -14,3 +14,9 @@ pyc64_ui/
 # Build and distribution artifacts
 dist/
 os/bin/
+
+# Frontend
+frontend/node_modules/
+frontend/package-lock.json
+frontend/dist/
+frontend/src-tauri/target/

@@ -1,0 +1,46 @@
+{
+  "name": "editor",
+  "version": "1.0.0",
+  "description": "READYCode Editor — tokenizzazione, minificazione e formattazione BASIC",
+  "category": "edit",
+  "icon": "✏️",
+  "entry_point": "run_c64.py",
+  "commands": [
+    {
+      "name": "tokenize",
+      "label": "Tokenizza",
+      "description": "Tokenizza BASIC sorgente → .prg tokenizzato",
+      "args": ["input"],
+      "options": {
+        "output": { "type": "string", "required": true, "description": "File .prg output" }
+      }
+    },
+    {
+      "name": "detokenize",
+      "label": "Detokenizza",
+      "description": "Detokenizza .prg → BASIC sorgente",
+      "args": ["input"],
+      "options": {
+        "output": { "type": "string", "required": true, "description": "File .bas output" }
+      }
+    },
+    {
+      "name": "minify",
+      "label": "Minifica",
+      "description": "Minifica codice BASIC rimuovendo spazi e commenti",
+      "args": ["input"],
+      "options": {
+        "output": { "type": "string", "required": true, "description": "File output" }
+      }
+    },
+    {
+      "name": "prettify",
+      "label": "Formatta",
+      "description": "Formatta codice BASIC con indentazione leggibile",
+      "args": ["input"],
+      "options": {
+        "output": { "type": "string", "required": true, "description": "File output" }
+      }
+    }
+  ]
+}
