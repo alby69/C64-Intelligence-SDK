@@ -22,9 +22,6 @@
 	path = debugger
 	url = https://github.com/alby69/C64-Debugger
 	branch = main
-[submodule "editor-src"]
-	path = editor-src
-	url = https://github.com/alby69/C64-Code.git
 [submodule "geckos"]
 	path = geckos
 	url = https://github.com/alby69/C64-OS
