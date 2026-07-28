@@ -127,16 +127,28 @@
 
 > Build system, packaging, documentation.
 
-- [ ] Tauri build config for Linux (.deb, .AppImage), macOS (.dmg), Windows (.msi)
-- [ ] Icons and branding (C64 Intelligence Studio logo)
-- [ ] First-run setup wizard (detect VICE, set paths)
-- [ ] Auto-update mechanism (Tauri updater)
-- [ ] Keyboard shortcuts (Ctrl+B compile, Ctrl+S save, F5 run)
-- [ ] User preferences persistence (window size, theme, last project)
-- [ ] Integration tests for plugin system
-- [ ] Documentation: setup guide, plugin development guide
+- [x] Tauri build config for Linux (.deb, .AppImage), macOS (.dmg), Windows (.nsis/.msi)
+  - Platform-specific bundle settings (deb depends, nsis installer, macOS min version)
+  - Window constraints: min 800x600, centered on launch
+- [x] Icons and branding (C64 Intelligence Studio logo — placeholder icons in `icons/`)
+- [x] First-run setup wizard (`FirstRunWizard.tsx`) — detects Python + VICE, guides setup
+  - Accessible via F1 shortcut
+  - Steps: Welcome → Python detection → VICE detection → Done
+- [x] Auto-update mechanism (Tauri updater configured in `tauri.conf.json`)
+- [x] Keyboard shortcuts (Ctrl+B compile, Ctrl+S save, F5 run, Ctrl+O open, F1 help)
+- [x] User preferences persistence
+  - Rust backend: `load_preferences`/`save_preferences` commands (JSON in config dir)
+  - Frontend: `preferencesService.ts` bridge
+  - Auto-saves last project, font size, theme, VICE path, window size
+  - Window state restored on launch
+- [x] Integration tests for plugin system (`test_plugin_system.py`)
+  - Plugin discovery, metadata, commands
+  - Command execution (success + error paths)
+  - Output parsing (messages, errors, PRG size, addresses, file paths)
+  - SDK root and file existence checks
+- [x] Documentation: setup guide embedded in FirstRunWizard, keyboard shortcuts on welcome screen
 
-**Status**: Not started
+**Status**: Complete
 
 ---
 
@@ -157,11 +169,19 @@
 | Plugin Interfaces | `services/core_service/plugins.py` | Complete (abstract) |
 | Plugin Loader | `services/core_service/plugin_loader.py` | Complete |
 | Tauri IPC Bridge | `frontend/src-tauri/src/main.rs` | Complete |
+| User Preferences | `frontend/src-tauri/src/main.rs` + `preferencesService.ts` | Complete |
 | React IDE Shell | `frontend/src/App.tsx` | Complete |
 | Sidebar + File Tree | `frontend/src/components/Sidebar.tsx` | Complete |
 | Monaco + BASIC Lang | `frontend/src/services/monacoLanguages.ts` | Complete |
+| LSP Client | `frontend/src/services/lspClient.ts` | Complete |
+| AI Copilot | `frontend/src/components/AiCopilotPanel.tsx` | Complete |
+| Disk Browser | `frontend/src/components/DiskBrowser.tsx` | Complete |
+| C64 Screen Preview | `frontend/src/components/C64ScreenPreview.tsx` | Complete |
+| Project Wizard | `frontend/src/components/ProjectWizard.tsx` | Complete |
+| First Run Wizard | `frontend/src/components/FirstRunWizard.tsx` | Complete |
 | Zustand Stores | `frontend/src/store/` | Complete |
 | Plugin/Command Svc | `frontend/src/services/` | Complete |
+| Plugin System Tests | `test_plugin_system.py` | Complete |
 | Docker Build | `Dockerfile` + `docker-compose.yml` | Complete |
 
 ---

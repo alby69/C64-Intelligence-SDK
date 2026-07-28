@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Sidebar } from "./components/Sidebar";
 import { TabBar } from "./components/TabBar";
 import { EditorPanel } from "./components/EditorPanel";
@@ -8,12 +8,51 @@ import { AiCopilotPanel } from "./components/AiCopilotPanel";
 import { DiskBrowser } from "./components/DiskBrowser";
 import { C64ScreenPreview } from "./components/C64ScreenPreview";
 import { ProjectWizard } from "./components/ProjectWizard";
+import { FirstRunWizard } from "./components/FirstRunWizard";
 import { useIDEStore } from "./store/ideStore";
 import { writeFile } from "./services/tauriBridge";
 import { runCompile, runEmulator } from "./services/commandService";
+import {
+  loadPreferences,
+  savePreferences,
+  UserPreferences,
+} from "./services/preferencesService";
 
 export default function App() {
-  const { activeFile, fileContents, saveActiveFile } = useIDEStore();
+  const { activeFile, fileContents, saveActiveFile, setActiveProject } = useIDEStore();
+  const [showWizard, setShowWizard] = useState(false);
+  const [prefsLoaded, setPrefsLoaded] = useState(false);
+
+  // Load preferences on startup
+  useEffect(() => {
+    (async () => {
+      const prefs = await loadPreferences();
+      if (prefs.last_project) {
+        setActiveProject(prefs.last_project);
+      }
+      if (prefs.theme === "light") {
+        document.documentElement.classList.add("light");
+      }
+      setPrefsLoaded(true);
+
+      // If no VICE/Python detected, show wizard
+      if (!prefs.VICE_path) {
+        setShowWizard(true);
+      }
+    })();
+  }, []);
+
+  // Save preferences when active project changes
+  useEffect(() => {
+    if (!prefsLoaded) return;
+    (async () => {
+      const prefs = await loadPreferences();
+      prefs.last_project = activeProject;
+      await savePreferences(prefs);
+    })();
+  }, [activeFile, prefsLoaded]);
+
+  const { activeProject } = useIDEStore();
 
   useEffect(() => {
     function handleKeyDown(e: KeyboardEvent) {
@@ -55,6 +94,11 @@ export default function App() {
         e.preventDefault();
         document.dispatchEvent(new CustomEvent("ide:toggleCopilot"));
       }
+
+      if (e.key === "F1") {
+        e.preventDefault();
+        setShowWizard(true);
+      }
     }
 
     window.addEventListener("keydown", handleKeyDown);
@@ -78,6 +122,9 @@ export default function App() {
       <DiskBrowser />
       <C64ScreenPreview />
       <ProjectWizard />
+      {showWizard && (
+        <FirstRunWizard onComplete={() => setShowWizard(false)} />
+      )}
     </div>
   );
 }

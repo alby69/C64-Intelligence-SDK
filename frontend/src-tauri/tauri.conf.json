@@ -14,7 +14,7 @@
       "all": false,
       "fs": {
         "all": true,
-        "scope": ["$APPDIR/*", "$USER/*", "$DOCUMENT/*", "$DESKTOP/*", "*"]
+        "scope": ["$APPDIR/*", "$USER/*", "$DOCUMENT/*", "$DESKTOP/*", "$DOWNLOAD/*", "*"]
       },
       "path": {
         "all": true
@@ -32,6 +32,12 @@
         "message": true,
         "open": true,
         "save": true
+      },
+      "window": {
+        "all": true
+      },
+      "updater": {
+        "active": true
       }
     },
     "bundle": {
@@ -44,18 +50,49 @@
         "icons/128x128@2x.png",
         "icons/icon.icns",
         "icons/icon.ico"
-      ]
+      ],
+      "resources": [],
+      "category": "Development",
+      "shortDescription": "C64PY IDE for Commodore 64 development",
+      "longDescription": "C64 Intelligence Studio is a modern IDE for developing C64PY programs targeting the Commodore 64. Features include syntax highlighting, LSP diagnostics, plugin system, disk image management, and AI-assisted coding.",
+      "linux": {
+        "deb": {
+          "depends": ["python3", "python3-pip"]
+        },
+        "appimage": {
+          "bundleMediaFramework": false
+        }
+      },
+      "macOS": {
+        "minimumSystemVersion": "10.15"
+      },
+      "windows": {
+        "nsis": {
+          "installerIcon": "icons/icon.ico",
+          "displayLanguageSelector": true
+        }
+      }
     },
     "security": {
       "csp": null
+    },
+    "updater": {
+      "active": true,
+      "endpoints": [
+        "https://github.com/alby69/C64-Intelligence-SDK/releases/latest/download/latest.json"
+      ],
+      "pubkey": ""
     },
     "windows": [
       {
         "title": "C64 Intelligence Studio",
         "width": 1280,
         "height": 800,
+        "minWidth": 800,
+        "minHeight": 600,
         "resizable": true,
-        "fullscreen": false
+        "fullscreen": false,
+        "center": true
       }
     ]
   }
