@@ -13,6 +13,7 @@ C64-Intelligence-SDK/
 ├── scraper/       → C64-Scrapy     — Scraping documentazione C64
 ├── kb-agent/      → C64-KB-Agent   — Agente knowledge base specializzato
 ├── debugger/      → C64-Debugger   — Debugger per C64
+├── geckos/        → C64-OS         — GeckOS-NG multitasking OS: shell, debugger, AI daemon on-target
 │
 ├── pyc64c.py      → Wrapper: importa tools.pyc64c (compilatore)
 ├── pyc64_ui.py    → Wrapper: importa tools.pyc64_ui (TUI)
@@ -30,6 +31,11 @@ C64-Intelligence-SDK/
 | `scraper/` | [C64-Scrapy](https://github.com/alby69/C64-Scrapy) | Scraping documentazione |
 | `kb-agent/` | [C64-KB-Agent](https://github.com/alby69/C64-KB-Agent) | Agente knowledge base |
 | `debugger/` | [C64-Debugger](https://github.com/alby69/C64-Debugger) | Debugger C64 |
+| `geckos/` | [C64-OS](https://github.com/alby69/C64-OS) | Sistema operativo multitasking (GeckOS-NG) — shell TUI, debugger e daemon AI su target reale/emulato |
+
+## Sistema Operativo On-Target
+
+La sottocartella `geckos/os/` contiene l'integrazione di GeckOS-NG con la SDK, includendo applicazioni personalizzate per il Commodore 64: la shell interattiva `tui_editor`, il debugger di sistema `debugger` e il daemon AI di sottofondo `ai_agent`. Consultare `geckos/os/README.md` per maggiori dettagli.
 
 ## Quick Start
 

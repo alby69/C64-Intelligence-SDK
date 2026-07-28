@@ -21,3 +21,10 @@ asm:
 # Cleans output directory
 clean:
 	rm -rf output/*
+
+# GeckOS targets
+geckos-build:
+	python3 geckos/os/build.py
+
+geckos-clean:
+	rm -rf geckos/dist geckos/os/bin
