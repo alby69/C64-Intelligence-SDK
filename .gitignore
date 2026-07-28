@@ -10,3 +10,7 @@ output/
 # PYC64 è un submodule (tools/), non duplicare qui
 pyc64c/
 pyc64_ui/
+
+# Build and distribution artifacts
+dist/
+os/bin/
