@@ -15,6 +15,9 @@ pyc64_ui/
 dist/
 os/bin/
 
+# Virtual environment
+.venv/
+
 # Frontend
 frontend/node_modules/
 frontend/package-lock.json
