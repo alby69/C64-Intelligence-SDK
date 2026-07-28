@@ -2,10 +2,17 @@ import asyncio
 import base64
 import json
 import logging
+import sys
+from pathlib import Path
 from typing import List, Optional, Dict, Any
 from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+
+# Aggiunge la root del progetto al PYTHONPATH per import relativi
+_project_root = str(Path(__file__).resolve().parent.parent.parent)
+if _project_root not in sys.path:
+    sys.path.insert(0, _project_root)
 
 from pyc64c.compiler import compile_to_prg
 from plugin_loader import get_loader, reload as reload_plugins
