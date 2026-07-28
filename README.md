@@ -28,14 +28,12 @@ C64-Intelligence-SDK/
 |----------|-----------|-------|
 | `core/` | [C64-LLM](https://github.com/alby69/C64-LLM) | Agenti AI, pipeline, ciclo di validazione |
 | `tools/` | [PYC64](https://github.com/alby69/PYC64) | Compilatore C64PY, TUI, simulatore 6502 |
-| `editor/` | [READYCode-Py](https://github.com/alby69/C64-Intelligence-SDK/tree/main/editor) | Tokenizer BASIC V2, .d64/.d81, minify/prettify, bridge C64U/VICE |
+| `editor/` | [C64-Code](https://github.com/alby69/C64-Code) | READYCode-Py: tokenizer BASIC V2, .d64/.d81, minify/prettify, bridge C64U/VICE |
 | `tutorial/` | [C64GameTutorial](https://github.com/alby69/C64GameTutorial) | Tutorial C64 assembler |
 | `scraper/` | [C64-Scrapy](https://github.com/alby69/C64-Scrapy) | Scraping documentazione |
 | `kb-agent/` | [C64-KB-Agent](https://github.com/alby69/C64-KB-Agent) | Agente knowledge base |
 | `debugger/` | [C64-Debugger](https://github.com/alby69/C64-Debugger) | Debugger C64 |
 | `geckos/` | [C64-OS](https://github.com/alby69/C64-OS) | Sistema operativo multitasking (GeckOS-NG) |
-
-> **Nota**: Il sorgente C# originale di READYCode è disponibile come riferimento esterno su [alby69/C64-Code](https://github.com/alby69/C64-Code). L'implementazione Python in `editor/` è l'unica utilizzata dalla SDK.
 
 ## Sistema Operativo On-Target
 

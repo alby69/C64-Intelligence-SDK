@@ -216,6 +216,17 @@ def cmd_editor_disk(args):
     sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'editor'))
     from readycode_py.diskimage import DiskImage, DiskGeometry, C64UFileKind
 
+    if args.action == 'create':
+        disk_fmt = args.format or 'd64'
+        geo = DiskGeometry.D64 if disk_fmt == 'd64' else DiskGeometry.D81
+        img = DiskImage(geo)
+        blank = img.create_blank_image(args.image or 'UNTITLED')
+        out = args.output or f'untitled.{disk_fmt}'
+        with open(out, 'wb') as f:
+            f.write(blank)
+        print(f'[OK] Created {disk_fmt.upper()}: {out} ({len(blank)} byte)')
+        return
+
     fmt = 'd81' if args.image.lower().endswith('.d81') else 'd64'
     geo = DiskGeometry.D64 if fmt == 'd64' else DiskGeometry.D81
     img = DiskImage(geo)

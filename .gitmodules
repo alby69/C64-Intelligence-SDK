@@ -26,3 +26,7 @@
 	path = geckos
 	url = https://github.com/alby69/C64-OS
 	branch = master
+[submodule "editor"]
+	path = editor
+	url = https://github.com/alby69/C64-Code.git
+	branch = main
