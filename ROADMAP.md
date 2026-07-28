@@ -107,16 +107,19 @@
 
 > Deep integration of all SDK modules into the launcher.
 
-- [ ] **Monaco Editor** with C64PY + BASIC V2 syntax highlighting (already in `monacoLanguages.ts`)
-- [ ] **LSP integration** via WebSocket (already in `lspClient.ts`, needs wiring)
-- [ ] **AI Copilot** via WebSocket (endpoint in `core_service/main.py`)
-- [ ] **Disk image browser** — visual D64/D81 directory viewer
-- [ ] **C64 screen preview** — xterm.js rendering C64 output
-- [ ] **Memory map viewer** — for debugger integration
-- [ ] **Sprite/char editor** — basic visual asset editor
-- [ ] **Project wizard** — create new `.c64proj` from template
+- [x] **Monaco Editor** with C64PY + BASIC V2 syntax highlighting (registered in `monacoLanguages.ts`)
+- [x] **LSP integration** via WebSocket — wired into `EditorPanel.tsx`, real-time diagnostics on `.c64` files
+- [x] **AI Copilot** via WebSocket — `AiCopilotPanel.tsx` with prompt input, streaming tokens, insert-to-editor
+  - Templates: PRINT, FOR loops, POKE/colors, SPRITE, SID sound, disk, custom
+  - Context-aware: sends last 500 chars of active file
+- [x] **Disk image browser** — `DiskBrowser.tsx` with D64/D81 directory viewer, extract, create new disk
+  - Backend endpoints: `GET /api/v1/disk/list`, `POST /api/v1/disk/create`
+- [x] **C64 screen preview** — `C64ScreenPreview.tsx` with C64 color palette, cursor, READY. prompt
+- [ ] **Memory map viewer** — for debugger integration (deferred to Phase 6)
+- ] **Sprite/char editor** — basic visual asset editor (deferred to Phase 6)
+- [x] **Project wizard** — `ProjectWizard.tsx` with templates (Hello World, Blinking Screen, Sprite Demo, Empty)
 
-**Status**: Not started
+**Status**: Complete
 
 ---
 

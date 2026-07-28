@@ -1,3 +1,4 @@
+import asyncio
 import base64
 import json
 import logging
@@ -159,25 +160,106 @@ async def websocket_ai_copilot(websocket: WebSocket):
                 msg = json.loads(data)
                 action = msg.get("action")
                 prompt = msg.get("prompt", "")
+                context = msg.get("context", "")
+                prompt_lower = prompt.lower()
 
-                # Simple retro-style intelligent inline completion suggestions
                 tokens = []
-                if "10 PRINT" in prompt.upper() or "PRINT" in prompt.upper():
-                    tokens = ["20 ", "GOTO ", "10", "\n"]
-                elif "FOR" in prompt.upper():
-                    tokens = ["\n", "    PRINT I\n", "NEXT I\n"]
-                elif "POKE" in prompt.upper() or "53280" in prompt:
-                    tokens = ["POKE ", "53281, ", "0", "\n"]
+
+                if any(w in prompt_lower for w in ["print", "10 print"]):
+                    tokens = [
+                        "# Routine di output\n",
+                        "def main() -> byte:\n",
+                        '    poke(53280, 0)\n',
+                        '    poke(53281, 0)\n',
+                        '    print("HELLO WORLD!")\n',
+                        "    return 0\n",
+                    ]
+                elif any(w in prompt_lower for w in ["for", "loop", "ciclo"]):
+                    tokens = [
+                        "# Ciclo FOR con contatore\n",
+                        "def main() -> byte:\n",
+                        "    for i = 0 to 255\n",
+                        '        poke(1024 + i, i)\n',
+                        "        poke(55296 + i, 1)\n",
+                        "    next i\n",
+                        "    return 0\n",
+                    ]
+                elif any(w in prompt_lower for w in ["poke", "color", "colore"]):
+                    tokens = [
+                        "# Cambio colori schermo\n",
+                        "def main() -> byte:\n",
+                        '    poke(53280, 0)  # bordo nero\n',
+                        '    poke(53281, 0)  # sfondo nero\n',
+                        '    for i = 0 to 999\n',
+                        '        poke(1024 + i, 81)  # blocco pieno\n',
+                        '        poke(55296 + i, i mod 16)\n',
+                        "    next i\n",
+                        "    return 0\n",
+                    ]
+                elif any(w in prompt_lower for w in ["sprite"]):
+                    tokens = [
+                        "# Mostra sprite\n",
+                        "byte sprite[64] = [\n",
+                        "    $00,$7E,$FF,$FF,$FF,$FF,$7E,$00,\n",
+                        "    $3C,$7E,$FF,$DB,$FF,$DB,$7E,$3C,\n",
+                        "    $7E,$FF,$FF,$FF,$FF,$FF,$FF,$7E,\n",
+                        "    $7E,$FF,$FF,$FF,$FF,$FF,$FF,$7E,\n",
+                        "    $3C,$7E,$FF,$DB,$FF,$DB,$7E,$3C,\n",
+                        "    $00,$7E,$FF,$FF,$FF,$FF,$7E,$00,\n",
+                        "    $00,$3C,$7E,$7E,$7E,$7E,$3C,$00\n",
+                        "]\n",
+                        "\n",
+                        "def main() -> byte:\n",
+                        "    poke(53269, 1)      # abilita sprite\n",
+                        "    poke(2040, 13)      # puntatore a $0340\n",
+                        "    for i = 0 to 63\n",
+                        "        poke(832 + i, sprite[i])\n",
+                        "    next i\n",
+                        "    poke(53248, 100)    # X\n",
+                        "    poke(53249, 100)    # Y\n",
+                        "    return 0\n",
+                    ]
+                elif any(w in prompt_lower for w in ["sound", "sid", "suono"]):
+                    tokens = [
+                        "# Suono SID\n",
+                        "def main() -> byte:\n",
+                        '    poke(54296, 15)     # volume max\n',
+                        '    poke(54277, 9)      # attack/decay\n',
+                        '    poke(54278, 0)      # sustain/release\n',
+                        '    poke(54273, 17)     #频率高位\n',
+                        '    poke(54272, 37)     #频率低位\n',
+                        '    poke(54276, 33)     # accende voice 1\n',
+                        "    for i = 0 to 500\n",
+                        "        pass\n",
+                        "    next i\n",
+                        "    poke(54276, 0)      # spegne voice 1\n",
+                        "    return 0\n",
+                    ]
+                elif any(w in prompt_lower for w in ["disk", "disco"]):
+                    tokens = [
+                        "# Lettura disco\n",
+                        "def main() -> byte:\n",
+                        '    print("LOADING...")\n',
+                        '    poke(1, 55)         # abilita IEC\n',
+                        "    return 0\n",
+                    ]
                 else:
-                    tokens = ["# AI Suggested routine\n", "def main() -> byte:\n", "    return 0\n"]
+                    tokens = [
+                        f"# Suggerito per: {prompt}\n",
+                        "def main() -> byte:\n",
+                        '    poke(53280, 0)\n',
+                        '    poke(53281, 0)\n',
+                        "    # Codice personalizzato\n",
+                        "    return 0\n",
+                    ]
 
                 for token in tokens:
                     await websocket.send_text(json.dumps({
                         "token": token,
                         "done": False
                     }))
+                    await asyncio.sleep(0.03)
 
-                # Signal completion
                 await websocket.send_text(json.dumps({
                     "token": "",
                     "done": True
@@ -190,6 +272,31 @@ async def websocket_ai_copilot(websocket: WebSocket):
                 await websocket.send_text(json.dumps({"error": str(e), "done": True}))
     except WebSocketDisconnect:
         logger.info("AI Copilot WebSocket disconnected")
+
+
+# ── Disk Browser API ──
+
+class DiskCreateRequest(BaseModel):
+    path: str
+    format: str = "d64"
+    label: str = "UNTITLED"
+
+@app.get("/api/v1/disk/list")
+def disk_list(path: str):
+    loader = get_loader()
+    result = loader.exec_command(
+        "disk-tools", "list", cli_args=["disk", "list", path]
+    )
+    return result
+
+@app.post("/api/v1/disk/create")
+def disk_create(req: DiskCreateRequest):
+    loader = get_loader()
+    result = loader.exec_command(
+        "disk-tools", "create",
+        cli_args=["disk", "create", req.label, "-o", req.path, "--format", req.format]
+    )
+    return result
 
 
 # ── Plugin API ──

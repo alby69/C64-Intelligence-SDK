@@ -4,6 +4,10 @@ import { TabBar } from "./components/TabBar";
 import { EditorPanel } from "./components/EditorPanel";
 import { TerminalPanel } from "./components/TerminalPanel";
 import { StatusBar } from "./components/StatusBar";
+import { AiCopilotPanel } from "./components/AiCopilotPanel";
+import { DiskBrowser } from "./components/DiskBrowser";
+import { C64ScreenPreview } from "./components/C64ScreenPreview";
+import { ProjectWizard } from "./components/ProjectWizard";
 import { useIDEStore } from "./store/ideStore";
 import { writeFile } from "./services/tauriBridge";
 import { runCompile, runEmulator } from "./services/commandService";
@@ -46,6 +50,11 @@ export default function App() {
         e.preventDefault();
         document.dispatchEvent(new CustomEvent("ide:newFile"));
       }
+
+      if (mod && e.shiftKey && e.key === "A") {
+        e.preventDefault();
+        document.dispatchEvent(new CustomEvent("ide:toggleCopilot"));
+      }
     }
 
     window.addEventListener("keydown", handleKeyDown);
@@ -65,6 +74,10 @@ export default function App() {
         </div>
       </div>
       <StatusBar />
+      <AiCopilotPanel />
+      <DiskBrowser />
+      <C64ScreenPreview />
+      <ProjectWizard />
     </div>
   );
 }

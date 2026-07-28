@@ -1,9 +1,64 @@
-import Editor from "@monaco-editor/react";
+import { useEffect, useRef, useCallback } from "react";
+import Editor, { OnMount } from "@monaco-editor/react";
 import { useIDEStore } from "../store/ideStore";
 import { registerC64Languages } from "../services/monacoLanguages";
+import { LSPClient } from "../services/lspClient";
 
 export function EditorPanel() {
   const { activeFile, fileContents, updateFileContent } = useIDEStore();
+  const lspRef = useRef<LSPClient | null>(null);
+  const editorRef = useRef<any>(null);
+
+  const cleanupLsp = useCallback(() => {
+    if (lspRef.current) {
+      lspRef.current.disconnect();
+      lspRef.current = null;
+    }
+  }, []);
+
+  useEffect(() => {
+    return () => cleanupLsp();
+  }, [cleanupLsp]);
+
+  useEffect(() => {
+    cleanupLsp();
+  }, [activeFile, cleanupLsp]);
+
+  const handleEditorMount: OnMount = useCallback(
+    (editor, monaco) => {
+      editorRef.current = editor;
+      registerC64Languages(monaco);
+
+      if (activeFile && activeFile.endsWith(".c64")) {
+        const uri = `file:///${activeFile}`;
+        lspRef.current = new LSPClient(editor, uri, (diagnostics) => {
+          const model = editor.getModel();
+          if (!model) return;
+          const markers = diagnostics.map((d: any) => ({
+            startLineNumber: (d.range?.start?.line ?? 0) + 1,
+            startColumn: (d.range?.start?.character ?? 0) + 1,
+            endLineNumber: (d.range?.end?.line ?? d.range?.start?.line ?? 0) + 1,
+            endColumn: (d.range?.end?.character ?? d.range?.start?.character ?? 0) + 1,
+            message: d.message || "Errore",
+            severity: monaco.MarkerSeverity.Error,
+          }));
+          monaco.editor.setModelMarkers(model, "c64-lsp", markers);
+        });
+      }
+    },
+    [activeFile]
+  );
+
+  const handleChange = useCallback(
+    (value: string | undefined) => {
+      if (!activeFile) return;
+      updateFileContent(activeFile, value || "");
+      if (lspRef.current) {
+        lspRef.current.notifyChange(value || "");
+      }
+    },
+    [activeFile, updateFileContent]
+  );
 
   if (!activeFile) {
     return (
@@ -74,7 +129,8 @@ export function EditorPanel() {
         height="100%"
         language={language}
         value={fileContents[activeFile] || ""}
-        onChange={(value) => updateFileContent(activeFile, value || "")}
+        onChange={handleChange}
+        onMount={handleEditorMount}
         theme="vs-dark"
         beforeMount={(monaco) => {
           registerC64Languages(monaco);

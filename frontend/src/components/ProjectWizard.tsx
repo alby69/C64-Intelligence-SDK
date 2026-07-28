@@ -1,0 +1,250 @@
+import { useState } from "react";
+import { useIDEStore } from "../store/ideStore";
+import { saveFileDialog, writeFile } from "../services/tauriBridge";
+import { addLog } from "../store/ideStore";
+
+interface ProjectTemplate {
+  name: string;
+  description: string;
+  entryContent: string;
+  projContent: (name: string) => string;
+}
+
+const TEMPLATES: ProjectTemplate[] = [
+  {
+    name: "Hello World",
+    description: "Programma base con PRINT",
+    entryContent: `# Hello World for C64
+def main() -> byte:
+    poke(53280, 0)
+    poke(53281, 0)
+    print("HELLO WORLD!")
+    return 0
+`,
+    projContent: (name) => JSON.stringify({
+      project_name: name,
+      version: "1.0.0",
+      author: "",
+      target: "C64",
+      entry_point: "main.c64",
+      output_name: `${name.toLowerCase().replace(/\s+/g, "_")}.prg`,
+      build_config: {
+        optimize: true,
+        assembler: "acme",
+        load_address: "0x0801",
+      },
+      assets: [],
+    }, null, 2),
+  },
+  {
+    name: "Blinking Screen",
+    description: "Cambia colori dello schermo in loop",
+    entryContent: `# Blinking Screen
+def main() -> byte:
+    for i = 0 to 15
+        poke(53280, i)
+        poke(53281, 15 - i)
+        for j = 0 to 200
+            pass
+        next j
+    next i
+    poke(53280, 14)
+    poke(53281, 6)
+    return 0
+`,
+    projContent: (name) => JSON.stringify({
+      project_name: name,
+      version: "1.0.0",
+      author: "",
+      target: "C64",
+      entry_point: "main.c64",
+      output_name: `${name.toLowerCase().replace(/\s+/g, "_")}.prg`,
+      build_config: {
+        optimize: true,
+        assembler: "acme",
+        load_address: "0x0801",
+      },
+      assets: [],
+    }, null, 2),
+  },
+  {
+    name: "Sprite Demo",
+    description: "Mostra uno sprite in movimento",
+    entryContent: `# Sprite Demo
+byte sprite_data[64] = [
+    $00,$7E,$FF,$FF,$FF,$FF,$7E,$00,
+    $00,$7E,$FF,$FF,$FF,$FF,$7E,$00,
+    $3C,$7E,$FF,$DB,$FF,$DB,$7E,$3C,
+    $7E,$FF,$FF,$FF,$FF,$FF,$FF,$7E,
+    $7E,$FF,$FF,$FF,$FF,$FF,$FF,$7E,
+    $3C,$7E,$FF,$DB,$FF,$DB,$7E,$3C,
+    $00,$7E,$FF,$FF,$FF,$FF,$7E,$00,
+    $00,$3C,$7E,$7E,$7E,$7E,$3C,$00
+]
+
+def main() -> byte:
+    poke(53269, 1)
+    poke(2040, 13)
+    for i = 0 to 63
+        poke(832 + i, sprite_data[i])
+    next i
+    poke(53248, 100)
+    poke(53249, 100)
+    return 0
+`,
+    projContent: (name) => JSON.stringify({
+      project_name: name,
+      version: "1.0.0",
+      author: "",
+      target: "C64",
+      entry_point: "main.c64",
+      output_name: `${name.toLowerCase().replace(/\s+/g, "_")}.prg`,
+      build_config: {
+        optimize: true,
+        assembler: "acme",
+        load_address: "0x0801",
+      },
+      assets: [],
+    }, null, 2),
+  },
+  {
+    name: "Progetto Vuoto",
+    description: "File di partenza minimale",
+    entryContent: `# Nuovo progetto C64
+def main() -> byte:
+    # Il tuo codice qui
+    return 0
+`,
+    projContent: (name) => JSON.stringify({
+      project_name: name,
+      version: "1.0.0",
+      author: "",
+      target: "C64",
+      entry_point: "main.c64",
+      output_name: `${name.toLowerCase().replace(/\s+/g, "_")}.prg`,
+      build_config: {
+        optimize: true,
+        assembler: "acme",
+        load_address: "0x0801",
+      },
+      assets: [],
+    }, null, 2),
+  },
+];
+
+export function ProjectWizard() {
+  const [collapsed, setCollapsed] = useState(true);
+  const [step, setStep] = useState<"list" | "configure">("list");
+  const [selectedTemplate, setSelectedTemplate] = useState<ProjectTemplate | null>(null);
+  const [projectName, setProjectName] = useState("My C64 Project");
+  const { openFile, setActiveProject } = useIDEStore.getState();
+
+  const handleSelect = (template: ProjectTemplate) => {
+    setSelectedTemplate(template);
+    setStep("configure");
+  };
+
+  const handleCreate = async () => {
+    if (!selectedTemplate) return;
+
+    try {
+      const projPath = await saveFileDialog(
+        `${projectName.toLowerCase().replace(/\s+/g, "_")}.c64proj`
+      );
+      if (!projPath) return;
+
+      const dir = projPath.substring(0, projPath.lastIndexOf("/"));
+      const entryPath = `${dir}/main.c64`;
+
+      await writeFile(projPath, selectedTemplate.projContent(projectName));
+      await writeFile(entryPath, selectedTemplate.entryContent);
+
+      openFile(entryPath, selectedTemplate.entryContent);
+      setActiveProject(projPath);
+
+      useIDEStore.getState().addLog(`[PROJECT] Nuovo progetto "${projectName}" creato`);
+      setCollapsed(true);
+      setStep("list");
+    } catch (e) {
+      useIDEStore.getState().addLog(`[ERROR] Creazione progetto fallita: ${e}`);
+    }
+  };
+
+  if (collapsed) {
+    return (
+      <button
+        onClick={() => setCollapsed(false)}
+        className="fixed bottom-16 right-72 z-50 bg-editor-sidebar border border-editor-border text-editor-text px-3 py-1.5 rounded-full text-xs font-medium shadow-lg hover:border-editor-accent transition-colors"
+        title="Nuovo Progetto"
+      >
+        📁 New
+      </button>
+    );
+  }
+
+  return (
+    <div className="fixed bottom-16 right-72 z-50 w-80 bg-editor-sidebar border border-editor-border rounded-lg shadow-2xl overflow-hidden">
+      <div className="flex items-center justify-between px-3 py-2 border-b border-editor-border bg-editor-bg">
+        <span className="text-xs font-semibold text-editor-text uppercase tracking-wider">
+          📁 Nuovo Progetto
+        </span>
+        <button
+          onClick={() => { setCollapsed(true); setStep("list"); }}
+          className="text-gray-500 hover:text-editor-text text-xs px-1"
+        >
+          ✕
+        </button>
+      </div>
+
+      <div className="p-3 space-y-3">
+        {step === "list" ? (
+          <>
+            <p className="text-[11px] text-gray-500">Scegli un template:</p>
+            <div className="space-y-2">
+              {TEMPLATES.map((t) => (
+                <button
+                  key={t.name}
+                  onClick={() => handleSelect(t)}
+                  className="w-full text-left p-2 bg-editor-bg border border-editor-border rounded hover:border-editor-accent/50 transition-colors"
+                >
+                  <div className="text-xs font-medium text-editor-text">{t.name}</div>
+                  <div className="text-[10px] text-gray-500 mt-0.5">{t.description}</div>
+                </button>
+              ))}
+            </div>
+          </>
+        ) : (
+          <>
+            <div>
+              <label className="text-[10px] text-gray-500 uppercase">Nome progetto</label>
+              <input
+                type="text"
+                value={projectName}
+                onChange={(e) => setProjectName(e.target.value)}
+                className="w-full mt-1 bg-editor-bg border border-editor-border rounded px-2 py-1.5 text-xs text-editor-text outline-none focus:border-editor-accent"
+              />
+            </div>
+            <div>
+              <label className="text-[10px] text-gray-500 uppercase">Template</label>
+              <div className="mt-1 text-xs text-editor-text">{selectedTemplate?.name}</div>
+            </div>
+            <div className="flex gap-2">
+              <button
+                onClick={() => setStep("list")}
+                className="flex-1 px-2 py-1.5 bg-editor-border text-gray-400 text-xs rounded hover:bg-editor-border/50 transition-colors"
+              >
+                ← Indietro
+              </button>
+              <button
+                onClick={handleCreate}
+                className="flex-1 px-2 py-1.5 bg-editor-accent text-white text-xs rounded hover:bg-editor-accent/80 transition-colors"
+              >
+                Crea
+              </button>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
+}
