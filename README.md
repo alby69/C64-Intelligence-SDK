@@ -1,123 +1,121 @@
-# C64 Intelligence SDK
+# C64 Intelligence Studio
 
-Un SDK modulare per lo sviluppo su Commodore 64, che integra compilatore C64PY,
-simulatore 6502, TUI editor, agenti AI, knowledge base, scraping e debugger.
-
-## Architettura
+IDE moderna per lo sviluppo su Commodore 64. Compila, debugga, emula e sviluppa in BASIC V2 e Assembly 6502 con un'interfaccia desktop basata su React + Tauri + FastAPI.
 
 ```
 C64-Intelligence-SDK/
-├── core/          → C64-LLM         — AI agents, pipeline, knowledge base
-├── tools/         → PYC64           — Compilatore C64PY, TUI, simulatore 6502
-├── editor/        → READYCode-Py    — Tokenizer BASIC, .d64/.d81, minify/prettify, bridge
-├── tutorial/      → C64GameTutorial — Tutorial e soluzioni assembly
-├── scraper/       → C64-Scrapy      — Scraping documentazione C64
-├── kb-agent/      → C64-KB-Agent    — Agente knowledge base specializzato
-├── debugger/      → C64-Debugger    — Debugger per C64
-├── geckos/        → C64-OS          — GeckOS-NG multitasking OS
-│
-├── pyc64c.py      → Wrapper: importa tools.pyc64c (compilatore)
-├── pyc64_ui.py    → Wrapper: importa tools.pyc64_ui (TUI)
-├── run_c64.py     → CLI compilatore + emulatore + editor
-└── Makefile       → Docker compose + editor targets
+├── frontend/         → React + Vite + Monaco + TailwindCSS  (interfaccia IDE)
+├── services/         → FastAPI backend con plugin system
+├── plugins/          → 10 plugin integrati dai submoduli
+├── core/             → C64-LLM         — AI agents, pipeline, knowledge base
+├── tools/            → PYC64           — Compilatore C64PY, TUI, simulatore 6502
+├── editor/           → READYCode-Py    — Tokenizer, diskimage, bridge VICE/Ultimate
+├── tutorial/         → C64GameTutorial — Tutorial e soluzioni assembly
+├── scraper/          → C64-Scrapy      — Scraping documentazione C64
+├── kb-agent/         → C64-KB-Agent    — Knowledge base (FAISS + SQLite FTS5)
+├── debugger/         → C64-Debugger    — Debugger VICE remoto
+└── geckos/           → GeckOS-NG       — Sistema operativo multitasking 6502
 ```
-
-## Submoduli
-
-| Percorso | Repository | Ruolo |
-|----------|-----------|-------|
-| `core/` | [C64-LLM](https://github.com/alby69/C64-LLM) | Agenti AI, pipeline, ciclo di validazione |
-| `tools/` | [PYC64](https://github.com/alby69/PYC64) | Compilatore C64PY, TUI, simulatore 6502 |
-| `editor/` | [C64-Code](https://github.com/alby69/C64-Code) | READYCode-Py: tokenizer BASIC V2, .d64/.d81, minify/prettify, bridge C64U/VICE |
-| `tutorial/` | [C64GameTutorial](https://github.com/alby69/C64GameTutorial) | Tutorial C64 assembler |
-| `scraper/` | [C64-Scrapy](https://github.com/alby69/C64-Scrapy) | Scraping documentazione |
-| `kb-agent/` | [C64-KB-Agent](https://github.com/alby69/C64-KB-Agent) | Agente knowledge base |
-| `debugger/` | [C64-Debugger](https://github.com/alby69/C64-Debugger) | Debugger C64 |
-| `geckos/` | [C64-OS](https://github.com/alby69/C64-OS) | Sistema operativo multitasking (GeckOS-NG) |
-
-## Sistema Operativo On-Target
-
-La sottocartella `geckos/os/` contiene l'integrazione di GeckOS-NG con la SDK, includendo applicazioni personalizzate per il Commodore 64: la shell interattiva `tui_editor`, il debugger di sistema `debugger` e il daemon AI di sottofondo `ai_agent`. Consultare `geckos/os/README.md` per maggiori dettagli.
 
 ## Quick Start
 
 ```bash
-# Inizializza tutti i submoduli
+# 1. Inizializza tutti i submoduli
 git submodule update --init --recursive
 
-# Installa editor (READYCode-Py)
-make editor-build
+# 2. Installa tutto (venv + editor + backend + frontend)
+make setup
 
-# Build e run con Docker
-make build
-make run
+# 3. Avvia l'IDE (due terminali)
+make ide-backend   # Terminale 1 → FastAPI su http://localhost:8000
+make ide-frontend  # Terminale 2 → React su http://localhost:5173
 ```
 
-## Comandi CLI
-
-### Compilatore C64PY (`run_c64.py`)
+Poi apri **http://localhost:5173** nel browser. Per l'app desktop nativa:
 
 ```bash
-# Compila un file .c64 in .prg
+make tauri-dev     # Richiede Rust + Cargo + Tauri CLI
+```
+
+## Plugin System (10 plugin)
+
+I plugin sono attivabili da tre interfacce:
+
+### 1. IDE Grafica (http://localhost:5173)
+Sidebar plugin → click per eseguire comandi. Monaco editor + terminale + AI copilot + debugger.
+
+### 2. CLI diretta
+
+```bash
+make plugins  # Elenca tutti i plugin
+
+python3 plugins/tutorial/wrapper.py list          # Elenco capitoli
+python3 plugins/tutorial/wrapper.py show 1        # Mostra capitolo 1
+python3 plugins/knowledge/wrapper.py status       # Stato knowledge base
+python3 plugins/knowledge/wrapper.py search sprite # Cerca documentazione
+python3 plugins/disk-tools/wrapper.py create -o /tmp/test.d64 --label MIOGIOCO
+python3 plugins/geckos/wrapper.py status          # Stato build GeckOS
+python3 plugins/geckos/wrapper.py build           # Compila GeckOS-NG
+python3 plugins/debugger/wrapper.py attach        # Connetti a VICE
+python3 plugins/ai-agent/wrapper.py status        # Stato agente AI
+```
+
+### 3. API REST (http://localhost:8000)
+
+```bash
+curl http://localhost:8000/api/v1/plugins
+curl -X POST http://localhost:8000/api/v1/plugins/tutorial/exec \
+  -H "Content-Type: application/json" \
+  -d '{"command":"list","cli_args":["list"]}'
+```
+
+## Plugin
+
+| Plugin | Submodule | Comandi |
+|--------|-----------|---------|
+| **ai-agent** | core/ | generate, explain, optimize, debug, status, search, distill, train |
+| **compiler** | tools/ | compile, basic |
+| **debugger** | debugger/ | attach, run, step, continue, breakpoint, registers, memory, crash-analyze, disassemble, reset |
+| **disk-tools** | editor/ | list, inject, extract, create, format, prg-to-disk, petscii-convert |
+| **editor** | tools/ | tokenize, detokenize, minify, prettify |
+| **emulator** | editor/ | run, vice-run, vice-attach, vice-step, vice-reset, vice-memory, vice-registers, vice-info, vice-upload |
+| **geckos** | geckos/ | build, deploy, run, status |
+| **knowledge** | kb-agent/ | search, docs, status, list-api, list-files |
+| **project-manager** | tools/ | load, build |
+| **tutorial** | tutorial/ | list, show, example, template, search, references |
+
+## CLI (run_c64.py — legacy)
+
+```bash
+# Compila .c64 in .prg
 python3 run_c64.py compile input.c64
-
-# Compila ed esegui in c64py
-python3 run_c64.py run input.c64
-
 # Genera solo BASIC
 python3 run_c64.py basic input.c64
-```
-
-### Editor READYCode (`run_c64.py` o `python3 -m readycode_py`)
-
-```bash
 # Tokenizza BASIC → .prg
 python3 run_c64.py tokenize input.bas -o output.prg
-
-# Detokenizza .prg → BASIC
-python3 run_c64.py detokenize input.prg -o output.bas
-
-# Minifica BASIC (riduce dimensione)
-python3 run_c64.py minify input.bas -o compact.bas
-
-# Prettify BASIC (migliora leggibilità)
-python3 run_c64.py prettify input.bas -o formatted.bas
+# Disk image
+python3 run_c64.py disk create -o mydisk.d64 "MY DISK"
 ```
 
-### Disk Image (.d64/.d81)
+## Docker TUI (legacy)
 
 ```bash
-# Crea immagine disco vuota
-python3 -m readycode_py disk create -o mydisk.d64 --name "MY DISK"
-
-# Lista directory
-python3 -m readycode_py disk list mydisk.d64
-
-# Inserisci file
-python3 -m readycode_py disk inject mydisk.d64 program.prg
-
-# Estrai file
-python3 -m readycode_py disk extract mydisk.d64 PROGRAM -o extracted.prg
-
-# Elimina file
-python3 -m readycode_py disk delete mydisk.d64 PROGRAM
-
-# Rinomina file
-python3 -m readycode_py disk rename mydisk.d64 OLDNAME NEWNAME
+make docker-build   # Build immagini Docker
+make docker-run     # Avvia TUI terminale (pyc64_ui)
 ```
 
-### Bridge Hardware
+## Submoduli
 
-```bash
-# C64 Ultimate — carica ed esegui PRG
-python3 -m readycode_py bridge-c64u run --host 192.168.1.100 --file program.prg
-
-# VICE — carica PRG nell'emulatore
-python3 -m readycode_py bridge-vice run --file program.prg
-
-# PETSCII — conversione screen code
-python3 -m readycode_py petscii $41
-```
+| Percorso | Repository | Plugin |
+|----------|-----------|--------|
+| `core/` | [C64-LLM](https://github.com/alby69/C64-LLM) | ai-agent |
+| `tools/` | [PYC64](https://github.com/alby69/PYC64) | compiler, editor, project-manager |
+| `editor/` | [C64-Code](https://github.com/alby69/C64-Code) | disk-tools, emulator |
+| `tutorial/` | [C64GameTutorial](https://github.com/alby69/C64GameTutorial) | tutorial |
+| `scraper/` | [C64-Scrapy](https://github.com/alby69/C64-Scrapy) | — (alimenta kb-agent) |
+| `kb-agent/` | [C64-KB-Agent](https://github.com/alby69/C64-KB-Agent) | knowledge |
+| `debugger/` | [C64-Debugger](https://github.com/alby69/C64-Debugger) | debugger |
+| `geckos/` | [C64-OS](https://github.com/alby69/C64-OS) | geckos |
 
 ## Autore
 
