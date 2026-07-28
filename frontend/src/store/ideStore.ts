@@ -4,10 +4,12 @@ interface IDEState {
   activeProject: string | null;
   openFiles: string[];
   activeFile: string | null;
-  fileContents: Record<string, string>; // Maps file path to current editor content
-  savedContents: Record<string, string>; // Maps file path to last saved content (to detect dirty state)
+  fileContents: Record<string, string>;
+  savedContents: Record<string, string>;
   isCompiling: boolean;
   terminalLogs: string[];
+  commandHistory: string[];
+  historyIndex: number;
 
   setActiveProject: (path: string | null) => void;
   openFile: (path: string, initialContent?: string) => void;
@@ -18,6 +20,7 @@ interface IDEState {
   setCompiling: (status: boolean) => void;
   addLog: (log: string) => void;
   clearLogs: () => void;
+  addCommandHistory: (cmd: string) => void;
   isFileDirty: (path: string) => boolean;
 }
 
@@ -29,6 +32,8 @@ export const useIDEStore = create<IDEState>((set, get) => ({
   savedContents: {},
   isCompiling: false,
   terminalLogs: [],
+  commandHistory: [],
+  historyIndex: -1,
 
   setActiveProject: (path) => set({ activeProject: path }),
 
@@ -37,7 +42,6 @@ export const useIDEStore = create<IDEState>((set, get) => ({
     const newContents = { ...state.fileContents };
     const newSaved = { ...state.savedContents };
 
-    // Only set initial content if it wasn't already loaded
     if (newContents[path] === undefined) {
       newContents[path] = initialContent;
       newSaved[path] = initialContent;
@@ -97,6 +101,11 @@ export const useIDEStore = create<IDEState>((set, get) => ({
   addLog: (log) => set((state) => ({ terminalLogs: [...state.terminalLogs, log] })),
 
   clearLogs: () => set({ terminalLogs: [] }),
+
+  addCommandHistory: (cmd) => set((state) => ({
+    commandHistory: [...state.commandHistory, cmd].slice(-50),
+    historyIndex: -1,
+  })),
 
   isFileDirty: (path) => {
     const { fileContents, savedContents } = get();

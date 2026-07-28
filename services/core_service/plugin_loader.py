@@ -5,6 +5,7 @@ import json
 import logging
 import subprocess
 import sys
+import re
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field, asdict
 
@@ -36,6 +37,66 @@ class Plugin:
     def to_dict(self) -> dict:
         d = asdict(self)
         return d
+
+
+def parse_output(stdout: str) -> dict:
+    """Parse tagged output from CLI tools into structured data."""
+    info = {
+        "messages": [],
+        "errors": [],
+        "files": [],
+        "prg_size": None,
+        "load_address": None,
+        "code_address": None,
+    }
+
+    for line in stdout.splitlines():
+        line = line.strip()
+        if not line:
+            continue
+
+        if line.startswith("[OK]"):
+            info["messages"].append({"type": "ok", "text": line[4:].strip()})
+        elif line.startswith("[PRG]"):
+            info["messages"].append({"type": "prg", "text": line[5:].strip()})
+            m = re.search(r'\((\d+)\s*byte\)', line)
+            if m:
+                info["prg_size"] = int(m.group(1))
+            m = re.search(r'(\S+\.(?:prg|bas|asm|lst))', line)
+            if m:
+                info["files"].append(m.group(1))
+        elif line.startswith("[BASIC]"):
+            info["messages"].append({"type": "basic", "text": line[7:].strip()})
+            m = re.search(r'(\S+\.bas)', line)
+            if m:
+                info["files"].append(m.group(1))
+        elif line.startswith("[ASM]"):
+            info["messages"].append({"type": "asm", "text": line[5:].strip()})
+            m = re.search(r'(\S+\.(?:asm|lst))', line)
+            if m:
+                info["files"].append(m.group(1))
+        elif line.startswith("[LOAD]"):
+            m = re.search(r'\$([0-9a-fA-F]{4})', line)
+            if m:
+                info["load_address"] = f"0x{m.group(1)}"
+        elif line.startswith("[CODE]"):
+            m = re.search(r'\$([0-9a-fA-F]{4})', line)
+            if m:
+                info["code_address"] = f"0x{m.group(1)}"
+        elif line.startswith("[SIZE]"):
+            m = re.search(r'(\d+)', line)
+            if m:
+                info["prg_size"] = int(m.group(1))
+        elif line.startswith("[C64]"):
+            info["messages"].append({"type": "c64", "text": line[5:].strip()})
+        elif line.startswith("[LEXER ERROR]") or line.startswith("[PARSER ERROR]") or line.startswith("[ASM ERROR]"):
+            info["errors"].append(line)
+        elif line.startswith("[ERROR]"):
+            info["errors"].append(line[7:].strip())
+        else:
+            info["messages"].append({"type": "info", "text": line})
+
+    return info
 
 
 class PluginLoader:
@@ -92,7 +153,23 @@ class PluginLoader:
     def list_plugins(self) -> List[dict]:
         return [p.to_dict() for p in self.plugins.values()]
 
-    def exec_command(self, plugin_name: str, command_name: str, args: List[str] = None, options: Dict[str, Any] = None) -> dict:
+    def exec_command(
+        self,
+        plugin_name: str,
+        command_name: str,
+        args: List[str] = None,
+        options: Dict[str, Any] = None,
+        cli_args: List[str] = None,
+    ) -> dict:
+        """Execute a plugin command.
+
+        Args:
+            plugin_name: Plugin identifier
+            command_name: Command to execute
+            args: Positional arguments (legacy, appended after command)
+            options: Key-value options converted to --key value flags (legacy)
+            cli_args: Full CLI argument list (overrides args/options when provided)
+        """
         plugin = self.get_plugin(plugin_name)
         if not plugin:
             return {"success": False, "error": f"Plugin '{plugin_name}' not found"}
@@ -105,33 +182,42 @@ class PluginLoader:
         if not cmd:
             return {"success": False, "error": f"Command '{command_name}' not found in plugin '{plugin_name}'"}
 
-        # Build CLI command
-        cli_args = [sys.executable, os.path.join(SDK_ROOT, plugin.entry_point), command_name]
-        if args:
-            cli_args.extend(args)
-        if options:
-            for k, v in options.items():
-                if isinstance(v, bool):
-                    if v:
-                        cli_args.append(f"--{k}")
-                elif v is not None:
-                    cli_args.extend([f"--{k}", str(v)])
+        # Build CLI command: python3 <entry_point> <command> <args...>
+        full_args = [sys.executable, os.path.join(SDK_ROOT, plugin.entry_point)]
 
-        log.info(f"Executing: {' '.join(cli_args)}")
+        if cli_args is not None:
+            full_args.extend(cli_args)
+        else:
+            full_args.append(command_name)
+            if args:
+                full_args.extend(args)
+            if options:
+                for k, v in options.items():
+                    if isinstance(v, bool):
+                        if v:
+                            full_args.append(f"--{k}")
+                    elif v is not None:
+                        full_args.extend([f"--{k}", str(v)])
+
+        log.info(f"Executing: {' '.join(full_args)}")
 
         try:
             result = subprocess.run(
-                cli_args,
+                full_args,
                 capture_output=True,
                 text=True,
                 cwd=SDK_ROOT,
                 timeout=60,
             )
+
+            output = parse_output(result.stdout)
+
             return {
                 "success": result.returncode == 0,
                 "stdout": result.stdout,
                 "stderr": result.stderr,
                 "returncode": result.returncode,
+                "output": output,
             }
         except subprocess.TimeoutExpired:
             return {"success": False, "error": "Command timed out (60s)"}

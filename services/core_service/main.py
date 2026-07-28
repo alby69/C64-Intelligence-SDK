@@ -198,6 +198,7 @@ class PluginExecRequest(BaseModel):
     command: str
     args: List[str] = []
     options: Dict[str, Any] = {}
+    cli_args: Optional[List[str]] = None
 
 @app.get("/api/v1/plugins")
 def list_plugins():
@@ -220,7 +221,9 @@ def get_plugin(plugin_name: str):
 @app.post("/api/v1/plugins/{plugin_name}/exec")
 def exec_plugin_command(plugin_name: str, req: PluginExecRequest):
     loader = get_loader()
-    result = loader.exec_command(plugin_name, req.command, req.args, req.options)
+    result = loader.exec_command(
+        plugin_name, req.command, req.args, req.options, cli_args=req.cli_args
+    )
     if not result["success"] and "not found" in result.get("error", ""):
         raise HTTPException(status_code=404, detail=result["error"])
     return result

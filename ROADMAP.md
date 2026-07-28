@@ -89,15 +89,17 @@
 
 > Each plugin command maps to a real CLI invocation.
 
-- [ ] **Compiler plugin**: `compile` → `python3 run_c64.py compile <file>`
-- [ ] **Editor plugin**: `tokenize`, `detokenize`, `minify`, `prettify` → `run_c64.py` editor subcommands
-- [ ] **Disk plugin**: `disk list`, `disk inject`, `disk extract`, `disk create` → `run_c64.py disk`
-- [ ] **Emulator plugin**: `run` → `python3 run_c64.py run <file>`
-- [ ] **Project Manager plugin**: `load_project`, `build_project` → `pyc64_project.py`
-- [ ] Map command outputs to UI panels (terminal output, error highlights, PRG size info)
-- [ ] Implement command history in terminal panel
+- [x] **Compiler plugin**: `compile` → `python3 run_c64.py compile <file>` + `basic` → `run_c64.py basic <file>`
+- [x] **Editor plugin**: `tokenize`, `detokenize`, `minify`, `prettify` → `run_c64.py` editor subcommands with `-o` output
+- [x] **Disk plugin**: `disk list`, `disk inject`, `disk extract`, `disk create` → `run_c64.py disk` with positional args
+- [x] **Emulator plugin**: `run` → `python3 run_c64.py run <file>` with `--sid`, `--resid`, `--timeout` options
+- [x] **Project Manager plugin**: `load`, `build` → `pyc64_project.py load/build <path>`
+- [x] Map command outputs to UI panels (terminal output, error highlights, PRG size info)
+- [x] Implement command history in terminal panel (arrow keys, 50 cmd buffer)
+- [x] Enhanced `plugin_loader.py` with `cli_args` override + `parse_output()` for structured output
+- [x] Enhanced `commandService.ts` with per-plugin argument builders
 
-**Status**: Not started
+**Status**: Complete
 
 ---
 
