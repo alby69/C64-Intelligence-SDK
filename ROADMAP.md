@@ -48,21 +48,21 @@
 
 > React app shell with layout, sidebar, tabs, and terminal panel.
 
-- [ ] Create `frontend/src/main.tsx` — React entry point (renders `<App />`)
-- [ ] Create `frontend/src/App.tsx` — root component with layout
-- [ ] Create `frontend/src/components/Sidebar.tsx` — plugin launcher + file tree
-- [ ] Create `frontend/src/components/TabBar.tsx` — open file tabs
-- [ ] Create `frontend/src/components/EditorPanel.tsx` — Monaco editor wrapper
-- [ ] Create `frontend/src/components/TerminalPanel.tsx` — xterm.js terminal
-- [ ] Create `frontend/src/components/StatusBar.tsx` — bottom status bar
-- [ ] Create `frontend/src/components/PluginCard.tsx` — plugin card for sidebar
-- [ ] Extend `frontend/src/store/ideStore.ts` — add plugin state, terminal state
-- [ ] Create `frontend/src/store/pluginStore.ts` — plugin list, active plugin
-- [ ] Create `frontend/src/services/pluginService.ts` — fetch plugins from backend API
-- [ ] Create `frontend/src/services/commandService.ts` — execute commands via Tauri IPC
-- [ ] Style layout with TailwindCSS (dark C64 theme, existing color palette)
+- [x] Create `frontend/src/main.tsx` — React entry point with Monaco language init
+- [x] Create `frontend/src/App.tsx` — root component with layout + keyboard shortcuts
+- [x] Create `frontend/src/components/Sidebar.tsx` — plugin launcher + file tree
+- [x] Create `frontend/src/components/TabBar.tsx` — open file tabs with dirty indicators
+- [x] Create `frontend/src/components/EditorPanel.tsx` — Monaco editor with C64PY/BASIC syntax
+- [x] Create `frontend/src/components/TerminalPanel.tsx` — color-coded terminal output
+- [x] Create `frontend/src/components/StatusBar.tsx` — bottom status bar with language info
+- [x] Create `frontend/src/components/PluginCard.tsx` — interactive plugin cards with exec
+- [x] Extend `frontend/src/store/ideStore.ts` — file state, terminal state, dirty tracking
+- [x] Create `frontend/src/store/pluginStore.ts` — plugin list from backend API
+- [x] Create `frontend/src/services/pluginService.ts` — fetch + exec via FastAPI
+- [x] Create `frontend/src/services/commandService.ts` — compile/run/disk commands
+- [x] Style layout with TailwindCSS (dark C64 theme, custom color palette)
 
-**Status**: Not started
+**Status**: Complete
 
 ---
 
@@ -70,18 +70,18 @@
 
 > Rust commands that bridge React frontend ↔ Python backend.
 
-- [ ] Extend `frontend/src-tauri/src/main.rs` — add Tauri commands:
-  - [ ] `run_command` — spawn sidecar process, stream stdout/stderr
-  - [ ] `read_file` — read file content
-  - [ ] `write_file` — write file content
-  - [ ] `list_directory` — list directory entries
-  - [ ] `open_file_dialog` — native file open dialog
-  - [ ] `save_file_dialog` — native file save dialog
-- [ ] Create `frontend/src/services/tauriBridge.ts` — TypeScript wrappers for Tauri invoke
-- [ ] Update `frontend/src-tauri/tauri.conf.json` — ensure shell/sidecar permissions
+- [x] Extend `frontend/src-tauri/src/main.rs` — add Tauri commands:
+  - [x] `run_command` — spawn sidecar process, stream stdout/stderr
+  - [x] `read_file` — read file content
+  - [x] `write_file` — write file content
+  - [x] `list_directory` — list directory entries
+  - [x] `open_file_dialog` — native file open dialog
+  - [x] `save_file_dialog` — native file save dialog
+- [x] Create `frontend/src/services/tauriBridge.ts` — TypeScript wrappers for Tauri invoke
+- [x] Update `frontend/src-tauri/tauri.conf.json` — ensure shell/sidecar permissions
 - [ ] Add `c64py-cli` sidecar binary config (or use `python3 run_c64.py` via shell)
 
-**Status**: Not started
+**Status**: Complete (except sidecar binary config)
 
 ---
 
@@ -150,10 +150,13 @@
 | Project Manager | `pyc64_project.py` | Complete |
 | FastAPI Core Service | `services/core_service/main.py` | Complete |
 | Plugin Interfaces | `services/core_service/plugins.py` | Complete (abstract) |
-| Tauri Scaffold | `frontend/src-tauri/` | Scaffold only |
-| React Deps | `frontend/package.json` | Installed |
-| Monaco + BASIC Lang | `frontend/src/services/` | Partial |
-| Zustand Store | `frontend/src/store/ideStore.ts` | Complete |
+| Plugin Loader | `services/core_service/plugin_loader.py` | Complete |
+| Tauri IPC Bridge | `frontend/src-tauri/src/main.rs` | Complete |
+| React IDE Shell | `frontend/src/App.tsx` | Complete |
+| Sidebar + File Tree | `frontend/src/components/Sidebar.tsx` | Complete |
+| Monaco + BASIC Lang | `frontend/src/services/monacoLanguages.ts` | Complete |
+| Zustand Stores | `frontend/src/store/` | Complete |
+| Plugin/Command Svc | `frontend/src/services/` | Complete |
 | Docker Build | `Dockerfile` + `docker-compose.yml` | Complete |
 
 ---

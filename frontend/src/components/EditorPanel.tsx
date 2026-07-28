@@ -1,5 +1,6 @@
 import Editor from "@monaco-editor/react";
 import { useIDEStore } from "../store/ideStore";
+import { registerC64Languages } from "../services/monacoLanguages";
 
 export function EditorPanel() {
   const { activeFile, fileContents, updateFileContent } = useIDEStore();
@@ -8,9 +9,39 @@ export function EditorPanel() {
     return (
       <div className="flex-1 flex items-center justify-center bg-editor-bg">
         <div className="text-center">
-          <div className="text-6xl mb-4">🖥️</div>
-          <h2 className="text-lg font-semibold text-gray-400 mb-2">C64 Intelligence Studio</h2>
-          <p className="text-sm text-gray-600">Apri un file o seleziona un plugin dalla barra laterale</p>
+          <div className="text-6xl mb-4 opacity-30">🖥️</div>
+          <h2 className="text-lg font-semibold text-gray-400 mb-2">
+            C64 Intelligence Studio
+          </h2>
+          <p className="text-sm text-gray-600 mb-4">
+            Apri un file o seleziona un plugin dalla barra laterale
+          </p>
+          <div className="flex flex-col items-center gap-2 text-[11px] text-gray-600">
+            <span>
+              <kbd className="px-1.5 py-0.5 bg-editor-sidebar border border-editor-border rounded text-gray-500">
+                Ctrl+O
+              </kbd>{" "}
+              Apri file
+            </span>
+            <span>
+              <kbd className="px-1.5 py-0.5 bg-editor-sidebar border border-editor-border rounded text-gray-500">
+                Ctrl+S
+              </kbd>{" "}
+              Salva
+            </span>
+            <span>
+              <kbd className="px-1.5 py-0.5 bg-editor-sidebar border border-editor-border rounded text-gray-500">
+                Ctrl+B
+              </kbd>{" "}
+              Compila
+            </span>
+            <span>
+              <kbd className="px-1.5 py-0.5 bg-editor-sidebar border border-editor-border rounded text-gray-500">
+                F5
+              </kbd>{" "}
+              Esegui
+            </span>
+          </div>
         </div>
       </div>
     );
@@ -26,6 +57,13 @@ export function EditorPanel() {
     json: "json",
     md: "markdown",
     txt: "plaintext",
+    js: "javascript",
+    ts: "typescript",
+    tsx: "typescript",
+    jsx: "javascript",
+    css: "css",
+    html: "html",
+    xml: "xml",
   };
 
   const language = languageMap[ext] || "plaintext";
@@ -38,6 +76,9 @@ export function EditorPanel() {
         value={fileContents[activeFile] || ""}
         onChange={(value) => updateFileContent(activeFile, value || "")}
         theme="vs-dark"
+        beforeMount={(monaco) => {
+          registerC64Languages(monaco);
+        }}
         options={{
           fontSize: 13,
           fontFamily: "'JetBrains Mono', 'Fira Code', 'Consolas', monospace",
@@ -50,6 +91,15 @@ export function EditorPanel() {
           automaticLayout: true,
           tabSize: 4,
           insertSpaces: false,
+          padding: { top: 8, bottom: 8 },
+          smoothScrolling: true,
+          cursorBlinking: "smooth",
+          cursorSmoothCaretAnimation: "on",
+          renderWhitespace: "selection",
+          guides: {
+            bracketPairs: true,
+            indentation: true,
+          },
         }}
       />
     </div>

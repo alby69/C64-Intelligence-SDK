@@ -15,10 +15,12 @@ export function TerminalPanel() {
   if (collapsed) {
     return (
       <div
-        className="h-8 bg-editor-sidebar border-t border-editor-border flex items-center px-3 cursor-pointer"
+        className="h-8 bg-editor-sidebar border-t border-editor-border flex items-center justify-between px-3 cursor-pointer hover:bg-editor-border/30 transition-colors"
         onClick={() => setCollapsed(false)}
       >
-        <span className="text-xs text-gray-500">Terminal ({terminalLogs.length} righe)</span>
+        <span className="text-xs text-gray-500">
+          ▴ Terminal ({terminalLogs.length} righe)
+        </span>
       </div>
     );
   }
@@ -45,7 +47,8 @@ export function TerminalPanel() {
           </button>
           <button
             onClick={() => setCollapsed(true)}
-            className="text-gray-500 hover:text-editor-text px-1 py-0.5 rounded hover:bg-editor-border"
+            className="text-gray-500 hover:text-editor-text px-1 py-0.5 rounded hover:bg-editor-border text-xs"
+            title="Comprimi"
           >
             ▾
           </button>
@@ -56,7 +59,12 @@ export function TerminalPanel() {
         className="flex-1 overflow-y-auto font-mono text-xs p-2 space-y-0.5"
       >
         {terminalLogs.length === 0 ? (
-          <span className="text-gray-600 italic">In attesa di output...</span>
+          <div className="flex flex-col items-center justify-center h-full">
+            <span className="text-gray-600 italic">In attesa di output...</span>
+            <span className="text-[10px] text-gray-700 mt-1">
+              Compila con Ctrl+B o esegui con F5
+            </span>
+          </div>
         ) : (
           terminalLogs.map((log, i) => (
             <div
@@ -64,10 +72,16 @@ export function TerminalPanel() {
               className={`whitespace-pre-wrap ${
                 log.startsWith("[ERROR]")
                   ? "text-red-400"
-                  : log.startsWith("[OK]") || log.startsWith("[BASIC]") || log.startsWith("[PRG]")
+                  : log.startsWith("[OK]") ||
+                    log.startsWith("[BASIC]") ||
+                    log.startsWith("[PRG]")
                   ? "text-green-400"
                   : log.startsWith("[C64]")
                   ? "text-yellow-400"
+                  : log.startsWith("[BUILD]")
+                  ? "text-blue-400"
+                  : log.startsWith("[EMU]")
+                  ? "text-purple-400"
                   : "text-gray-400"
               }`}
             >
