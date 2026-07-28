@@ -1,0 +1,58 @@
+{
+  "name": "tutorial",
+  "version": "1.0.0",
+  "description": "C64 Game Tutorial — manuale di programmazione arcade completo (27 capitoli, 28 soluzioni, template gioco)",
+  "category": "docs",
+  "icon": "📖",
+  "entry_point": "plugins/tutorial/wrapper.py",
+  "commands": [
+    {
+      "name": "list",
+      "label": "Elenco capitoli",
+      "description": "Mostra l'elenco dei capitoli del manuale",
+      "args": [],
+      "options": {
+        "part": { "type": "int", "description": "Filtra per parte (1-9)" }
+      }
+    },
+    {
+      "name": "show",
+      "label": "Mostra capitolo",
+      "description": "Mostra il contenuto di un capitolo",
+      "args": ["chapter"],
+      "options": {
+        "lang": { "type": "choice", "choices": ["it", "en"], "default": "it" }
+      }
+    },
+    {
+      "name": "example",
+      "label": "Soluzione",
+      "description": "Mostra il codice assembly di una soluzione",
+      "args": ["name"],
+      "options": {
+        "chapter": { "type": "string", "description": "Filtra per capitolo (es. cap01)" }
+      }
+    },
+    {
+      "name": "template",
+      "label": "Crea template",
+      "description": "Copia il template gioco completo in una directory",
+      "args": ["output_dir"]
+    },
+    {
+      "name": "search",
+      "label": "Cerca",
+      "description": "Cerca nel testo del manuale",
+      "args": ["query"]
+    },
+    {
+      "name": "references",
+      "label": "Appendici",
+      "description": "Mostra le appendici del manuale",
+      "args": [],
+      "options": {
+        "appendix": { "type": "choice", "choices": ["A", "B", "C", "D", "E", "F", "G", "TMP"], "description": "Specifica appendice" }
+      }
+    }
+  ]
+}

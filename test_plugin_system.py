@@ -19,7 +19,8 @@ class TestPluginDiscovery:
     def test_all_expected_plugins_loaded(self):
         loader = PluginLoader()
         plugins = loader.discover()
-        expected = ["compiler", "disk-tools", "editor", "emulator", "project-manager"]
+        expected = ["compiler", "disk-tools", "editor", "emulator", "project-manager",
+                     "ai-agent", "debugger", "knowledge", "tutorial", "geckos"]
         for name in expected:
             assert name in plugins, f"Plugin '{name}' not found"
 

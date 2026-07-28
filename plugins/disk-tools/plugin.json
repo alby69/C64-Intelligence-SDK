@@ -1,15 +1,15 @@
 {
   "name": "disk-tools",
-  "version": "1.0.0",
-  "description": "Disk Tools — gestione immagini disco D64/D81",
+  "version": "2.0.0",
+  "description": "Disk Tools — gestione immagini disco D64/D81, estrazione/iniezione file, formattazione, PETSCII conversion",
   "category": "tools",
   "icon": "💾",
-  "entry_point": "run_c64.py",
+  "entry_point": "plugins/disk-tools/wrapper.py",
   "commands": [
     {
       "name": "list",
       "label": "Lista file",
-      "description": "Mostra i file su un'immagine disco",
+      "description": "Mostra i file su un'immagine disco D64/D81",
       "args": ["image"]
     },
     {
@@ -30,10 +30,39 @@
     {
       "name": "create",
       "label": "Crea disco",
-      "description": "Crea un'immagine disco vuota",
+      "description": "Crea un'immagine disco vuota D64/D81",
       "options": {
         "format": { "type": "choice", "choices": ["d64", "d81"], "default": "d64" },
-        "output": { "type": "string", "description": "File output" }
+        "output": { "type": "string", "required": true, "description": "Percorso output" },
+        "label": { "type": "string", "default": "UNTITLED", "description": "Etichetta disco" }
+      }
+    },
+    {
+      "name": "format",
+      "label": "Formatta disco",
+      "description": "Formatta un'immagine disco esistente (cancella tutti i file)",
+      "args": ["image"],
+      "options": {
+        "label": { "type": "string", "default": "UNTITLED" }
+      }
+    },
+    {
+      "name": "prg-to-disk",
+      "label": "PRG → Disco",
+      "description": "Crea un disco D64 da uno o più file PRG",
+      "args": ["output_image"],
+      "options": {
+        "files": { "type": "string", "required": true, "description": "File PRG da includere (separati da virgola)" },
+        "label": { "type": "string", "default": "PROGRAMS" }
+      }
+    },
+    {
+      "name": "petscii-convert",
+      "label": "Converti PETSCII",
+      "description": "Converte file tra PETSCII e ASCII",
+      "args": ["input", "direction"],
+      "options": {
+        "output": { "type": "string", "required": true, "description": "File output" }
       }
     }
   ]

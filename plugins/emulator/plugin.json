@@ -1,20 +1,81 @@
 {
   "name": "emulator",
-  "version": "1.0.0",
-  "description": "Emulator — esegui PRG in c64py o VICE",
+  "version": "2.0.0",
+  "description": "Emulator — esegui PRG in c64py o VICE (con monitor remoto TCP, step, breakpoint)",
   "category": "run",
   "icon": "🎮",
-  "entry_point": "run_c64.py",
+  "entry_point": "plugins/emulator/wrapper.py",
   "commands": [
     {
       "name": "run",
-      "label": "Esegui",
-      "description": "Compila ed esegui in c64py emulator",
+      "label": "Esegui (c64py)",
+      "description": "Compila ed esegui in c64py emulator (Python)",
       "args": ["input"],
       "options": {
         "sid": { "type": "flag", "description": "Abilita SID" },
         "resid": { "type": "flag", "description": "Abilita reSID" },
         "timeout": { "type": "int", "default": 30, "description": "Timeout secondi" }
+      }
+    },
+    {
+      "name": "vice-run",
+      "label": "Esegui in VICE",
+      "description": "Esegue un PRG in VICE con monitor remoto TCP",
+      "args": ["prg_path"],
+      "options": {
+        "headless": { "type": "flag", "description": "Avvia VICE headless" },
+        "limit_cycles": { "type": "int", "default": 10000000 }
+      }
+    },
+    {
+      "name": "vice-attach",
+      "label": "Connetti a VICE",
+      "description": "Si connette a VICE già in esecuzione via monitor TCP",
+      "options": {
+        "host": { "type": "string", "default": "127.0.0.1" },
+        "port": { "type": "int", "default": 6510 }
+      }
+    },
+    {
+      "name": "vice-step",
+      "label": "Step VICE",
+      "description": "Esegue una singola istruzione in VICE",
+      "args": []
+    },
+    {
+      "name": "vice-reset",
+      "label": "Reset VICE",
+      "description": "Resetta VICE",
+      "args": []
+    },
+    {
+      "name": "vice-memory",
+      "label": "Memoria VICE",
+      "description": "Legge memoria da VICE",
+      "args": ["address"],
+      "options": {
+        "size": { "type": "int", "default": 256 }
+      }
+    },
+    {
+      "name": "vice-registers",
+      "label": "Registri VICE",
+      "description": "Mostra registri CPU da VICE",
+      "args": []
+    },
+    {
+      "name": "vice-info",
+      "label": "Info VICE",
+      "description": "Mostra informazioni su VICE (versione, stato)",
+      "args": []
+    },
+    {
+      "name": "vice-upload",
+      "label": "Upload PRG",
+      "description": "Carica un PRG in VICE via monitor remoto",
+      "args": ["prg_path"],
+      "options": {
+        "address": { "type": "string", "default": "0x0801", "description": "Indirizzo di caricamento" }
       }
     }
   ]

@@ -1,0 +1,85 @@
+{
+  "name": "debugger",
+  "version": "1.0.0",
+  "description": "C64 Debugger — debugging remoto tramite VICE monitor, breakpoint, watchpoint, crash analysis",
+  "category": "debug",
+  "icon": "🐛",
+  "entry_point": "plugins/debugger/wrapper.py",
+  "commands": [
+    {
+      "name": "attach",
+      "label": "Connetti a VICE",
+      "description": "Si connette al monitor remoto di VICE (x64sc)",
+      "options": {
+        "host": { "type": "string", "default": "127.0.0.1" },
+        "port": { "type": "int", "default": 6510 }
+      }
+    },
+    {
+      "name": "run",
+      "label": "Esegui PRG",
+      "description": "Avvia VICE headless con un PRG e si connette al monitor",
+      "args": ["prg_path"],
+      "options": {
+        "timeout": { "type": "int", "default": 30 }
+      }
+    },
+    {
+      "name": "step",
+      "label": "Step Into",
+      "description": "Esegue una singola istruzione 6502",
+      "args": []
+    },
+    {
+      "name": "continue",
+      "label": "Continua",
+      "description": "Riprende l'esecuzione fino al prossimo breakpoint",
+      "args": []
+    },
+    {
+      "name": "breakpoint",
+      "label": "Breakpoint",
+      "description": "Imposta o rimuove un breakpoint",
+      "args": ["address"],
+      "options": {
+        "remove": { "type": "flag", "description": "Rimuovi invece di aggiungere" }
+      }
+    },
+    {
+      "name": "registers",
+      "label": "Registri",
+      "description": "Mostra lo stato dei registri CPU 6502",
+      "args": []
+    },
+    {
+      "name": "memory",
+      "label": "Memoria",
+      "description": "Legge una porzione di memoria",
+      "args": ["address"],
+      "options": {
+        "size": { "type": "int", "default": 256, "description": "Byte da leggere" }
+      }
+    },
+    {
+      "name": "crash-analyze",
+      "label": "Analisi crash",
+      "description": "Analizza un crash dump e diagnostica stack overflow/underflow o loop infiniti",
+      "args": ["dump_path"]
+    },
+    {
+      "name": "disassemble",
+      "label": "Disassembla",
+      "description": "Disassembla un range di memoria",
+      "args": ["address"],
+      "options": {
+        "size": { "type": "int", "default": 256 }
+      }
+    },
+    {
+      "name": "reset",
+      "label": "Reset",
+      "description": "Resetta l'emulatore",
+      "args": []
+    }
+  ]
+}

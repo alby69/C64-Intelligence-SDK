@@ -163,6 +163,8 @@
 | BASIC Minifier/Prettifier | `editor/readycode_py/transform.py` | Complete |
 | D64/D81 Disk Images | `editor/readycode_py/diskimage.py` | Complete |
 | PETSCII Converter | `editor/readycode_py/petscii.py` | Complete |
+| VICE Remote Monitor Bridge | `editor/readycode_py/vice_client.py` | Complete |
+| C64 Ultimate REST/FTP Client | `editor/readycode_py/ultimate_client.py` | Complete |
 | CLI Wrapper | `run_c64.py` | Complete |
 | Project Manager | `pyc64_project.py` | Complete |
 | FastAPI Core Service | `services/core_service/main.py` | Complete |
@@ -184,17 +186,32 @@
 | Plugin System Tests | `test_plugin_system.py` | Complete |
 | Docker Build | `Dockerfile` + `docker-compose.yml` | Complete |
 
+## Plugins (10 total)
+
+| Plugin | Version | Category | Commands | Source Submodule |
+|---|---|---|---|---|
+| compiler | 1.0.0 | build | compile, basic | tools/ |
+| editor | 1.0.0 | edit | tokenize, detokenize, minify, prettify | editor/ (via run_c64.py) |
+| disk-tools | 2.0.0 | tools | list, inject, extract, create, format, prg-to-disk, petscii-convert | editor/ (diskimage.py + petscii.py) |
+| emulator | 2.0.0 | run | run, vice-run, vice-attach, vice-step, vice-reset, vice-memory, vice-registers, vice-info, vice-upload | editor/ (vice_client.py) |
+| project-manager | 1.0.0 | project | load, build | tools/ (pyc64_project.py) |
+| ai-agent | 1.0.0 | ai | generate, explain, optimize, debug, status, search, distill, train | core/ (C64CodingAgent + FAISS RAG) |
+| debugger | 1.0.0 | debug | attach, run, step, continue, breakpoint, registers, memory, crash-analyze, disassemble, reset | debugger/ (vice_bridge.py + debugger_core.py) |
+| knowledge | 1.0.0 | docs | search, docs, status, list-api, list-files | kb-agent/ (FAISS + SQLite FTS5) |
+| tutorial | 1.0.0 | docs | list, show, example, template, search, references | tutorial/ (27 capitoli + 28 soluzioni) |
+| geckos | 1.0.0 | os | build, deploy, run, status | geckos/ (GeckOS-NG build system) |
+
 ---
 
 ## Submodules
 
-| Submodule | Path | Description |
-|---|---|---|
-| core | `core/` | C64PY compiler core |
-| tools | `tools/` | Utility tools |
-| tutorial | `tutorial/` | C64PY tutorial/examples |
-| scraper | `scraper/` | Web scraper module |
-| kb-agent | `kb-agent/` | Knowledge base agent |
-| debugger | `debugger/` | C64 debugger |
-| geckos | `geckos/` | GeckOS microkernel |
-| editor | `editor/` | READYCode (Python) |
+| Submodule | Path | Description | Plugin |
+|---|---|---|---|
+| core | `core/` | C64 AI Coding Agent (multi-agente + RAG + FAISS) | ✅ ai-agent |
+| tools | `tools/` | PYC64 compiler, assembler, TUI, CLI | ✅ compiler, emulator, project-manager |
+| tutorial | `tutorial/` | C64 Game Tutorial (27 capitoli, 28 soluzioni, template) | ✅ tutorial |
+| scraper | `scraper/` | Web scraper per documentazione C64 | ⚠️ Indiretto (alimenta kb-agent) |
+| kb-agent | `kb-agent/` | Knowledge Base (FAISS + SQLite FTS5) | ✅ knowledge |
+| debugger | `debugger/` | VICE remote monitor bridge + debugger core | ✅ debugger |
+| geckos | `geckos/` | GeckOS-NG multitasking OS 6502 | ✅ geckos |
+| editor | `editor/` | READYCode-Py (tokenizer, diskimage, PETSCII, VICE/Ultimate clients) | ✅ disk-tools, emulator, editor |

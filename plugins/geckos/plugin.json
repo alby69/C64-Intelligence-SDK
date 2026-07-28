@@ -1,0 +1,44 @@
+{
+  "name": "geckos",
+  "version": "1.0.0",
+  "description": "GeckOS-NG — sistema operativo multitasking per C64 con processi, semafori e filesystem ROM",
+  "category": "os",
+  "icon": "🖥️",
+  "entry_point": "plugins/geckos/wrapper.py",
+  "commands": [
+    {
+      "name": "build",
+      "label": "Compila OS",
+      "description": "Compila il kernel GeckOS-NG e le applicazioni",
+      "args": [],
+      "options": {
+        "clean": { "type": "flag", "description": "Pulisci prima di buildare" },
+        "target": { "type": "choice", "choices": ["all", "kernel", "apps", "sysapps"], "default": "all" }
+      }
+    },
+    {
+      "name": "deploy",
+      "label": "Deploy disco",
+      "description": "Crea un'immagine disco D64 con GeckOS e applicazioni",
+      "args": ["output_path"],
+      "options": {
+        "format": { "type": "choice", "choices": ["d64"], "default": "d64" }
+      }
+    },
+    {
+      "name": "run",
+      "label": "Esegui",
+      "description": "Avvia l'emulatore con GeckOS",
+      "args": [],
+      "options": {
+        "disk": { "type": "string", "description": "Percorso immagine disco" }
+      }
+    },
+    {
+      "name": "status",
+      "label": "Stato",
+      "description": "Mostra lo stato della build GeckOS",
+      "args": []
+    }
+  ]
+}

@@ -1,0 +1,52 @@
+{
+  "name": "knowledge",
+  "version": "1.0.0",
+  "description": "C64 Knowledge Base — ricerca full-text nella documentazione C64, consultazione API e dataset",
+  "category": "docs",
+  "icon": "📚",
+  "entry_point": "plugins/knowledge/wrapper.py",
+  "commands": [
+    {
+      "name": "search",
+      "label": "Cerca",
+      "description": "Cerca nella Knowledge Base documentazione su un argomento",
+      "args": ["query"],
+      "options": {
+        "max_results": { "type": "int", "default": 10 }
+      }
+    },
+    {
+      "name": "docs",
+      "label": "Documentazione",
+      "description": "Mostra documentazione strutturata su un topic C64 specifico",
+      "args": ["topic"],
+      "options": {
+        "source": { "type": "choice", "choices": ["kb-agent", "tutorial", "all"], "default": "all" }
+      }
+    },
+    {
+      "name": "status",
+      "label": "Stato KB",
+      "description": "Statistiche della Knowledge Base (documenti, dataset, indici)",
+      "args": []
+    },
+    {
+      "name": "list-api",
+      "label": "API Index",
+      "description": "Elenco API C64 indicizzate (KERNAL, BASIC, VIC-II, SID, CIA)",
+      "args": [],
+      "options": {
+        "filter": { "type": "string", "description": "Filtra per nome API" }
+      }
+    },
+    {
+      "name": "list-files",
+      "label": "Elenco file",
+      "description": "Elenco file nella Knowledge Base",
+      "args": [],
+      "options": {
+        "dir": { "type": "choice", "choices": ["docs", "dataset"], "default": "docs" }
+      }
+    }
+  ]
+}

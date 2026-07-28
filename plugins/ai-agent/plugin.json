@@ -1,0 +1,72 @@
+{
+  "name": "ai-agent",
+  "version": "1.0.0",
+  "description": "C64 AI Coding Agent — genera, spiega, debugga e ottimizza codice 6502/BASIC tramite LLM locale (RAG + FAISS)",
+  "category": "ai",
+  "icon": "🤖",
+  "entry_point": "plugins/ai-agent/wrapper.py",
+  "commands": [
+    {
+      "name": "generate",
+      "label": "Genera codice",
+      "description": "Genera codice C64 (BASIC o Assembly) da prompt in linguaggio naturale",
+      "args": ["prompt"],
+      "options": {
+        "mode": { "type": "choice", "choices": ["rag", "direct"], "default": "rag" },
+        "output": { "type": "string", "description": "File output (.asm/.bas/.c64)" }
+      }
+    },
+    {
+      "name": "explain",
+      "label": "Spiega codice",
+      "description": "Analizza e spiega codice BASIC o Assembly 6502",
+      "args": ["input"],
+      "options": {
+        "detail": { "type": "choice", "choices": ["brief", "full"], "default": "full" }
+      }
+    },
+    {
+      "name": "optimize",
+      "label": "Ottimizza",
+      "description": "Suggerisce ottimizzazioni per velocità o dimensione",
+      "args": ["input"]
+    },
+    {
+      "name": "debug",
+      "label": "Debug AI",
+      "description": "Analizza errore o crash dump e propone correzioni",
+      "args": ["input"],
+      "options": {
+        "crash": { "type": "string", "description": "File crash dump (.txt)" }
+      }
+    },
+    {
+      "name": "status",
+      "label": "Stato KB",
+      "description": "Stato della Knowledge Base (file, vector store, dataset)",
+      "args": []
+    },
+    {
+      "name": "search",
+      "label": "Cerca nella KB",
+      "description": "Cerca documentazione nella Knowledge Base",
+      "args": ["query"]
+    },
+    {
+      "name": "distill",
+      "label": "Distilla dataset",
+      "description": "Genera dataset di training da documenti caricati",
+      "args": [],
+      "options": {
+        "backend": { "type": "choice", "choices": ["opencode", "groq", "ollama"], "default": "opencode" },
+        "max_chunks": { "type": "int", "default": 50 }
+      }
+    },
+    {
+      "name": "train",
+      "label": "Training LoRA",
+      "description": "Esegue training LoRA su modello base dal dataset distillato",
+      "args": ["dataset_path", "output_dir"]
+    }
+  ]
+}
