@@ -187,6 +187,105 @@ def hex_dump(prg_data):
     return '\n'.join(lines)
 
 
+# ── Editor (READYCode) wrappers ──
+
+def cmd_editor_tokenize(args):
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'editor'))
+    from readycode_py.tokenizer import PrgConverter
+    source = read_source(args.input)
+    converter = PrgConverter()
+    prg = converter.convert_to_prg(source)
+    with open(args.output, 'wb') as f:
+        f.write(prg)
+    print(f"[OK] {args.input} → {args.output} ({len(prg)} byte, load $0801)")
+
+
+def cmd_editor_detokenize(args):
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'editor'))
+    from readycode_py.tokenizer import PrgConverter
+    with open(args.input, 'rb') as f:
+        data = f.read()
+    converter = PrgConverter()
+    basic = converter.convert_from_prg(data)
+    with open(args.output, 'w', encoding='utf-8') as f:
+        f.write(basic)
+    print(f"[OK] {args.input} → {args.output}")
+
+
+def cmd_editor_disk(args):
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'editor'))
+    from readycode_py.diskimage import DiskImage, DiskGeometry, C64UFileKind
+
+    fmt = 'd81' if args.image.lower().endswith('.d81') else 'd64'
+    geo = DiskGeometry.D64 if fmt == 'd64' else DiskGeometry.D81
+    img = DiskImage(geo)
+
+    with open(args.image, 'rb') as f:
+        data = f.read()
+
+    if args.action == 'list':
+        entries = img.read_directory(data)
+        if not entries:
+            print('(empty disk)')
+        else:
+            for e in entries:
+                kind_tag = {'Prg': 'PRG', 'Ml': 'PRG/ML'}.get(e.kind.name, e.kind.name)
+                print(f'{e.name:<18} {kind_tag:<7} {len(e.content):>6} byte')
+        print(f'\n{len(entries)} file(s)')
+
+    elif args.action == 'extract':
+        entries = img.read_directory(data)
+        target = args.name.upper()
+        for e in entries:
+            if e.name == target:
+                out = args.output or f'{e.name}.prg'
+                with open(out, 'wb') as f:
+                    f.write(e.content)
+                print(f'[OK] {args.image}:{e.name} → {out} ({len(e.content)} byte)')
+                return
+        print(f"[ERR] '{args.name}' not found on {args.image}", file=sys.stderr)
+        sys.exit(1)
+
+    elif args.action == 'inject':
+        with open(args.name, 'rb') as f:
+            content = f.read()
+        prog_name = os.path.splitext(os.path.basename(args.name))[0]
+        new_data = img.add_entry(data, prog_name, C64UFileKind.Prg, content)
+        with open(args.image, 'wb') as f:
+            f.write(new_data)
+        print(f'[OK] {args.name} → {args.image}:{prog_name}')
+
+    elif args.action == 'create':
+        disk_fmt = args.format or 'd64'
+        geo_c = DiskGeometry.D64 if disk_fmt == 'd64' else DiskGeometry.D81
+        img_c = DiskImage(geo_c)
+        blank = img_c.create_blank_image(args.name or 'UNTITLED')
+        out = args.output or f'untitled.{disk_fmt}'
+        with open(out, 'wb') as f:
+            f.write(blank)
+        print(f'[OK] Created {disk_fmt.upper()}: {out} ({len(blank)} byte)')
+
+
+def cmd_editor_minify(args):
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'editor'))
+    from readycode_py.transform import CodeMinifier
+    source = read_source(args.input)
+    result = CodeMinifier.minify(source, True, True, True, True, True, True)
+    with open(args.output, 'w', encoding='utf-8') as f:
+        f.write(result)
+    print(f'[OK] {args.input} → {args.output} ({len(source)} → {len(result)} chars)')
+
+
+def cmd_editor_prettify(args):
+    sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), 'editor'))
+    from readycode_py.transform import CodePrettifier
+    source = read_source(args.input)
+    result = CodePrettifier.prettify(source, True, True, True, True, True)
+    with open(args.output, 'w', encoding='utf-8') as f:
+        f.write(result)
+    print(f'[OK] {args.input} → {args.output}')
+
+
 def main():
     parser = argparse.ArgumentParser(description='PYC64 — C64PY Compiler & Emulator')
     sub = parser.add_subparsers(dest='command')
@@ -204,8 +303,40 @@ def main():
     p_run.add_argument('--resid', action='store_true', help='Abilita reSID')
     p_run.add_argument('--timeout', type=int, default=30, help='Timeout secondi (default 30)')
 
+    # ── Editor / READYCode commands ──
+
+    p_tokenize = sub.add_parser('tokenize', help='Tokenizza BASIC → .prg')
+    p_tokenize.add_argument('input', help='File BASIC sorgente (.bas)')
+    p_tokenize.add_argument('-o', '--output', required=True, help='File .prg output')
+    p_tokenize.set_defaults(func=cmd_editor_tokenize)
+
+    p_detokenize = sub.add_parser('detokenize', help='Detokenizza .prg → BASIC')
+    p_detokenize.add_argument('input', help='File .prg tokenizzato')
+    p_detokenize.add_argument('-o', '--output', required=True, help='File .bas output')
+    p_detokenize.set_defaults(func=cmd_editor_detokenize)
+
+    p_disk = sub.add_parser('disk', help='Operazioni su immagini disco (.d64/.d81)')
+    p_disk.add_argument('action', choices=['list', 'extract', 'inject', 'create'])
+    p_disk.add_argument('image', help='File immagine disco')
+    p_disk.add_argument('name', nargs='?', help='Nome file su disco / etichetta')
+    p_disk.add_argument('-o', '--output', help='File output')
+    p_disk.add_argument('--format', choices=['d64', 'd81'], help='Formato disco (per create)')
+    p_disk.set_defaults(func=cmd_editor_disk)
+
+    p_minify = sub.add_parser('minify', help='Minifica codice BASIC')
+    p_minify.add_argument('input', help='File BASIC sorgente')
+    p_minify.add_argument('-o', '--output', required=True, help='File output')
+    p_minify.set_defaults(func=cmd_editor_minify)
+
+    p_prettify = sub.add_parser('prettify', help='Formatta codice BASIC')
+    p_prettify.add_argument('input', help='File BASIC sorgente')
+    p_prettify.add_argument('-o', '--output', required=True, help='File output')
+    p_prettify.set_defaults(func=cmd_editor_prettify)
+
     args = parser.parse_args()
-    if args.command == 'basic':
+    if hasattr(args, 'func'):
+        args.func(args)
+    elif args.command == 'basic':
         cmd_basic(args)
     elif args.command == 'compile':
         cmd_compile(args)

@@ -16,3 +16,6 @@ dependencies = [
 test = [
     "pytest>=7.0.0"
 ]
+
+[project.scripts]
+readycode = "readycode_py.cli:main"
