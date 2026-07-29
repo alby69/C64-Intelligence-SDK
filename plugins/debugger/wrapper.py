@@ -62,7 +62,8 @@ def cmd_run(args):
         if bridge.start_vice_headless(prg_path, limit_cycles=timeout * 1000000):
             print(f"[OK] VICE avviato con {prg_path}")
             time.sleep(2)
-            if bridge.connect():
+            ok, msg = bridge.connect()
+            if ok:
                 print("[OK] Connesso al monitor VICE")
                 global _connection
                 from c64debugger.debugger_core import C64DebuggerCore
@@ -70,7 +71,7 @@ def cmd_run(args):
                 _connection = (bridge, C64DebuggerCore())
                 print(f"[C64] Esecuzione di {os.path.basename(prg_path)}")
             else:
-                print("[ERROR] Connessione al monitor VICE fallita")
+                print(f"[ERROR] Connessione al monitor VICE fallita: {msg}")
                 return 1
         else:
             print("[ERROR] Avvio VICE fallito")

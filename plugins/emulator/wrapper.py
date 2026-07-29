@@ -157,8 +157,12 @@ def ensure_vice():
         bridge = _get_vice_bridge()
         if bridge:
             try:
-                bridge.connect()
-                _vice = bridge
+                ok, msg = bridge.connect()
+                if ok:
+                    _vice = bridge
+                else:
+                    print(f"[ERROR] Connessione a VICE fallita: {msg}")
+                    return None
             except Exception as e:
                 print(f"[ERROR] Connessione a VICE fallita: {e}")
                 return None
