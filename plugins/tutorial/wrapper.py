@@ -7,6 +7,8 @@ import glob as pyglob
 
 SDK_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 TUTORIAL_DIR = os.path.join(SDK_ROOT, "tutorial")
+CHAPTER_DIR_IT = os.path.join(TUTORIAL_DIR, "docs", "it")
+CHAPTER_DIR_EN = os.path.join(TUTORIAL_DIR, "docs", "en")
 
 PARTS = {
     1: (1, 3, "Fondamenti di 6502 e Turbo Macro Pro"),
@@ -15,42 +17,76 @@ PARTS = {
     4: (9, 13, "Gameplay (joystick, collisioni, pool, wave, stati)"),
     5: (14, 15, "Audio SID"),
     6: (16, 18, "Tecniche avanzate (multiplex, parallax, boss)"),
-    7: (19, 21, "Architettura professionale (kernel 3-layer, Arcade OS, custom loader)"),
-    8: (22, 24, "Strumenti e rifiniture (debugging VICE, titolo/high score, scrolling)"),
+    7: (
+        19,
+        21,
+        "Architettura professionale (kernel 3-layer, Arcade OS, custom loader)",
+    ),
+    8: (
+        22,
+        24,
+        "Strumenti e rifiniture (debugging VICE, titolo/high score, scrolling)",
+    ),
     9: (25, 27, "Hardware avanzato (turbo loader, REU, music tracker)"),
 }
 
 # File naming in tutorial/md/: "XX-titolo.md" (IT) / tutorial/en/: "XX-title.md" (EN)
 CHAPTER_FILES_IT = [
-    "01-introduzione-c64-tmp", "02-istruzioni-fondamentali",
-    "03-indirizzamento-cicli-ritardi", "04-memoria-video-e-caratteri",
-    "05-sprite-hardware-vic-ii", "06-movimento-e-controllo-sprite",
-    "07-raster-interrupt", "08-game-loop-sincronizzato",
-    "09-joystick-e-input", "10-collisioni-software",
-    "11-sistema-proiettili", "12-wave-system-e-ai-nemici",
-    "13-punteggio-e-stati-gioco", "14-audio-sid-base",
-    "15-audio-engine-e-sfx", "16-multiplex-degli-sprite",
-    "17-effetto-parallasse", "18-boss-fight",
-    "19-architettura-3-layer", "20-arcade-os",
-    "21-custom-loader", "22-debugging-con-vice",
-    "23-titolo-e-highscore", "24-scrolling-avanzato",
-    "25-turbo-loader", "26-ram-expansion-unit-reu",
+    "01-introduzione-c64-tmp",
+    "02-istruzioni-fondamentali",
+    "03-indirizzamento-cicli-ritardi",
+    "04-memoria-video-e-caratteri",
+    "05-sprite-hardware-vic-ii",
+    "06-movimento-e-controllo-sprite",
+    "07-raster-interrupt",
+    "08-game-loop-sincronizzato",
+    "09-joystick-e-input",
+    "10-collisioni-software",
+    "11-sistema-proiettili",
+    "12-wave-system-e-ai-nemici",
+    "13-punteggio-e-stati-gioco",
+    "14-audio-sid-base",
+    "15-audio-engine-e-sfx",
+    "16-multiplex-degli-sprite",
+    "17-effetto-parallasse",
+    "18-boss-fight",
+    "19-architettura-3-layer",
+    "20-arcade-os",
+    "21-custom-loader",
+    "22-debugging-con-vice",
+    "23-titolo-e-highscore",
+    "24-scrolling-avanzato",
+    "25-turbo-loader",
+    "26-ram-expansion-unit-reu",
     "27-music-tracker",
 ]
 CHAPTER_FILES_EN = [
-    "01-introduction-c64-tmp", "02-fundamental-instructions",
-    "03-addressing-loops-delays", "04-video-memory-and-characters",
-    "05-sprite-hardware-vic-ii", "06-sprite-movement-and-control",
-    "07-raster-interrupt", "08-synchronized-game-loop",
-    "09-joystick-and-input", "10-software-collisions",
-    "11-projectile-system", "12-wave-system-and-ai-enemies",
-    "13-score-and-game-states", "14-audio-sid-basics",
-    "15-audio-engine-and-sfx", "16-sprite-multiplex",
-    "17-parallax-effect", "18-boss-fight",
-    "19-three-layer-architecture", "20-arcade-os",
-    "21-custom-loader", "22-debugging-with-vice",
-    "23-title-and-highscore", "24-advanced-scrolling",
-    "25-turbo-loader", "26-reu-ram-expansion-unit",
+    "01-c64-tmp-introduction",
+    "02-fundamental-instructions",
+    "03-addressing-loops-delays",
+    "04-video-memory-and-characters",
+    "05-sprite-hardware-vic-ii",
+    "06-sprite-movement-and-control",
+    "07-raster-interrupt",
+    "08-synchronized-game-loop",
+    "09-joystick-and-input",
+    "10-software-collisions",
+    "11-projectile-system",
+    "12-wave-system-and-ai-enemies",
+    "13-score-and-game-states",
+    "14-audio-sid-basics",
+    "15-audio-engine-and-sfx",
+    "16-sprite-multiplex",
+    "17-parallax-effect",
+    "18-boss-fight",
+    "19-three-layer-architecture",
+    "20-arcade-os",
+    "21-custom-loader",
+    "22-debugging-with-vice",
+    "23-title-and-highscore",
+    "24-advanced-scrolling",
+    "25-turbo-loader",
+    "26-reu-ram-expansion-unit",
     "27-music-tracker",
 ]
 
@@ -110,10 +146,10 @@ def cmd_list(args):
 
             it_file = None
             if idx < len(CHAPTER_FILES_IT):
-                it_file = os.path.join(TUTORIAL_DIR, "md", f"{CHAPTER_FILES_IT[idx]}.md")
+                it_file = os.path.join(CHAPTER_DIR_IT, f"{CHAPTER_FILES_IT[idx]}.md")
             en_file = None
             if idx < len(CHAPTER_FILES_EN):
-                en_file = os.path.join(TUTORIAL_DIR, "en", f"{CHAPTER_FILES_EN[idx]}.md")
+                en_file = os.path.join(CHAPTER_DIR_EN, f"{CHAPTER_FILES_EN[idx]}.md")
 
             found = None
             lang_tag = ""
@@ -132,7 +168,9 @@ def cmd_list(args):
                 print(f"[C64]   Cap {ch:02d}: {name} (file non trovato)")
 
     # Reference tables
-    print("\n[C64] Appendici: A (Tabelle), B (Glossario), C-F (Schemi rapidi), G (Risorse), TMP (Guida TMP)")
+    print(
+        "\n[C64] Appendici: A (Tabelle), B (Glossario), C-F (Schemi rapidi), G (Risorse), TMP (Guida TMP)"
+    )
     print(f"[BASIC] Soluzioni: in tutorial/soluzioni/")
     print(f"[BASIC] Template gioco: in tutorial/game/")
 
@@ -161,20 +199,21 @@ def cmd_show(args):
 
     # Find by number or by partial name
     filepath = None
+    chapter_dir = CHAPTER_DIR_EN if lang == "en" else CHAPTER_DIR_IT
     if chapter_clean.isdigit():
         idx = int(chapter_clean) - 1
         if 0 <= idx < len(chapter_list):
-            lang_dir = "en" if lang == "en" else "md"
-            candidate = os.path.join(TUTORIAL_DIR, lang_dir, f"{chapter_list[idx]}.md")
+            candidate = os.path.join(chapter_dir, f"{chapter_list[idx]}.md")
             if os.path.isfile(candidate):
                 filepath = candidate
     else:
         # Try to match partial name
-        lang_dir = "en" if lang == "en" else "md"
-        full_dir = os.path.join(TUTORIAL_DIR, lang_dir)
+        full_dir = chapter_dir
         if os.path.isdir(full_dir):
             for f in os.listdir(full_dir):
-                if f.endswith(".md") and (chapter.lower() in f.lower() or chapter_clean in f):
+                if f.endswith(".md") and (
+                    chapter.lower() in f.lower() or chapter_clean in f
+                ):
                     filepath = os.path.join(full_dir, f)
                     break
 
@@ -281,6 +320,7 @@ def cmd_template(args):
         return 1
 
     import shutil
+
     os.makedirs(output_dir, exist_ok=True)
     for item in os.listdir(game_dir):
         src = os.path.join(game_dir, item)
@@ -311,13 +351,12 @@ def cmd_search(args):
     query = " ".join(args).lower()
 
     results = []
-    for lang_dir in ["md", "en"]:
-        full = os.path.join(TUTORIAL_DIR, lang_dir)
-        if not os.path.isdir(full):
+    for chapter_dir in [CHAPTER_DIR_IT, CHAPTER_DIR_EN]:
+        if not os.path.isdir(chapter_dir):
             continue
-        for f in sorted(os.listdir(full)):
+        for f in sorted(os.listdir(chapter_dir)):
             if f.endswith(".md"):
-                fp = os.path.join(full, f)
+                fp = os.path.join(chapter_dir, f)
                 with open(fp, errors="replace") as fh:
                     content = fh.read()
                 if query in content.lower():
@@ -336,7 +375,9 @@ def cmd_search(args):
                 with open(fp, errors="replace") as fh:
                     content = fh.read()
                 if query in content.lower():
-                    matching = [l.strip() for l in content.split("\n") if query in l.lower()]
+                    matching = [
+                        l.strip() for l in content.split("\n") if query in l.lower()
+                    ]
                     results.append((fp, f, len(content), matching[:3]))
 
     if results:
@@ -371,13 +412,15 @@ def cmd_references(args):
 
     if appendix:
         if appendix not in appendices:
-            print(f"[ERROR] Appendice '{appendix}' non trovata. Disponibili: {', '.join(appendices.keys())}")
+            print(
+                f"[ERROR] Appendice '{appendix}' non trovata. Disponibili: {', '.join(appendices.keys())}"
+            )
             return 1
         print(f"[OK] Appendice {appendix}: {appendices[appendix]}")
         # Try to find the appendix file
-        pattern = os.path.join(TUTORIAL_DIR, "md", f"appendix-{appendix.lower()}.md")
+        pattern = os.path.join(CHAPTER_DIR_IT, f"appendix-{appendix.lower()}.md")
         if not os.path.isfile(pattern):
-            pattern = os.path.join(TUTORIAL_DIR, "md", f"appendice-{appendix.lower()}.md")
+            pattern = os.path.join(CHAPTER_DIR_IT, f"appendice-{appendix.lower()}.md")
         if os.path.isfile(pattern):
             with open(pattern) as f:
                 content = f.read()

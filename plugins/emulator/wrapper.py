@@ -1,14 +1,31 @@
 #!/usr/bin/env python3
 """Wrapper: emulator plugin -> c64py + VICE monitor via editor/readycode_py/vice_client.py."""
 
+import json
 import os
+import subprocess
 import sys
 import time
+from pathlib import Path
 
 SDK_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.join(SDK_ROOT, "editor"))
 
 _vice = None
+
+
+def _get_vice_path() -> str:
+    """Read VICE path from user settings (set via UI preferences)."""
+    settings_file = Path(SDK_ROOT) / "config" / "settings.json"
+    if settings_file.exists():
+        try:
+            data = json.loads(settings_file.read_text())
+            path = data.get("VICE_path")
+            if path and os.path.isfile(path):
+                return path
+        except (json.JSONDecodeError, OSError):
+            pass
+    return "x64sc"
 
 
 def cmd_run(args):
@@ -26,9 +43,12 @@ def cmd_run(args):
             timeout = int(args[i + 1])
 
     print(f"[OK] Avvio c64py: {os.path.basename(input_path)}")
-    print(f"[C64] SID={'on' if sid else 'off'} reSID={'on' if resid else 'off'} timeout={timeout}s")
+    print(
+        f"[C64] SID={'on' if sid else 'off'} reSID={'on' if resid else 'off'} timeout={timeout}s"
+    )
 
     import subprocess
+
     cmd = [sys.executable, os.path.join(SDK_ROOT, "run_c64.py"), "run", input_path]
     if sid:
         cmd.append("--sid")
@@ -73,6 +93,7 @@ def cmd_vice_run(args):
 
     try:
         from readycode_py.vice_client import ViceClient
+
         client = ViceClient()
         print(f"[OK] Avvio VICE con {os.path.basename(prg_path)}")
         info = client.run_prg(prg_path, headless=headless, limit_cycles=limit_cycles)
@@ -83,15 +104,17 @@ def cmd_vice_run(args):
     except ImportError:
         print("[ERROR] ViceClient non disponibile (pip install -e editor)")
         print("[C64] Fallback: avvio VICE manuale")
-        import subprocess
-        cmd = ["x64sc", "-monitorport", "6510", prg_path]
+        vice_exe = _get_vice_path()
+        cmd = [vice_exe, "-monitorport", "6510", prg_path]
         if headless:
             cmd.insert(1, "-headless")
         try:
             subprocess.Popen(cmd)
             print(f"[OK] VICE avviato: {' '.join(cmd)}")
         except FileNotFoundError:
-            print("[ERROR] VICE (x64sc) non trovato")
+            print(
+                f"[ERROR] VICE ({vice_exe}) non trovato — verifica il percorso nelle impostazioni"
+            )
             return 1
     return 0
 
@@ -107,6 +130,7 @@ def cmd_vice_attach(args):
 
     try:
         from readycode_py.vice_client import ViceClient
+
         global _vice
         _vice = ViceClient()
         _vice.connect(host, port)
@@ -125,6 +149,7 @@ def ensure_vice():
     if _vice is None:
         try:
             from readycode_py.vice_client import ViceClient
+
             _vice = ViceClient()
             _vice.connect("127.0.0.1", 6510)
         except ImportError:
@@ -183,7 +208,7 @@ def cmd_vice_memory(args):
         if data:
             print(f"[OK] Memoria da ${addr_int:04X} ({size} byte):")
             for offset in range(0, len(data), 16):
-                chunk = data[offset:offset + 16]
+                chunk = data[offset : offset + 16]
                 hex_part = " ".join(f"{b:02x}" for b in chunk)
                 ascii_part = "".join(chr(b) if 32 <= b < 127 else "." for b in chunk)
                 print(f"  ${addr_int + offset:04X}: {hex_part:48s}  {ascii_part}")
@@ -201,7 +226,13 @@ def cmd_vice_registers(args):
         if regs:
             print("[OK] Registri CPU 6502 (da VICE):")
             for k, v in regs.items():
-                print(f"  {k:4s} = ${v:04X}" if isinstance(v, int) and v > 0xFF else f"  {k:4s} = ${v:02X}" if isinstance(v, int) else f"  {k:4s} = {v}")
+                print(
+                    f"  {k:4s} = ${v:04X}"
+                    if isinstance(v, int) and v > 0xFF
+                    else f"  {k:4s} = ${v:02X}"
+                    if isinstance(v, int)
+                    else f"  {k:4s} = {v}"
+                )
     except Exception as e:
         print(f"[ERROR] Lettura registri: {e}")
     return 0
@@ -215,7 +246,7 @@ def cmd_vice_info(args):
         info = client.get_info()
         if info:
             print("[OK] Informazioni VICE:")
-            if hasattr(info, 'version'):
+            if hasattr(info, "version"):
                 print(f"[OK] Versione: {info.version}")
             else:
                 for k, v in info.items():
@@ -260,7 +291,9 @@ def cmd_vice_upload(args):
 
 def main():
     if len(sys.argv) < 2:
-        print("[ERROR] Comando richiesto: run|vice-run|vice-attach|vice-step|vice-reset|vice-memory|vice-registers|vice-info|vice-upload")
+        print(
+            "[ERROR] Comando richiesto: run|vice-run|vice-attach|vice-step|vice-reset|vice-memory|vice-registers|vice-info|vice-upload"
+        )
         return 1
 
     command = sys.argv[1]

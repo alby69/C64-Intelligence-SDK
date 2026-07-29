@@ -31,12 +31,24 @@ export async function loadPreferences(): Promise<UserPreferences> {
 }
 
 export async function savePreferences(prefs: UserPreferences): Promise<void> {
-  if (!isTauri()) return;
-  try {
-    const { invoke } = await import("@tauri-apps/api/tauri");
-    await invoke("save_preferences", { prefs });
-  } catch (e) {
-    console.error("Failed to save preferences:", e);
+  if (isTauri()) {
+    try {
+      const { invoke } = await import("@tauri-apps/api/tauri");
+      await invoke("save_preferences", { prefs });
+    } catch (e) {
+      console.error("Failed to save Tauri preferences:", e);
+    }
+  }
+  if (prefs.VICE_path) {
+    try {
+      await fetch("http://localhost:8000/api/v1/settings", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key: "VICE_path", value: prefs.VICE_path }),
+      });
+    } catch {
+      // backend non disponibile, silenzioso
+    }
   }
 }
 

@@ -23,17 +23,23 @@ logger = logging.getLogger("core-service")
 app = FastAPI(
     title="C64 Intelligence Core Service",
     description="Backend API and LSP for the C64 Intelligence Studio",
-    version="1.0.0"
+    version="1.0.0",
 )
 
 # Allow CORS for Vite dev server and Tauri
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:1420", "tauri://localhost", "https://tauri.localhost"],
+    allow_origins=[
+        "http://localhost:5173",
+        "http://localhost:1420",
+        "tauri://localhost",
+        "https://tauri.localhost",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 # REST Models
 class CompileRequest(BaseModel):
@@ -42,6 +48,7 @@ class CompileRequest(BaseModel):
     optimize: bool = True
     load_address: str = "0x0801"
 
+
 class CompileResponse(BaseModel):
     success: bool
     prg_base64: Optional[str] = None
@@ -49,16 +56,22 @@ class CompileResponse(BaseModel):
     size_bytes: int
     errors: List[str] = []
 
+
 @app.get("/")
 def read_root():
     return {"status": "running", "service": "C64 Intelligence Core Service"}
+
 
 @app.post("/api/v1/compile", response_model=CompileResponse)
 def compile_code(req: CompileRequest):
     try:
         # Parse load address
         try:
-            load_addr = int(req.load_address, 16) if req.load_address.startswith("0x") else int(req.load_address)
+            load_addr = (
+                int(req.load_address, 16)
+                if req.load_address.startswith("0x")
+                else int(req.load_address)
+            )
         except ValueError:
             load_addr = 0x0801
 
@@ -72,7 +85,7 @@ def compile_code(req: CompileRequest):
                 prg_base64=prg_b64,
                 load_address=load_addr,
                 size_bytes=len(prg_bytes),
-                errors=[]
+                errors=[],
             )
         else:
             errors_list = []
@@ -86,11 +99,12 @@ def compile_code(req: CompileRequest):
                 prg_base64=None,
                 load_address=load_addr,
                 size_bytes=0,
-                errors=errors_list
+                errors=errors_list,
             )
     except Exception as e:
         logger.exception("Compilation failed with exception")
         raise HTTPException(status_code=500, detail=str(e))
+
 
 # LSP WebSocket Endpoint
 @app.websocket("/ws/lsp")
@@ -105,7 +119,10 @@ async def websocket_lsp(websocket: WebSocket):
                 method = msg.get("method")
                 msg_id = msg.get("id")
 
-                if method == "textDocument/didChange" or method == "textDocument/didOpen":
+                if (
+                    method == "textDocument/didChange"
+                    or method == "textDocument/didOpen"
+                ):
                     params = msg.get("params", {})
                     text_document = params.get("textDocument", {})
                     uri = text_document.get("uri", "file:///src/main.c64")
@@ -123,47 +140,49 @@ async def websocket_lsp(websocket: WebSocket):
                         _, result = compile_to_prg(content)
                         if not result.success:
                             for err in result.lex_errors + result.parse_errors:
-                                line = err.get("line", 1) - 1  # 0-based index for Monaco/LSP
+                                line = (
+                                    err.get("line", 1) - 1
+                                )  # 0-based index for Monaco/LSP
                                 if line < 0:
                                     line = 0
-                                diagnostics.append({
-                                    "range": {
-                                        "start": {"line": line, "character": 0},
-                                        "end": {"line": line, "character": 80}
-                                    },
-                                    "severity": 1, # Error
-                                    "message": err.get("msg", "Syntax error")
-                                })
+                                diagnostics.append(
+                                    {
+                                        "range": {
+                                            "start": {"line": line, "character": 0},
+                                            "end": {"line": line, "character": 80},
+                                        },
+                                        "severity": 1,  # Error
+                                        "message": err.get("msg", "Syntax error"),
+                                    }
+                                )
 
                     # Publish diagnostics response
                     resp = {
                         "jsonrpc": "2.0",
                         "method": "textDocument/publishDiagnostics",
-                        "params": {
-                            "uri": uri,
-                            "diagnostics": diagnostics
-                        }
+                        "params": {"uri": uri, "diagnostics": diagnostics},
                     }
                     await websocket.send_text(json.dumps(resp))
 
                 elif msg_id is not None:
                     # Echo standard jsonrpc response
-                    resp = {
-                        "jsonrpc": "2.0",
-                        "id": msg_id,
-                        "result": "processed"
-                    }
+                    resp = {"jsonrpc": "2.0", "id": msg_id, "result": "processed"}
                     await websocket.send_text(json.dumps(resp))
             except json.JSONDecodeError:
-                await websocket.send_text(json.dumps({
-                    "jsonrpc": "2.0",
-                    "error": {"code": -32700, "message": "Parse error"},
-                    "id": None
-                }))
+                await websocket.send_text(
+                    json.dumps(
+                        {
+                            "jsonrpc": "2.0",
+                            "error": {"code": -32700, "message": "Parse error"},
+                            "id": None,
+                        }
+                    )
+                )
             except Exception as e:
                 logger.error(f"Error processing LSP message: {e}")
     except WebSocketDisconnect:
         logger.info("LSP WebSocket disconnected")
+
 
 # AI Copilot WebSocket Endpoint
 @app.websocket("/ws/ai-copilot")
@@ -186,8 +205,8 @@ async def websocket_ai_copilot(websocket: WebSocket):
                     tokens = [
                         "# Routine di output\n",
                         "def main() -> byte:\n",
-                        '    poke(53280, 0)\n',
-                        '    poke(53281, 0)\n',
+                        "    poke(53280, 0)\n",
+                        "    poke(53281, 0)\n",
                         '    print("HELLO WORLD!")\n',
                         "    return 0\n",
                     ]
@@ -196,7 +215,7 @@ async def websocket_ai_copilot(websocket: WebSocket):
                         "# Ciclo FOR con contatore\n",
                         "def main() -> byte:\n",
                         "    for i = 0 to 255\n",
-                        '        poke(1024 + i, i)\n',
+                        "        poke(1024 + i, i)\n",
                         "        poke(55296 + i, 1)\n",
                         "    next i\n",
                         "    return 0\n",
@@ -205,11 +224,11 @@ async def websocket_ai_copilot(websocket: WebSocket):
                     tokens = [
                         "# Cambio colori schermo\n",
                         "def main() -> byte:\n",
-                        '    poke(53280, 0)  # bordo nero\n',
-                        '    poke(53281, 0)  # sfondo nero\n',
-                        '    for i = 0 to 999\n',
-                        '        poke(1024 + i, 81)  # blocco pieno\n',
-                        '        poke(55296 + i, i mod 16)\n',
+                        "    poke(53280, 0)  # bordo nero\n",
+                        "    poke(53281, 0)  # sfondo nero\n",
+                        "    for i = 0 to 999\n",
+                        "        poke(1024 + i, 81)  # blocco pieno\n",
+                        "        poke(55296 + i, i mod 16)\n",
                         "    next i\n",
                         "    return 0\n",
                     ]
@@ -240,12 +259,12 @@ async def websocket_ai_copilot(websocket: WebSocket):
                     tokens = [
                         "# Suono SID\n",
                         "def main() -> byte:\n",
-                        '    poke(54296, 15)     # volume max\n',
-                        '    poke(54277, 9)      # attack/decay\n',
-                        '    poke(54278, 0)      # sustain/release\n',
-                        '    poke(54273, 17)     #频率高位\n',
-                        '    poke(54272, 37)     #频率低位\n',
-                        '    poke(54276, 33)     # accende voice 1\n',
+                        "    poke(54296, 15)     # volume max\n",
+                        "    poke(54277, 9)      # attack/decay\n",
+                        "    poke(54278, 0)      # sustain/release\n",
+                        "    poke(54273, 17)     #频率高位\n",
+                        "    poke(54272, 37)     #频率低位\n",
+                        "    poke(54276, 33)     # accende voice 1\n",
                         "    for i = 0 to 500\n",
                         "        pass\n",
                         "    next i\n",
@@ -257,33 +276,31 @@ async def websocket_ai_copilot(websocket: WebSocket):
                         "# Lettura disco\n",
                         "def main() -> byte:\n",
                         '    print("LOADING...")\n',
-                        '    poke(1, 55)         # abilita IEC\n',
+                        "    poke(1, 55)         # abilita IEC\n",
                         "    return 0\n",
                     ]
                 else:
                     tokens = [
                         f"# Suggerito per: {prompt}\n",
                         "def main() -> byte:\n",
-                        '    poke(53280, 0)\n',
-                        '    poke(53281, 0)\n',
+                        "    poke(53280, 0)\n",
+                        "    poke(53281, 0)\n",
                         "    # Codice personalizzato\n",
                         "    return 0\n",
                     ]
 
                 for token in tokens:
-                    await websocket.send_text(json.dumps({
-                        "token": token,
-                        "done": False
-                    }))
+                    await websocket.send_text(
+                        json.dumps({"token": token, "done": False})
+                    )
                     await asyncio.sleep(0.03)
 
-                await websocket.send_text(json.dumps({
-                    "token": "",
-                    "done": True
-                }))
+                await websocket.send_text(json.dumps({"token": "", "done": True}))
 
             except json.JSONDecodeError:
-                await websocket.send_text(json.dumps({"error": "Invalid JSON", "done": True}))
+                await websocket.send_text(
+                    json.dumps({"error": "Invalid JSON", "done": True})
+                )
             except Exception as e:
                 logger.error(f"AI Copilot WebSocket error: {e}")
                 await websocket.send_text(json.dumps({"error": str(e), "done": True}))
@@ -293,30 +310,33 @@ async def websocket_ai_copilot(websocket: WebSocket):
 
 # ── Disk Browser API ──
 
+
 class DiskCreateRequest(BaseModel):
     path: str
     format: str = "d64"
     label: str = "UNTITLED"
 
+
 @app.get("/api/v1/disk/list")
 def disk_list(path: str):
     loader = get_loader()
-    result = loader.exec_command(
-        "disk-tools", "list", cli_args=["disk", "list", path]
-    )
+    result = loader.exec_command("disk-tools", "list", cli_args=["disk", "list", path])
     return result
+
 
 @app.post("/api/v1/disk/create")
 def disk_create(req: DiskCreateRequest):
     loader = get_loader()
     result = loader.exec_command(
-        "disk-tools", "create",
-        cli_args=["disk", "create", req.label, "-o", req.path, "--format", req.format]
+        "disk-tools",
+        "create",
+        cli_args=["disk", "create", req.label, "-o", req.path, "--format", req.format],
     )
     return result
 
 
 # ── Plugin API ──
+
 
 class PluginExecRequest(BaseModel):
     command: str
@@ -324,15 +344,18 @@ class PluginExecRequest(BaseModel):
     options: Dict[str, Any] = {}
     cli_args: Optional[List[str]] = None
 
+
 @app.get("/api/v1/plugins")
 def list_plugins():
     loader = get_loader()
     return {"plugins": loader.list_plugins()}
 
+
 @app.post("/api/v1/plugins/reload")
 def reload_all_plugins():
     plugins = reload_plugins()
     return {"plugins": [p.to_dict() for p in plugins.values()]}
+
 
 @app.get("/api/v1/plugins/{plugin_name}")
 def get_plugin(plugin_name: str):
@@ -341,6 +364,45 @@ def get_plugin(plugin_name: str):
     if not plugin:
         raise HTTPException(status_code=404, detail=f"Plugin '{plugin_name}' not found")
     return plugin.to_dict()
+
+
+# ── Settings API (persistenza preferenze utente) ──
+
+SETTINGS_DIR = Path(__file__).resolve().parent.parent.parent / "config"
+SETTINGS_FILE = SETTINGS_DIR / "settings.json"
+
+
+def _load_settings() -> dict:
+    if SETTINGS_FILE.exists():
+        try:
+            return json.loads(SETTINGS_FILE.read_text())
+        except (json.JSONDecodeError, OSError):
+            pass
+    return {}
+
+
+def _save_settings(data: dict):
+    SETTINGS_DIR.mkdir(parents=True, exist_ok=True)
+    SETTINGS_FILE.write_text(json.dumps(data, indent=2))
+
+
+@app.get("/api/v1/settings")
+def get_settings():
+    return _load_settings()
+
+
+class SettingsUpdate(BaseModel):
+    key: str
+    value: Any
+
+
+@app.put("/api/v1/settings")
+def update_settings(req: SettingsUpdate):
+    settings = _load_settings()
+    settings[req.key] = req.value
+    _save_settings(settings)
+    return {"ok": True, "key": req.key, "value": req.value}
+
 
 @app.post("/api/v1/plugins/{plugin_name}/exec")
 def exec_plugin_command(plugin_name: str, req: PluginExecRequest):
