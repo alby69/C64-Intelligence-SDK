@@ -84,7 +84,7 @@ def cmd_run(args):
 def cmd_step(args):
     bridge, core = ensure_connection()
     try:
-        result = bridge.send_command_and_read_response("s")
+        result = bridge.send_command("s")
         print(f"[OK] Step eseguito")
         if result:
             print(f"[C64] {result}")
@@ -105,7 +105,7 @@ def cmd_step(args):
 def cmd_continue(args):
     bridge, core = ensure_connection()
     try:
-        result = bridge.send_command_and_read_response("c")
+        result = bridge.send_command("c")
         print(f"[OK] Esecuzione ripresa")
         if result:
             print(f"[C64] {result}")
@@ -245,7 +245,7 @@ def cmd_disassemble(args):
         if a == "--size" and i + 1 < len(args):
             size = int(args[i + 1])
     try:
-        result = bridge.send_command_and_read_response(f"d {addr} {size}")
+        result = bridge.send_command(f"d {addr} {size}")
         if result:
             print(f"[OK] Disassemblato ${addr_int:04X}-${addr_int + size:04X}:")
             print(result)

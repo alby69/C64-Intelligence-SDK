@@ -76,6 +76,12 @@
       }
     },
     {
+      "name": "status",
+      "label": "Stato debugger",
+      "description": "Mostra lo stato della connessione a VICE",
+      "args": []
+    },
+    {
       "name": "reset",
       "label": "Reset",
       "description": "Resetta l'emulatore",

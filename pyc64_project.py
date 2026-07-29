@@ -1,14 +1,21 @@
-"""C64Project class to handle CBM Studio-like project file configurations (.c64proj)."""
+"""C64Project class to handle CBM Studio-like project file configurations (.c64proj).
+CLI usage:
+  python pyc64_project.py load <project.c64proj>
+  python pyc64_project.py build <project.c64proj>
+"""
 
 import os
+import sys
 import json
 import logging
 from pyc64c.compiler import compile_to_prg
 
 log = logging.getLogger("pyc64_project")
 
+
 class ProjectValidationError(Exception):
     pass
+
 
 class C64Project:
     def __init__(self, config_dict: dict, file_path: str = None):
@@ -36,7 +43,9 @@ class C64Project:
             config = cls._parse_simple_yaml(content)
             return cls(config, file_path=path)
         except Exception as e:
-            raise ProjectValidationError(f"Failed to parse project file as JSON or YAML: {e}")
+            raise ProjectValidationError(
+                f"Failed to parse project file as JSON or YAML: {e}"
+            )
 
     @staticmethod
     def _parse_simple_yaml(content: str) -> dict:
@@ -61,7 +70,11 @@ class C64Project:
                     k = parts[0].strip()
                     v = parts[1].strip().strip('"').strip("'")
                     if current_list_name:
-                        if len(current_list) > 0 and isinstance(current_list[-1], dict) and k not in current_list[-1]:
+                        if (
+                            len(current_list) > 0
+                            and isinstance(current_list[-1], dict)
+                            and k not in current_list[-1]
+                        ):
                             current_list[-1][k] = v
                         else:
                             current_list.append({k: v})
@@ -133,11 +146,10 @@ class C64Project:
 
     @property
     def build_config(self) -> dict:
-        return self.config.get("build_config", {
-            "optimize": True,
-            "assembler": "acme",
-            "load_address": "0x0801"
-        })
+        return self.config.get(
+            "build_config",
+            {"optimize": True, "assembler": "acme", "load_address": "0x0801"},
+        )
 
     @property
     def assets(self) -> list:
@@ -175,7 +187,7 @@ class C64Project:
                 # Generate .asm file containing .byte representations
                 asm_lines = [f"; Generated ASM from {atype}: {path}"]
                 for i in range(0, len(data), 8):
-                    chunk = data[i:i+8]
+                    chunk = data[i : i + 8]
                     hex_vals = ", ".join(f"${b:02X}" for b in chunk)
                     asm_lines.append(f"    .byte {hex_vals}")
 
@@ -189,7 +201,9 @@ class C64Project:
                 if not os.path.exists(abs_path):
                     os.makedirs(os.path.dirname(abs_path), exist_ok=True)
                     with open(abs_path, "wb") as f:
-                        f.write(b"RSID\x00\x02\x00\x7c\x00\x00\x10\x00")  # Mock SID bytes
+                        f.write(
+                            b"RSID\x00\x02\x00\x7c\x00\x00\x10\x00"
+                        )  # Mock SID bytes
                 with open(abs_path, "rb") as f:
                     injected_bytes += f.read()
                 log.info(f"Asset pipeline: Registered SID injection from {abs_path}")
@@ -197,7 +211,9 @@ class C64Project:
         # 2. Compile Entry Point
         entry_path = os.path.join(base_dir, self.entry_point)
         if not os.path.exists(entry_path):
-            raise ProjectValidationError(f"Entry point source file not found: {entry_path}")
+            raise ProjectValidationError(
+                f"Entry point source file not found: {entry_path}"
+            )
 
         with open(entry_path, "r", encoding="utf-8") as f:
             src = f.read()
@@ -216,3 +232,81 @@ class C64Project:
             f.write(prg_bytes)
 
         return prg_bytes
+
+
+def cmd_load(args):
+    if not args:
+        print("[ERROR] Specifica un file .c64proj")
+        return 1
+    path = args[0]
+    if not os.path.isfile(path):
+        print(f"[ERROR] File non trovato: {path}")
+        return 1
+    try:
+        project = C64Project.load(path)
+        print(f"[OK] Progetto caricato: {project.project_name}")
+        print(f"[INFO] Versione: {project.version}")
+        print(f"[INFO] Autore: {project.author}")
+        print(f"[INFO] Target: {project.target}")
+        print(f"[INFO] Entry point: {project.entry_point}")
+        print(f"[INFO] Output: {project.output_name}")
+        bc = project.build_config
+        print(
+            f"[INFO] Build: optimize={bc.get('optimize', True)}, assembler={bc.get('assembler', 'acme')}"
+        )
+        assets = project.assets
+        if assets:
+            print(f"[OK] Assets: {len(assets)} configurati")
+    except Exception as e:
+        print(f"[ERROR] Caricamento progetto fallito: {e}")
+        return 1
+    return 0
+
+
+def cmd_build(args):
+    if not args:
+        print("[ERROR] Specifica un file .c64proj")
+        return 1
+    path = args[0]
+    if not os.path.isfile(path):
+        print(f"[ERROR] File non trovato: {path}")
+        return 1
+    try:
+        project = C64Project.load(path)
+        base_dir = os.path.dirname(path)
+        prg_bytes = project.build(base_dir=base_dir)
+        output_path = os.path.join(base_dir, project.output_name)
+        print(f"[OK] Build completato: {project.output_name} ({len(prg_bytes)} byte)")
+        print(f"[PRG] {output_path}")
+    except Exception as e:
+        print(f"[ERROR] Build fallito: {e}")
+        return 1
+    return 0
+
+
+def main():
+    if len(sys.argv) < 2:
+        print("[ERROR] Comando richiesto: load|build")
+        return 1
+
+    command = sys.argv[1]
+    args = sys.argv[2:]
+
+    commands = {
+        "load": cmd_load,
+        "build": cmd_build,
+    }
+
+    if command not in commands:
+        print(f"[ERROR] Comando sconosciuto: {command}")
+        return 1
+
+    try:
+        return commands[command](args)
+    except Exception as e:
+        print(f"[ERROR] {e}")
+        return 1
+
+
+if __name__ == "__main__":
+    sys.exit(main())

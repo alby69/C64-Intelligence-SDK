@@ -320,7 +320,7 @@ class DiskCreateRequest(BaseModel):
 @app.get("/api/v1/disk/list")
 def disk_list(path: str):
     loader = get_loader()
-    result = loader.exec_command("disk-tools", "list", cli_args=["disk", "list", path])
+    result = loader.exec_command("disk-tools", "list", cli_args=["list", path])
     return result
 
 
@@ -330,7 +330,7 @@ def disk_create(req: DiskCreateRequest):
     result = loader.exec_command(
         "disk-tools",
         "create",
-        cli_args=["disk", "create", req.label, "-o", req.path, "--format", req.format],
+        cli_args=["create", req.label, "-o", req.path, "--format", req.format],
     )
     return result
 

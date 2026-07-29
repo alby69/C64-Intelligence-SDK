@@ -75,6 +75,16 @@ def cmd_run(args):
     return 0
 
 
+def _get_vice_bridge(host="127.0.0.1", port=6510):
+    try:
+        sys.path.insert(0, os.path.join(SDK_ROOT, "debugger"))
+        from c64debugger.vice_bridge import VICERemoteMonitorBridge
+
+        return VICERemoteMonitorBridge(host, port)
+    except ImportError:
+        return None
+
+
 def cmd_vice_run(args):
     """Run PRG in VICE headless with monitor."""
     if not args:
@@ -91,18 +101,17 @@ def cmd_vice_run(args):
         if a == "--limit-cycles" and i + 1 < len(args):
             limit_cycles = int(args[i + 1])
 
-    try:
-        from readycode_py.vice_client import ViceClient
-
-        client = ViceClient()
+    bridge = _get_vice_bridge()
+    if bridge:
         print(f"[OK] Avvio VICE con {os.path.basename(prg_path)}")
-        info = client.run_prg(prg_path, headless=headless, limit_cycles=limit_cycles)
-        if info:
-            print(f"[OK] VICE avviato (PID: {info.get('pid', '?')})")
-        global _vice
-        _vice = client
-    except ImportError:
-        print("[ERROR] ViceClient non disponibile (pip install -e editor)")
+        if bridge.start_vice_headless(prg_path, limit_cycles=limit_cycles):
+            print(f"[OK] VICE avviato")
+            global _vice
+            _vice = bridge
+        else:
+            print("[ERROR] Avvio VICE fallito")
+            return 1
+    else:
         print("[C64] Fallback: avvio VICE manuale")
         vice_exe = _get_vice_path()
         cmd = [vice_exe, "-monitorport", "6510", prg_path]
@@ -112,9 +121,7 @@ def cmd_vice_run(args):
             subprocess.Popen(cmd)
             print(f"[OK] VICE avviato: {' '.join(cmd)}")
         except FileNotFoundError:
-            print(
-                f"[ERROR] VICE ({vice_exe}) non trovato — verifica il percorso nelle impostazioni"
-            )
+            print(f"[ERROR] VICE ({vice_exe}) non trovato")
             return 1
     return 0
 
@@ -128,18 +135,18 @@ def cmd_vice_attach(args):
         if a == "--port" and i + 1 < len(args):
             port = int(args[i + 1])
 
-    try:
-        from readycode_py.vice_client import ViceClient
-
-        global _vice
-        _vice = ViceClient()
-        _vice.connect(host, port)
-        print(f"[OK] Connesso a VICE su {host}:{port}")
-    except ImportError:
-        print("[ERROR] ViceClient non disponibile")
-        return 1
-    except Exception as e:
-        print(f"[ERROR] Connessione fallita: {e}")
+    bridge = _get_vice_bridge(host, port)
+    if bridge:
+        ok, msg = bridge.connect()
+        if ok:
+            global _vice
+            _vice = bridge
+            print(f"[OK] Connesso a VICE su {host}:{port}")
+        else:
+            print(f"[ERROR] Connessione fallita: {msg}")
+            return 1
+    else:
+        print("[ERROR] ViceBridge non disponibile")
         return 1
     return 0
 
@@ -147,16 +154,16 @@ def cmd_vice_attach(args):
 def ensure_vice():
     global _vice
     if _vice is None:
-        try:
-            from readycode_py.vice_client import ViceClient
-
-            _vice = ViceClient()
-            _vice.connect("127.0.0.1", 6510)
-        except ImportError:
-            print("[ERROR] ViceClient non disponibile")
-            return None
-        except Exception as e:
-            print(f"[ERROR] Connessione a VICE fallita: {e}")
+        bridge = _get_vice_bridge()
+        if bridge:
+            try:
+                bridge.connect()
+                _vice = bridge
+            except Exception as e:
+                print(f"[ERROR] Connessione a VICE fallita: {e}")
+                return None
+        else:
+            print("[ERROR] ViceBridge non disponibile")
             return None
     return _vice
 
@@ -166,7 +173,7 @@ def cmd_vice_step(args):
     if not client:
         return 1
     try:
-        result = client.step()
+        result = client.send_command("s")
         print("[OK] Step eseguito")
         if result:
             print(f"[C64] {result}")
@@ -180,8 +187,8 @@ def cmd_vice_reset(args):
     if not client:
         return 1
     try:
-        client.reset()
-        print("[OK] VICE resettato")
+        client.kill_vice()
+        print("[OK] VICE arrestato")
     except Exception as e:
         print(f"[ERROR] Reset: {e}")
     return 0
@@ -204,7 +211,7 @@ def cmd_vice_memory(args):
         if a == "--size" and i + 1 < len(args):
             size = int(args[i + 1])
     try:
-        data = client.read_memory(addr_int, size)
+        data = client.read_memory(addr_int, addr_int + size)
         if data:
             print(f"[OK] Memoria da ${addr_int:04X} ({size} byte):")
             for offset in range(0, len(data), 16):
@@ -226,33 +233,20 @@ def cmd_vice_registers(args):
         if regs:
             print("[OK] Registri CPU 6502 (da VICE):")
             for k, v in regs.items():
-                print(
-                    f"  {k:4s} = ${v:04X}"
-                    if isinstance(v, int) and v > 0xFF
-                    else f"  {k:4s} = ${v:02X}"
-                    if isinstance(v, int)
-                    else f"  {k:4s} = {v}"
-                )
+                if isinstance(v, int):
+                    print(
+                        f"  {k:4s} = ${v:04X}" if v > 0xFF else f"  {k:4s} = ${v:02X}"
+                    )
+                else:
+                    print(f"  {k:4s} = {v}")
     except Exception as e:
         print(f"[ERROR] Lettura registri: {e}")
     return 0
 
 
 def cmd_vice_info(args):
-    client = ensure_vice()
-    if not client:
-        return 1
-    try:
-        info = client.get_info()
-        if info:
-            print("[OK] Informazioni VICE:")
-            if hasattr(info, "version"):
-                print(f"[OK] Versione: {info.version}")
-            else:
-                for k, v in info.items():
-                    print(f"[C64] {k}: {v}")
-    except Exception as e:
-        print(f"[ERROR] Info VICE: {e}")
+    print("[C64] Info VICE: usa 'vice-registers' per vedere i registri CPU")
+    print("[C64] Per la versione VICE, esegui: x64sc --version")
     return 0
 
 
@@ -281,9 +275,8 @@ def cmd_vice_upload(args):
     try:
         with open(prg_path, "rb") as f:
             data = f.read()
-        client.load_prg(data, addr_int)
+        client.write_memory(addr_int, data)
         print(f"[OK] PRG caricato a ${addr_int:04X} ({len(data)} byte)")
-        print(f"[OK] Esegui con: goto ${addr_int:04X}")
     except Exception as e:
         print(f"[ERROR] Upload PRG: {e}")
     return 0
