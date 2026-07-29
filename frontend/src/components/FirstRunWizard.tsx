@@ -16,6 +16,7 @@ export function FirstRunWizard({ onComplete }: FirstRunWizardProps) {
   const [step, setStep] = useState<Step>("welcome");
   const [pythonPath, setPythonPath] = useState<string | null>(null);
   const [vicePath, setVicePath] = useState<string | null>(null);
+  const [viceManualPath, setViceManualPath] = useState("");
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
@@ -27,6 +28,7 @@ export function FirstRunWizard({ onComplete }: FirstRunWizardProps) {
     const [py, vice] = await Promise.all([detectPython(), detectVice()]);
     setPythonPath(py);
     setVicePath(vice);
+    if (vice) setViceManualPath(vice);
     setLoading(false);
   };
 
@@ -46,7 +48,7 @@ export function FirstRunWizard({ onComplete }: FirstRunWizardProps) {
           font_size: 13,
           window_width: 1280,
           window_height: 800,
-          VICE_path: vicePath,
+          VICE_path: viceManualPath || vicePath,
           auto_save: true,
         };
         await savePreferences(prefs);
@@ -149,27 +151,37 @@ export function FirstRunWizard({ onComplete }: FirstRunWizardProps) {
               </p>
               {loading ? (
                 <div className="text-xs text-gray-500 italic">Rilevamento in corso...</div>
-              ) : vicePath ? (
-                <div className="bg-green-900/30 border border-green-700/50 rounded-lg p-3">
-                  <div className="flex items-center gap-2 text-green-400 text-sm">
-                    <span>✅</span>
-                    <span className="font-medium">VICE trovato: {vicePath}</span>
-                  </div>
-                </div>
               ) : (
-                <div className="bg-yellow-900/30 border border-yellow-700/50 rounded-lg p-3">
-                  <div className="flex items-center gap-2 text-yellow-400 text-sm">
-                    <span>⚠️</span>
-                    <span className="font-medium">VICE non trovato</span>
+                <>
+                  {vicePath ? (
+                    <div className="bg-green-900/30 border border-green-700/50 rounded-lg p-3">
+                      <div className="flex items-center gap-2 text-green-400 text-sm">
+                        <span>✅</span>
+                        <span className="font-medium">VICE trovato: {vicePath}</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-yellow-900/30 border border-yellow-700/50 rounded-lg p-3">
+                      <div className="flex items-center gap-2 text-yellow-400 text-sm">
+                        <span>⚠️</span>
+                        <span className="font-medium">VICE non trovato</span>
+                      </div>
+                    </div>
+                  )}
+                  <div>
+                    <label className="text-xs text-gray-500 block mb-1">
+                      Percorso manuale VICE (es. C:\Program Files\VICE\x64sc.exe)
+                    </label>
+                    <input
+                      type="text"
+                      value={viceManualPath}
+                      onChange={(e) => setViceManualPath(e.target.value)}
+                      placeholder="x64sc"
+                      className="w-full px-3 py-2 bg-editor-bg border border-editor-border rounded-lg text-sm text-editor-text placeholder-gray-600 focus:outline-none focus:border-editor-accent"
+                    />
                   </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Puoi installarlo con: <code className="text-yellow-400">sudo apt install vice</code>
-                  </p>
-                </div>
+                </>
               )}
-              <p className="text-xs text-gray-600">
-                Puoi configurare il percorso VICE nelle preferenze dopo il setup.
-              </p>
             </div>
           )}
 

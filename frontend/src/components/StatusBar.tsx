@@ -1,6 +1,10 @@
 import { useIDEStore } from "../store/ideStore";
 
-export function StatusBar() {
+interface StatusBarProps {
+  onOpenSettings?: () => void;
+}
+
+export function StatusBar({ onOpenSettings }: StatusBarProps) {
   const { activeFile, isCompiling, activeProject, isFileDirty } = useIDEStore();
 
   const fileName = activeFile?.split("/").pop() || "";
@@ -52,6 +56,13 @@ export function StatusBar() {
           </>
         )}
         <span className="opacity-50">Commodore 64</span>
+        <button
+          onClick={onOpenSettings}
+          className="opacity-50 hover:opacity-100 transition-opacity ml-1"
+          title="Impostazioni"
+        >
+          ⚙️
+        </button>
       </div>
     </div>
   );

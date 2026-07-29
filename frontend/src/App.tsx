@@ -9,6 +9,7 @@ import { DiskBrowser } from "./components/DiskBrowser";
 import { C64ScreenPreview } from "./components/C64ScreenPreview";
 import { ProjectWizard } from "./components/ProjectWizard";
 import { FirstRunWizard } from "./components/FirstRunWizard";
+import { SettingsPanel } from "./components/SettingsPanel";
 import { useIDEStore } from "./store/ideStore";
 import { writeFile } from "./services/tauriBridge";
 import { runCompile, runEmulator } from "./services/commandService";
@@ -21,6 +22,7 @@ import {
 export default function App() {
   const { activeFile, fileContents, saveActiveFile, setActiveProject } = useIDEStore();
   const [showWizard, setShowWizard] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [prefsLoaded, setPrefsLoaded] = useState(false);
 
   // Load preferences on startup
@@ -117,13 +119,16 @@ export default function App() {
           <TerminalPanel />
         </div>
       </div>
-      <StatusBar />
+      <StatusBar onOpenSettings={() => setShowSettings(true)} />
       <AiCopilotPanel />
       <DiskBrowser />
       <C64ScreenPreview />
       <ProjectWizard />
       {showWizard && (
         <FirstRunWizard onComplete={() => setShowWizard(false)} />
+      )}
+      {showSettings && (
+        <SettingsPanel onClose={() => setShowSettings(false)} />
       )}
     </div>
   );
