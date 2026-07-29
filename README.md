@@ -31,6 +31,26 @@ make ide-backend   # Terminale 1 → FastAPI su http://localhost:8000
 make ide-frontend  # Terminale 2 → React su http://localhost:5173
 ```
 
+Su Windows (se `make` non è disponibile):
+
+```powershell
+# 2. Installa tutto
+python -m venv .venv
+.venv\Scripts\pip install -e "editor[test]"
+.venv\Scripts\pip install -r services/core_service/requirements.txt
+cd frontend && npm install
+cd ..
+
+# 3. Avvia l'IDE (due terminali separati)
+# Terminale 1 → FastAPI
+cd services\core_service
+..\..\.venv\Scripts\python -m uvicorn main:app --host 0.0.0.0 --port 8000 --reload
+
+# Terminale 2 → React
+cd frontend
+npm run dev
+```
+
 Poi apri **http://localhost:5173** nel browser. Per l'app desktop nativa:
 
 ```bash
