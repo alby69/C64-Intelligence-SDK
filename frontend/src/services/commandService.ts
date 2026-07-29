@@ -102,7 +102,7 @@ export async function runDiskList(imagePath: string): Promise<void> {
   addLog(`[DISK] Lettura ${imagePath.split("/").pop()}...`);
 
   const result = await execPluginCommand("disk-tools", "list", undefined, undefined, [
-    "disk", "list", imagePath,
+    "list", imagePath,
   ]);
 
   if (result.stdout) addLines(result.stdout.split("\n"));
@@ -118,7 +118,7 @@ export async function runDiskExtract(
   const { addLog } = useIDEStore.getState();
   addLog(`[DISK] Estrazione ${fileName} da ${imagePath.split("/").pop()}...`);
 
-  const cliArgs = ["disk", "extract", imagePath, fileName];
+  const cliArgs = ["extract", imagePath, fileName];
   if (outputPath) cliArgs.push("-o", outputPath);
 
   const result = await execPluginCommand("disk-tools", "extract", undefined, undefined, cliArgs);
@@ -133,7 +133,7 @@ export async function runDiskInject(imagePath: string, filePath: string): Promis
   addLog(`[DISK] Inserimento ${filePath.split("/").pop()} in ${imagePath.split("/").pop()}...`);
 
   const result = await execPluginCommand("disk-tools", "inject", undefined, undefined, [
-    "disk", "inject", imagePath, filePath,
+    "inject", imagePath, filePath,
   ]);
 
   if (result.stdout) addLines(result.stdout.split("\n"));
@@ -149,7 +149,7 @@ export async function runDiskCreate(
   const { addLog } = useIDEStore.getState();
   addLog(`[DISK] Creazione disco ${format.toUpperCase()}...`);
 
-  const cliArgs = ["disk", "create", label || "UNTITLED"];
+  const cliArgs = ["create", label || "UNTITLED"];
   cliArgs.push("-o", outputPath);
   cliArgs.push("--format", format);
 

@@ -83,6 +83,7 @@ def cmd_deploy(args):
     try:
         sys.path.insert(0, os.path.join(SDK_ROOT, "editor"))
         from readycode_py.diskimage import C64DiskImage
+
         img = C64DiskImage()
         img.create_new(output_path, fmt=fmt, name="GECKOS-NG")
         for f in sorted(os.listdir(dist_dir)):
@@ -93,6 +94,7 @@ def cmd_deploy(args):
     except ImportError:
         print("[C64] diskimage.py non disponibile, copio solo i file binari")
         import shutil
+
         bin_dir = os.path.join(GECKOS_DIR, "os", "bin")
         os.makedirs(output_path, exist_ok=True)
         if os.path.isdir(bin_dir):
@@ -144,7 +146,11 @@ def cmd_status(args):
     dist_dir = os.path.join(GECKOS_DIR, "dist")
     if os.path.isdir(dist_dir):
         files = os.listdir(dist_dir)
-        total_sz = sum(os.path.getsize(os.path.join(dist_dir, f)) for f in files if os.path.isfile(os.path.join(dist_dir, f)))
+        total_sz = sum(
+            os.path.getsize(os.path.join(dist_dir, f))
+            for f in files
+            if os.path.isfile(os.path.join(dist_dir, f))
+        )
         print(f"[OK] dist/: {len(files)} file ({total_sz // 1024}KB)")
         for f in sorted(files):
             fp = os.path.join(dist_dir, f)
@@ -166,10 +172,17 @@ def cmd_status(args):
 
     # Check build tools
     for tool in ["acme", "xa", "make"]:
-        r = subprocess.run(["which", tool], capture_output=True, text=True)
-        if r.returncode == 0:
-            print(f"[OK] {tool}: trovato")
-        else:
+        try:
+            r = subprocess.run(
+                ["where", tool] if os.name == "nt" else ["which", tool],
+                capture_output=True,
+                text=True,
+            )
+            if r.returncode == 0:
+                print(f"[OK] {tool}: trovato")
+            else:
+                print(f"[C64] {tool}: non installato")
+        except FileNotFoundError:
             print(f"[C64] {tool}: non installato")
 
     return 0

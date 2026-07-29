@@ -15,7 +15,9 @@ def cmd_generate(args):
     try:
         from agent.agent_pro import C64CodingAgent, get_hints
     except ImportError:
-        print("[ERROR] core/agent modules not available. Run `pip install -r core/requirements.txt`")
+        print(
+            "[ERROR] core/agent modules not available. Run `pip install -r core/requirements.txt`"
+        )
         return 1
 
     print(f"[OK] Generazione codice da prompt: {prompt}")
@@ -58,9 +60,12 @@ def cmd_explain(args):
 
     try:
         from agent.agent_pro import C64CodingAgent
+
         agent = C64CodingAgent(gguf_path=os.environ.get("GGUF_PATH"))
         prompt = f"Spiega questo codice C64 in modo {'dettagliato' if detail == 'full' else 'breve'}:\n{code}"
-        response, sources, logs = agent.orchestrator.process_request(prompt, use_rag=True)
+        response, sources, logs = agent.orchestrator.process_request(
+            prompt, use_rag=True
+        )
         print(f"[OK] Spiegazione completata")
         print(response)
     except ImportError:
@@ -82,9 +87,12 @@ def cmd_optimize(args):
     print(f"[OK] Ottimizzazione di {input_path}")
     try:
         from agent.agent_pro import C64CodingAgent
+
         agent = C64CodingAgent(gguf_path=os.environ.get("GGUF_PATH"))
         prompt = f"Ottimizza questo codice C64 per velocità e dimensione:\n{code}"
-        response, sources, logs = agent.orchestrator.process_request(prompt, use_rag=True)
+        response, sources, logs = agent.orchestrator.process_request(
+            prompt, use_rag=True
+        )
         print(response)
     except ImportError:
         print("[INFO] AI agent non disponibile")
@@ -117,11 +125,14 @@ def cmd_debug(args):
     print(f"[OK] Analisi debug di {input_path}")
     try:
         from agent.agent_pro import C64CodingAgent
+
         agent = C64CodingAgent(gguf_path=os.environ.get("GGUF_PATH"))
         prompt = f"Analizza e correggi errori in questo codice C64:\n{content}"
         if crash_dump:
             prompt += f"\nCrash dump:\n{crash_dump}"
-        response, sources, logs = agent.orchestrator.process_request(prompt, use_rag=True)
+        response, sources, logs = agent.orchestrator.process_request(
+            prompt, use_rag=True
+        )
         print(response)
     except ImportError:
         print("[INFO] AI agent non disponibile per analisi avanzata")
@@ -138,12 +149,12 @@ def cmd_status(args):
         ("data/vectorstore", "Indice vettoriale"),
     ]:
         full = os.path.join(core_path, path)
-        if os.path.exists(full):
-            if path == "data/vectorstore":
-                n = len(os.listdir(full))
-            else:
-                n = len([f for f in os.listdir(full) if not f.startswith(".")])
-            print(f"[OK] {label}: {n}")
+        if os.path.isdir(full):
+            try:
+                files = [f for f in os.listdir(full) if not f.startswith(".")]
+                print(f"[OK] {label}: {len(files)}")
+            except OSError as e:
+                print(f"[C64] {label}: errore lettura ({e})")
         else:
             print(f"[C64] {label}: assente")
     ds = os.path.join(core_path, "data/output/dataset_unified.jsonl")
@@ -161,6 +172,7 @@ def cmd_search(args):
         return 1
     try:
         from agent.knowledge_base import C64KnowledgeBase
+
         kb = C64KnowledgeBase()
         results = kb.search(query)
         print(f"[OK] Ricerca KB: '{query}'")
@@ -185,6 +197,7 @@ def cmd_distill(args):
     print(f"[OK] Avvio distillazione con backend: {backend}, max chunks: {max_chunks}")
     try:
         from pipeline.knowledge_distiller import run_distillation
+
         run_distillation(backend=backend, max_chunks=max_chunks)
         print("[OK] Dataset distillato generato in data/output/distill_dataset.jsonl")
     except ImportError:
@@ -200,6 +213,7 @@ def cmd_train(args):
     print(f"[OK] Avvio training LoRA da {dataset_path} -> {output_dir}")
     try:
         from pipeline.train_lora import train
+
         train(dataset_path, output_dir)
         print(f"[OK] Modello salvato in {output_dir}")
     except ImportError:
@@ -209,7 +223,9 @@ def cmd_train(args):
 
 def main():
     if len(sys.argv) < 2:
-        print("[ERROR] Comando richiesto: generate|explain|optimize|debug|status|search|distill|train")
+        print(
+            "[ERROR] Comando richiesto: generate|explain|optimize|debug|status|search|distill|train"
+        )
         return 1
 
     command = sys.argv[1]
