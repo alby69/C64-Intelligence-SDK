@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 
 export function C64ScreenPreview() {
   const [collapsed, setCollapsed] = useState(true);
@@ -8,6 +8,10 @@ export function C64ScreenPreview() {
   const [textColor] = useState("#ffffff");
   const screenRef = useRef<HTMLDivElement>(null);
   const [cursorVisible, setCursorVisible] = useState(true);
+  const panelRef = useRef<HTMLDivElement>(null);
+  const [pos, setPos] = useState({ x: window.innerWidth - 420, y: window.innerHeight - 380 });
+  const dragging = useRef(false);
+  const dragStart = useRef({ x: 0, y: 0, left: 0, top: 0 });
 
   useEffect(() => {
     const interval = setInterval(() => setCursorVisible((v) => !v), 500);
@@ -20,20 +24,51 @@ export function C64ScreenPreview() {
     }
   }, [output]);
 
-  const addOutput = (text: string) => {
+  const addOutput = useCallback((text: string) => {
     setOutput((prev) => {
       const lines = [...prev, ...text.split("\n")];
       return lines.slice(-25);
     });
-  };
+  }, []);
 
   useEffect(() => {
     const handler = (e: CustomEvent) => addOutput(e.detail);
     window.addEventListener("c64:output" as any, handler);
     return () => window.removeEventListener("c64:output" as any, handler);
-  }, []);
+  }, [addOutput]);
 
   const clearScreen = () => setOutput([]);
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).tagName === "INPUT") return;
+    dragging.current = true;
+    dragStart.current = { x: e.clientX, y: e.clientY, left: pos.x, top: pos.y };
+    document.body.style.cursor = "grabbing";
+    document.body.style.userSelect = "none";
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!dragging.current) return;
+      setPos({
+        x: Math.max(0, dragStart.current.left + (e.clientX - dragStart.current.x)),
+        y: Math.max(0, dragStart.current.top + (e.clientY - dragStart.current.y)),
+      });
+    };
+    const handleMouseUp = () => {
+      if (dragging.current) {
+        dragging.current = false;
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+      }
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [pos]);
 
   if (collapsed) {
     return (
@@ -48,8 +83,15 @@ export function C64ScreenPreview() {
   }
 
   return (
-    <div className="fixed bottom-16 right-24 z-50 w-[400px] bg-editor-sidebar border border-editor-border rounded-lg shadow-2xl overflow-hidden">
-      <div className="flex items-center justify-between px-3 py-2 border-b border-editor-border bg-editor-bg">
+    <div
+      ref={panelRef}
+      className="fixed z-50 w-[400px] bg-editor-sidebar border border-editor-border rounded-lg shadow-2xl overflow-hidden"
+      style={{ left: pos.x, top: pos.y }}
+    >
+      <div
+        className="flex items-center justify-between px-3 py-2 border-b border-editor-border bg-editor-bg cursor-grab"
+        onMouseDown={handleMouseDown}
+      >
         <span className="text-xs font-semibold text-editor-text uppercase tracking-wider">
           📺 C64 Screen
         </span>
@@ -113,6 +155,7 @@ export function C64ScreenPreview() {
           )}
         </div>
       </div>
+      <div className="h-2 bg-editor-border cursor-ns-resize hover:bg-editor-accent/50 transition-colors" />
     </div>
   );
 }

@@ -11,7 +11,10 @@ from dataclasses import dataclass, field, asdict
 
 log = logging.getLogger("plugin-loader")
 
-PLUGINS_DIR = os.path.join(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))), "plugins")
+PLUGINS_DIR = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))),
+    "plugins",
+)
 SDK_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 
@@ -59,38 +62,44 @@ def parse_output(stdout: str) -> dict:
             info["messages"].append({"type": "ok", "text": line[4:].strip()})
         elif line.startswith("[PRG]"):
             info["messages"].append({"type": "prg", "text": line[5:].strip()})
-            m = re.search(r'\((\d+)\s*byte\)', line)
+            m = re.search(r"\((\d+)\s*byte\)", line)
             if m:
                 info["prg_size"] = int(m.group(1))
-            m = re.search(r'(\S+\.(?:prg|bas|asm|lst))', line)
+            m = re.search(r"(\S+\.(?:prg|bas|asm|lst))", line)
             if m:
                 info["files"].append(m.group(1))
         elif line.startswith("[BASIC]"):
             info["messages"].append({"type": "basic", "text": line[7:].strip()})
-            m = re.search(r'(\S+\.bas)', line)
+            m = re.search(r"(\S+\.bas)", line)
             if m:
                 info["files"].append(m.group(1))
         elif line.startswith("[ASM]"):
             info["messages"].append({"type": "asm", "text": line[5:].strip()})
-            m = re.search(r'(\S+\.(?:asm|lst))', line)
+            m = re.search(r"(\S+\.(?:asm|lst))", line)
             if m:
                 info["files"].append(m.group(1))
         elif line.startswith("[LOAD]"):
-            m = re.search(r'\$([0-9a-fA-F]{4})', line)
+            m = re.search(r"\$([0-9a-fA-F]{4})", line)
             if m:
                 info["load_address"] = f"0x{m.group(1)}"
         elif line.startswith("[CODE]"):
-            m = re.search(r'\$([0-9a-fA-F]{4})', line)
+            m = re.search(r"\$([0-9a-fA-F]{4})", line)
             if m:
                 info["code_address"] = f"0x{m.group(1)}"
         elif line.startswith("[SIZE]"):
-            m = re.search(r'(\d+)', line)
+            m = re.search(r"(\d+)", line)
             if m:
                 info["prg_size"] = int(m.group(1))
         elif line.startswith("[C64]"):
             info["messages"].append({"type": "c64", "text": line[5:].strip()})
-        elif line.startswith("[LEXER ERROR]") or line.startswith("[PARSER ERROR]") or line.startswith("[ASM ERROR]"):
+        elif (
+            line.startswith("[LEXER ERROR]")
+            or line.startswith("[PARSER ERROR]")
+            or line.startswith("[ASM ERROR]")
+        ):
             info["errors"].append(line)
+        elif line.startswith("[WARN]"):
+            info["errors"].append(f"[WARNING] {line[6:].strip()}")
         elif line.startswith("[ERROR]"):
             info["errors"].append(line[7:].strip())
         else:
@@ -117,7 +126,9 @@ class PluginLoader:
             try:
                 plugin = self._load_manifest(manifest_path)
                 self.plugins[plugin.name] = plugin
-                log.info(f"Loaded plugin: {plugin.name} v{plugin.version} ({len(plugin.commands)} commands)")
+                log.info(
+                    f"Loaded plugin: {plugin.name} v{plugin.version} ({len(plugin.commands)} commands)"
+                )
             except Exception as e:
                 log.error(f"Failed to load plugin from {manifest_path}: {e}")
 
@@ -129,13 +140,15 @@ class PluginLoader:
 
         commands = []
         for cmd_data in data.get("commands", []):
-            commands.append(PluginCommand(
-                name=cmd_data["name"],
-                label=cmd_data.get("label", cmd_data["name"]),
-                description=cmd_data.get("description", ""),
-                args=cmd_data.get("args", []),
-                options=cmd_data.get("options", {}),
-            ))
+            commands.append(
+                PluginCommand(
+                    name=cmd_data["name"],
+                    label=cmd_data.get("label", cmd_data["name"]),
+                    description=cmd_data.get("description", ""),
+                    args=cmd_data.get("args", []),
+                    options=cmd_data.get("options", {}),
+                )
+            )
 
         return Plugin(
             name=data["name"],
@@ -161,28 +174,22 @@ class PluginLoader:
         options: Dict[str, Any] = None,
         cli_args: List[str] = None,
     ) -> dict:
-        """Execute a plugin command.
-
-        Args:
-            plugin_name: Plugin identifier
-            command_name: Command to execute
-            args: Positional arguments (legacy, appended after command)
-            options: Key-value options converted to --key value flags (legacy)
-            cli_args: Full CLI argument list (overrides args/options when provided)
-        """
         plugin = self.get_plugin(plugin_name)
         if not plugin:
             return {"success": False, "error": f"Plugin '{plugin_name}' not found"}
 
+        effective_cmd = (cli_args[0] if cli_args else command_name) or command_name
         cmd = None
         for c in plugin.commands:
-            if c.name == command_name:
+            if c.name == effective_cmd:
                 cmd = c
                 break
         if not cmd:
-            return {"success": False, "error": f"Command '{command_name}' not found in plugin '{plugin_name}'"}
+            return {
+                "success": False,
+                "error": f"Command '{effective_cmd}' not found in plugin '{plugin_name}'",
+            }
 
-        # Build CLI command: python3 <entry_point> <command> <args...>
         full_args = [sys.executable, os.path.join(SDK_ROOT, plugin.entry_point)]
 
         if cli_args is not None:
@@ -211,14 +218,24 @@ class PluginLoader:
             )
 
             output = parse_output(result.stdout)
+            err = result.stderr.strip() if result.stderr else ""
 
-            return {
+            resp = {
                 "success": result.returncode == 0,
                 "stdout": result.stdout,
                 "stderr": result.stderr,
                 "returncode": result.returncode,
                 "output": output,
             }
+            if not resp["success"] and not resp.get("error"):
+                if output.get("errors"):
+                    resp["error"] = output["errors"][0]
+                elif err:
+                    resp["error"] = err
+                else:
+                    resp["error"] = "Command failed"
+            return resp
+
         except subprocess.TimeoutExpired:
             return {"success": False, "error": "Command timed out (60s)"}
         except Exception as e:

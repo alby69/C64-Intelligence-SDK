@@ -195,6 +195,9 @@ def cmd_run(args):
 
 
 def read_source(path):
+    if not os.path.isfile(path):
+        print(f"[ERROR] File non trovato: {path}", file=sys.stderr)
+        sys.exit(1)
     with open(path, "r") as f:
         return f.read()
 

@@ -20,11 +20,19 @@ def cmd_build(args):
 
     if clean:
         print("[C64] Pulizia...")
-        clean_cmd = ["make", "-C", GECKOS_DIR, "clean"]
-        r = subprocess.run(clean_cmd, capture_output=True, text=True, cwd=GECKOS_DIR)
-        if r.returncode != 0:
-            print(f"[C64] Clean: {r.stdout}")
-            print(f"[ERROR] Clean fallito: {r.stderr}")
+        try:
+            clean_cmd = ["make", "-C", GECKOS_DIR, "clean"]
+            r = subprocess.run(
+                clean_cmd, capture_output=True, text=True, cwd=GECKOS_DIR
+            )
+            if r.returncode != 0:
+                print(f"[C64] Clean: {r.stdout}")
+                print(f"[ERROR] Clean fallito: {r.stderr}")
+                return 1
+        except FileNotFoundError:
+            print(
+                "[ERROR] make non trovato nel PATH. Installa make o verifica il PATH."
+            )
             return 1
 
     targets = {
@@ -37,7 +45,13 @@ def cmd_build(args):
     make_targets = targets.get(target, [])
     cmd = ["make", "-C", GECKOS_DIR] + make_targets
     print(f"[C64] Esecuzione: {' '.join(cmd)}")
-    r = subprocess.run(cmd, capture_output=True, text=True, cwd=GECKOS_DIR, timeout=120)
+    try:
+        r = subprocess.run(
+            cmd, capture_output=True, text=True, cwd=GECKOS_DIR, timeout=120
+        )
+    except FileNotFoundError:
+        print("[ERROR] make non trovato nel PATH. Installa make o verifica il PATH.")
+        return 1
 
     if r.stdout:
         print(f"[C64] {r.stdout[:2000]}")
@@ -82,16 +96,24 @@ def cmd_deploy(args):
     # Use diskimage.py from editor/ if available
     try:
         sys.path.insert(0, os.path.join(SDK_ROOT, "editor"))
-        from readycode_py.diskimage import C64DiskImage
+        from readycode_py.diskimage import DiskImage, DiskGeometry, C64UFileKind
 
-        img = C64DiskImage()
-        img.create_new(output_path, fmt=fmt, name="GECKOS-NG")
+        geo = DiskGeometry.D64 if fmt == "d64" else DiskGeometry.D81
+        img = DiskImage(geo)
+        image_data = img.create_blank_image("GECKOS-NG")
         for f in sorted(os.listdir(dist_dir)):
             fp = os.path.join(dist_dir, f)
             if os.path.isfile(fp):
-                img.add_file(fp, f)
+                with open(fp, "rb") as fh:
+                    file_data = fh.read()
+                fname = os.path.splitext(f)[0]
+                image_data = img.add_entry(
+                    image_data, fname, C64UFileKind.Prg, file_data
+                )
+        with open(output_path, "wb") as f:
+            f.write(image_data)
         print(f"[OK] Disco creato con {len(os.listdir(dist_dir))} file")
-    except ImportError:
+    except Exception:
         print("[C64] diskimage.py non disponibile, copio solo i file binari")
         import shutil
 

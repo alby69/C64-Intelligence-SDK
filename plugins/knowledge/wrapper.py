@@ -12,6 +12,23 @@ sys.path.insert(0, KB_AGENT_DIR)
 sys.path.insert(0, CORE_DIR)
 
 
+def _resolve_kb_dir():
+    """Resolve knowledge_base directory, handling git symlinks on Windows."""
+    kb_dir = os.path.join(CORE_DIR, "knowledge_base")
+    if os.path.isdir(kb_dir):
+        return kb_dir
+    if os.path.isfile(kb_dir):
+        with open(kb_dir) as f:
+            target = f.read().strip()
+        resolved = os.path.join(SDK_ROOT, target.replace("/", os.sep))
+        if os.path.isdir(resolved):
+            return resolved
+    fallback = os.path.join(KB_AGENT_DIR, "data", "docs")
+    if os.path.isdir(fallback):
+        return fallback
+    return None
+
+
 def cmd_search(args):
     if not args:
         print("[ERROR] Specifica una query di ricerca")
@@ -50,13 +67,13 @@ def cmd_search(args):
         print(f"[OK] Trovati {len(results)} risultati per '{query}':")
         for fp, title, sz in results:
             rel = os.path.relpath(fp, docs_path)
-            sz_str = f"{sz}B" if sz < 1024 else f"{sz//1024}KB"
+            sz_str = f"{sz}B" if sz < 1024 else f"{sz // 1024}KB"
             print(f"[BASIC] {rel:60s} {sz_str:>8s}")
             print(f"[INFO]  {title}")
     else:
-        # Fallback: search in core knowledge_base
-        kb_dir = os.path.join(CORE_DIR, "knowledge_base")
-        if os.path.isdir(kb_dir):
+        # Fallback: search in resolved knowledge_base
+        kb_dir = _resolve_kb_dir()
+        if kb_dir:
             ql = query.lower()
             for root, _, files in os.walk(kb_dir):
                 for f in files:
@@ -75,7 +92,9 @@ def cmd_search(args):
 
         if results:
             rel = os.path.relpath
-            print(f"[OK] Trovati {len(results)} risultati in Knowledge Base per '{query}':")
+            print(
+                f"[OK] Trovati {len(results)} risultati in Knowledge Base per '{query}':"
+            )
             for fp, title, sz in results:
                 r = os.path.relpath(fp, kb_dir)
                 print(f"[INFO] {r}")
@@ -97,7 +116,11 @@ def cmd_docs(args):
         if a == "--source" and i + 1 < len(args):
             source = args[i + 1]
 
-    # Core knowledge_base has targeted files
+    kb_dir = _resolve_kb_dir()
+    if not kb_dir:
+        print(f"[ERROR] Knowledge base non trovata")
+        return 1
+
     kb_topics = {
         "sprite": "sprite_programming.md",
         "raster": "raster_interrupts.md",
@@ -118,19 +141,20 @@ def cmd_docs(args):
     tl = topic.lower()
     for key, filename in kb_topics.items():
         if key in tl:
-            fp = os.path.join(CORE_DIR, "knowledge_base", filename)
+            fp = os.path.join(kb_dir, filename)
             if os.path.isfile(fp):
                 with open(fp) as f:
                     content = f.read()
                 lines = content.split("\n")
                 title = lines[0].strip("# ") if lines else filename
                 print(f"[OK] Documentazione: {title}")
-                # Print first 30 lines
                 for line in lines[:30]:
                     if line.strip():
                         print(f"[C64] {line.strip()}")
                 if len(lines) > 30:
-                    print(f"[INFO] ... ({len(lines) - 30} righe in più. File: {filename})")
+                    print(
+                        f"[INFO] ... ({len(lines) - 30} righe in più. File: {filename})"
+                    )
                 found = True
                 break
 
@@ -147,7 +171,10 @@ def cmd_status(args):
     for label, path in [
         ("kb-agent docs", os.path.join(KB_AGENT_DIR, "data", "docs")),
         ("kb-agent dataset", os.path.join(KB_AGENT_DIR, "data", "dataset")),
-        ("core knowledge_base", os.path.join(CORE_DIR, "knowledge_base")),
+        (
+            "core knowledge_base",
+            _resolve_kb_dir() or os.path.join(CORE_DIR, "knowledge_base"),
+        ),
     ]:
         if os.path.isdir(path):
             files = []
@@ -190,8 +217,8 @@ def cmd_list_api(args):
     if not os.path.isfile(api_idx):
         api_idx = os.path.join(KB_AGENT_DIR, "data", "api_index.json")
     if not os.path.isfile(api_idx):
-        # Try to build from core knowledge_base
         print("[OK] Indice API C64")
+        kb_dir = _resolve_kb_dir()
         kb_topics = {
             "KERNAL": "kernal_routines.md",
             "VIC-II": "vic2_registers.md",
@@ -207,13 +234,14 @@ def cmd_list_api(args):
         for name, fn in kb_topics.items():
             if filter_term and filter_term.lower() not in name.lower():
                 continue
-            fp = os.path.join(CORE_DIR, "knowledge_base", fn)
-            if os.path.isfile(fp):
-                sz = os.path.getsize(fp)
-                print(f"[OK] {name:12s} -> {fn} ({sz//1024}KB)")
+            if kb_dir:
+                fp = os.path.join(kb_dir, fn)
+                if os.path.isfile(fp):
+                    sz = os.path.getsize(fp)
+                    print(f"[OK] {name:12s} -> {fn} ({sz // 1024}KB)")
         return 0
 
-    with open(api_idx) as f:
+    with open(api_idx, "r", encoding="utf-8", errors="replace") as f:
         apis = json.load(f)
 
     print(f"[OK] Indice API C64 ({len(apis)} entry)")
@@ -239,7 +267,10 @@ def cmd_list_files(args):
     if target_dir == "docs":
         paths = [
             ("kb-agent docs", os.path.join(KB_AGENT_DIR, "data", "docs")),
-            ("core knowledge_base", os.path.join(CORE_DIR, "knowledge_base")),
+            (
+                "core knowledge_base",
+                _resolve_kb_dir() or os.path.join(CORE_DIR, "knowledge_base"),
+            ),
         ]
     else:
         paths = [

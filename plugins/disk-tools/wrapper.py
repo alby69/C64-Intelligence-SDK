@@ -8,12 +8,19 @@ import shutil
 SDK_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.insert(0, os.path.join(SDK_ROOT, "editor"))
 
+try:
+    from readycode_py.diskimage import DiskImage, DiskGeometry, C64UFileKind
+except ImportError:
+    C64UFileKind = None
 
-def get_diskimage():
+
+def get_diskimage(fmt="d64"):
     try:
-        from readycode_py.diskimage import C64DiskImage
-        return C64DiskImage(), None
-    except ImportError as e:
+        from readycode_py.diskimage import DiskImage, DiskGeometry, C64UFileKind
+
+        geo = DiskGeometry.D64 if fmt == "d64" else DiskGeometry.D81
+        return DiskImage(geo), None
+    except Exception as e:
         return None, str(e)
 
 
@@ -29,16 +36,17 @@ def cmd_list(args):
     disk, err = get_diskimage()
     if disk:
         try:
-            entries = disk.list_files(image_path)
+            with open(image_path, "rb") as f:
+                image_data = f.read()
+            entries = disk.read_directory(image_data)
             if entries:
                 print(f"[OK] Contenuto di {os.path.basename(image_path)}:")
                 print(f"[PRG] {'Nome':18s} {'Tipo':6s} {'Dimensione':>10s}")
-                print(f"[PRG] {'-'*18} {'-'*6} {'-'*10}")
+                print(f"[PRG] {'-' * 18} {'-' * 6} {'-' * 10}")
                 for e in entries:
-                    name = e.get("name", "?")
-                    ftype = e.get("type", "?")
-                    size = e.get("size", 0)
-                    print(f"[BASIC] {name:18s} {ftype:6s} {size:>10d}")
+                    print(
+                        f"[BASIC] {e.name:18s} {e.kind.name:6s} {len(e.content):>10d}"
+                    )
             else:
                 print(f"[C64] Disco vuoto o non leggibile")
         except Exception as e:
@@ -46,9 +54,18 @@ def cmd_list(args):
     else:
         print(f"[C64] diskimage.py non disponibile, uso fallback run_c64.py")
         import subprocess
+
         r = subprocess.run(
-            [sys.executable, os.path.join(SDK_ROOT, "run_c64.py"), "disk", "list", image_path],
-            capture_output=True, text=True, cwd=SDK_ROOT
+            [
+                sys.executable,
+                os.path.join(SDK_ROOT, "run_c64.py"),
+                "disk",
+                "list",
+                image_path,
+            ],
+            capture_output=True,
+            text=True,
+            cwd=SDK_ROOT,
         )
         if r.stdout:
             print(r.stdout)
@@ -73,15 +90,34 @@ def cmd_inject(args):
     disk, err = get_diskimage()
     if disk:
         try:
-            disk.add_file(image_path, file_path)
-            print(f"[OK] {os.path.basename(file_path)} inserito in {os.path.basename(image_path)}")
+            with open(image_path, "rb") as f:
+                image_data = f.read()
+            with open(file_path, "rb") as f:
+                file_data = f.read()
+            name = os.path.splitext(os.path.basename(file_path))[0]
+            new_image = disk.add_entry(image_data, name, C64UFileKind.Prg, file_data)
+            with open(image_path, "wb") as f:
+                f.write(new_image)
+            print(
+                f"[OK] {os.path.basename(file_path)} inserito in {os.path.basename(image_path)}"
+            )
         except Exception as e:
             print(f"[ERROR] Inserimento fallito: {e}")
     else:
         import subprocess
+
         r = subprocess.run(
-            [sys.executable, os.path.join(SDK_ROOT, "run_c64.py"), "disk", "inject", image_path, file_path],
-            capture_output=True, text=True, cwd=SDK_ROOT
+            [
+                sys.executable,
+                os.path.join(SDK_ROOT, "run_c64.py"),
+                "disk",
+                "inject",
+                image_path,
+                file_path,
+            ],
+            capture_output=True,
+            text=True,
+            cwd=SDK_ROOT,
         )
         if r.stdout:
             print(r.stdout)
@@ -110,14 +146,33 @@ def cmd_extract(args):
     disk, err = get_diskimage()
     if disk:
         try:
-            disk.extract_file(image_path, name, output)
-            sz = os.path.getsize(output) if os.path.isfile(output) else 0
-            print(f"[OK] {name} estratto -> {output} ({sz}B)")
+            with open(image_path, "rb") as f:
+                image_data = f.read()
+            entries = disk.read_directory(image_data)
+            found = None
+            for e in entries:
+                if e.name.upper() == name.upper():
+                    found = e
+                    break
+            if found:
+                with open(output, "wb") as f:
+                    f.write(found.content)
+                print(f"[OK] {name} estratto -> {output} ({len(found.content)}B)")
+            else:
+                print(f"[ERROR] File '{name}' non trovato sul disco")
         except Exception as e:
             print(f"[ERROR] Estrazione fallita: {e}")
     else:
         import subprocess
-        cmd = [sys.executable, os.path.join(SDK_ROOT, "run_c64.py"), "disk", "extract", image_path, name]
+
+        cmd = [
+            sys.executable,
+            os.path.join(SDK_ROOT, "run_c64.py"),
+            "disk",
+            "extract",
+            image_path,
+            name,
+        ]
         if output:
             cmd.extend(["-o", output])
         r = subprocess.run(cmd, capture_output=True, text=True, cwd=SDK_ROOT)
@@ -144,20 +199,34 @@ def cmd_create(args):
         print("[ERROR] Specifica --output <path>")
         return 1
 
-    disk, err = get_diskimage()
+    disk, err = get_diskimage(fmt)
     if disk:
         try:
-            disk.create_new(output, fmt=fmt, name=label)
-            sz = os.path.getsize(output) if os.path.isfile(output) else 0
-            print(f"[OK] Disco {fmt.upper()} creato: {output} ({sz}B)")
+            blank = disk.create_blank_image(label)
+            with open(output, "wb") as f:
+                f.write(blank)
+            print(f"[OK] Disco {fmt.upper()} creato: {output} ({len(blank)}B)")
             print(f"[OK] Label: {label}")
         except Exception as e:
             print(f"[ERROR] Creazione disco fallita: {e}")
     else:
         import subprocess
+
         r = subprocess.run(
-            [sys.executable, os.path.join(SDK_ROOT, "run_c64.py"), "disk", "create", label, "-o", output, "--format", fmt],
-            capture_output=True, text=True, cwd=SDK_ROOT
+            [
+                sys.executable,
+                os.path.join(SDK_ROOT, "run_c64.py"),
+                "disk",
+                "create",
+                label,
+                "-o",
+                output,
+                "--format",
+                fmt,
+            ],
+            capture_output=True,
+            text=True,
+            cwd=SDK_ROOT,
         )
         if r.stdout:
             print(r.stdout)
@@ -179,7 +248,9 @@ def cmd_format(args):
     disk, err = get_diskimage()
     if disk:
         try:
-            disk.format(image_path, name=label)
+            blank = disk.create_blank_image(label)
+            with open(image_path, "wb") as f:
+                f.write(blank)
             print(f"[OK] Disco formattato: {os.path.basename(image_path)} ({label})")
         except Exception as e:
             print(f"[ERROR] Formattazione fallita: {e}")
@@ -211,14 +282,23 @@ def cmd_prg_to_disk(args):
     disk, err = get_diskimage()
     if disk:
         try:
-            disk.create_new(output, fmt="d64", name=label)
+            image_data = disk.create_blank_image(label)
             for f in files:
                 if os.path.isfile(f):
-                    disk.add_file(output, f)
+                    with open(f, "rb") as fh:
+                        file_data = fh.read()
+                    fname = os.path.splitext(os.path.basename(f))[0]
+                    image_data = disk.add_entry(
+                        image_data, fname, C64UFileKind.Prg, file_data
+                    )
                     print(f"[OK] Aggiunto: {f}")
                 else:
                     print(f"[C64] File non trovato: {f}")
-            print(f"[OK] Disco creato: {output} con {len([f for f in files if os.path.isfile(f)])} file")
+            with open(output, "wb") as f:
+                f.write(image_data)
+            print(
+                f"[OK] Disco creato: {output} con {len([f for f in files if os.path.isfile(f)])} file"
+            )
         except Exception as e:
             print(f"[ERROR] {e}")
     else:
@@ -247,6 +327,7 @@ def cmd_petscii_convert(args):
 
     try:
         from readycode_py.petscii import PETSCIIConverter
+
         conv = PETSCIIConverter()
         with open(input_path) as f:
             text = f.read()
@@ -273,7 +354,9 @@ def cmd_petscii_convert(args):
 
 def main():
     if len(sys.argv) < 2:
-        print("[ERROR] Comando richiesto: list|inject|extract|create|format|prg-to-disk|petscii-convert")
+        print(
+            "[ERROR] Comando richiesto: list|inject|extract|create|format|prg-to-disk|petscii-convert"
+        )
         return 1
 
     command = sys.argv[1]

@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useIDEStore } from "../store/ideStore";
-import { saveFileDialog, writeFile } from "../services/tauriBridge";
+import { saveFileDialog, writeFile, openFileDialog } from "../services/tauriBridge";
 
 interface ProjectTemplate {
   name: string;
@@ -27,11 +27,7 @@ def main() -> byte:
       target: "C64",
       entry_point: "main.c64",
       output_name: `${name.toLowerCase().replace(/\s+/g, "_")}.prg`,
-      build_config: {
-        optimize: true,
-        assembler: "acme",
-        load_address: "0x0801",
-      },
+      build_config: { optimize: true, assembler: "acme", load_address: "0x0801" },
       assets: [],
     }, null, 2),
   },
@@ -58,11 +54,7 @@ def main() -> byte:
       target: "C64",
       entry_point: "main.c64",
       output_name: `${name.toLowerCase().replace(/\s+/g, "_")}.prg`,
-      build_config: {
-        optimize: true,
-        assembler: "acme",
-        load_address: "0x0801",
-      },
+      build_config: { optimize: true, assembler: "acme", load_address: "0x0801" },
       assets: [],
     }, null, 2),
   },
@@ -98,11 +90,7 @@ def main() -> byte:
       target: "C64",
       entry_point: "main.c64",
       output_name: `${name.toLowerCase().replace(/\s+/g, "_")}.prg`,
-      build_config: {
-        optimize: true,
-        assembler: "acme",
-        load_address: "0x0801",
-      },
+      build_config: { optimize: true, assembler: "acme", load_address: "0x0801" },
       assets: [],
     }, null, 2),
   },
@@ -111,7 +99,6 @@ def main() -> byte:
     description: "File di partenza minimale",
     entryContent: `# Nuovo progetto C64
 def main() -> byte:
-    # Il tuo codice qui
     return 0
 `,
     projContent: (name) => JSON.stringify({
@@ -121,11 +108,7 @@ def main() -> byte:
       target: "C64",
       entry_point: "main.c64",
       output_name: `${name.toLowerCase().replace(/\s+/g, "_")}.prg`,
-      build_config: {
-        optimize: true,
-        assembler: "acme",
-        load_address: "0x0801",
-      },
+      build_config: { optimize: true, assembler: "acme", load_address: "0x0801" },
       assets: [],
     }, null, 2),
   },
@@ -136,7 +119,9 @@ export function ProjectWizard() {
   const [step, setStep] = useState<"list" | "configure">("list");
   const [selectedTemplate, setSelectedTemplate] = useState<ProjectTemplate | null>(null);
   const [projectName, setProjectName] = useState("My C64 Project");
-  const { openFile, setActiveProject } = useIDEStore.getState();
+  const [pos, setPos] = useState({ x: window.innerWidth - 340, y: window.innerHeight - 460 });
+  const dragging = useRef(false);
+  const dragStart = useRef({ x: 0, y: 0, left: 0, top: 0 });
 
   const handleSelect = (template: ProjectTemplate) => {
     setSelectedTemplate(template);
@@ -158,9 +143,8 @@ export function ProjectWizard() {
       await writeFile(projPath, selectedTemplate.projContent(projectName));
       await writeFile(entryPath, selectedTemplate.entryContent);
 
-      openFile(entryPath, selectedTemplate.entryContent);
-      setActiveProject(projPath);
-
+      useIDEStore.getState().openFile(entryPath, selectedTemplate.entryContent);
+      useIDEStore.getState().setActiveProject(projPath);
       useIDEStore.getState().addLog(`[PROJECT] Nuovo progetto "${projectName}" creato`);
       setCollapsed(true);
       setStep("list");
@@ -168,6 +152,52 @@ export function ProjectWizard() {
       useIDEStore.getState().addLog(`[ERROR] Creazione progetto fallita: ${e}`);
     }
   };
+
+  const handleOpenProject = async () => {
+    const path = await openFileDialog();
+    if (path) {
+      try {
+        const content = await import("../services/tauriBridge").then(m => m.readFile(path));
+        const name = path.split("/").pop() || path.split("\\").pop() || "project";
+        useIDEStore.getState().openFile(path, content);
+        useIDEStore.getState().setActiveProject(path);
+        useIDEStore.getState().addLog(`[PROJECT] Progetto caricato: ${name}`);
+        setCollapsed(true);
+      } catch (e) {
+        useIDEStore.getState().addLog(`[ERROR] Caricamento progetto fallito: ${e}`);
+      }
+    }
+  };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    dragging.current = true;
+    dragStart.current = { x: e.clientX, y: e.clientY, left: pos.x, top: pos.y };
+    document.body.style.cursor = "grabbing";
+    document.body.style.userSelect = "none";
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!dragging.current) return;
+      setPos({
+        x: Math.max(0, dragStart.current.left + (e.clientX - dragStart.current.x)),
+        y: Math.max(0, dragStart.current.top + (e.clientY - dragStart.current.y)),
+      });
+    };
+    const handleMouseUp = () => {
+      if (dragging.current) {
+        dragging.current = false;
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+      }
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [pos]);
 
   if (collapsed) {
     return (
@@ -182,17 +212,32 @@ export function ProjectWizard() {
   }
 
   return (
-    <div className="fixed bottom-16 right-72 z-50 w-80 bg-editor-sidebar border border-editor-border rounded-lg shadow-2xl overflow-hidden">
-      <div className="flex items-center justify-between px-3 py-2 border-b border-editor-border bg-editor-bg">
+    <div
+      className="fixed z-50 w-80 bg-editor-sidebar border border-editor-border rounded-lg shadow-2xl overflow-hidden"
+      style={{ left: pos.x, top: pos.y }}
+    >
+      <div
+        className="flex items-center justify-between px-3 py-2 border-b border-editor-border bg-editor-bg cursor-grab"
+        onMouseDown={handleMouseDown}
+      >
         <span className="text-xs font-semibold text-editor-text uppercase tracking-wider">
           📁 Nuovo Progetto
         </span>
-        <button
-          onClick={() => { setCollapsed(true); setStep("list"); }}
-          className="text-gray-500 hover:text-editor-text text-xs px-1"
-        >
-          ✕
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            onClick={handleOpenProject}
+            className="text-[10px] text-gray-500 hover:text-editor-accent px-1"
+            title="Apri progetto esistente"
+          >
+            Apri
+          </button>
+          <button
+            onClick={() => { setCollapsed(true); setStep("list"); }}
+            className="text-gray-500 hover:text-editor-text text-xs px-1"
+          >
+            ✕
+          </button>
+        </div>
       </div>
 
       <div className="p-3 space-y-3">

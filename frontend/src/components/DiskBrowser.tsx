@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useIDEStore } from "../store/ideStore";
 import { openFileDialog } from "../services/tauriBridge";
-import { runDiskList, runDiskExtract, runDiskCreate } from "../services/commandService";
+import { runDiskExtract, runDiskCreate } from "../services/commandService";
 
 interface DiskEntry {
   name: string;
@@ -17,6 +17,9 @@ export function DiskBrowser() {
   const [loading, setLoading] = useState(false);
   const [newDiskName, setNewDiskName] = useState("");
   const [newDiskFormat, setNewDiskFormat] = useState<"d64" | "d81">("d64");
+  const [pos, setPos] = useState({ x: window.innerWidth - 340, y: window.innerHeight - 400 });
+  const dragging = useRef(false);
+  const dragStart = useRef({ x: 0, y: 0, left: 0, top: 0 });
 
   const handleOpenDisk = async () => {
     try {
@@ -34,7 +37,21 @@ export function DiskBrowser() {
     setLoading(true);
     setEntries([]);
     try {
-      await runDiskList(path);
+      const { execPluginCommand } = await import("../services/pluginService");
+      const result = await execPluginCommand("disk-tools", "list", undefined, undefined, [
+        "list", path,
+      ]);
+      if (result.success && result.stdout) {
+        const lines = result.stdout.split("\n");
+        const parsed: DiskEntry[] = [];
+        for (const line of lines) {
+          const match = line.match(/\[BASIC\]\s+(.+?)\s{2,}(\w+)\s+(\d+)/);
+          if (match) {
+            parsed.push({ name: match[1].trim(), kind: match[2], size: parseInt(match[3]) });
+          }
+        }
+        setEntries(parsed);
+      }
     } catch {
       addLog("[DISK] Errore nel caricamento disco");
     }
@@ -66,6 +83,37 @@ export function DiskBrowser() {
     }
   };
 
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).tagName === "INPUT" || (e.target as HTMLElement).tagName === "SELECT") return;
+    dragging.current = true;
+    dragStart.current = { x: e.clientX, y: e.clientY, left: pos.x, top: pos.y };
+    document.body.style.cursor = "grabbing";
+    document.body.style.userSelect = "none";
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!dragging.current) return;
+      setPos({
+        x: Math.max(0, dragStart.current.left + (e.clientX - dragStart.current.x)),
+        y: Math.max(0, dragStart.current.top + (e.clientY - dragStart.current.y)),
+      });
+    };
+    const handleMouseUp = () => {
+      if (dragging.current) {
+        dragging.current = false;
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+      }
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [pos]);
+
   if (collapsed && !imagePath) {
     return (
       <button
@@ -79,8 +127,14 @@ export function DiskBrowser() {
   }
 
   return (
-    <div className="fixed bottom-16 right-48 z-50 w-80 bg-editor-sidebar border border-editor-border rounded-lg shadow-2xl overflow-hidden">
-      <div className="flex items-center justify-between px-3 py-2 border-b border-editor-border bg-editor-bg">
+    <div
+      className="fixed z-50 w-80 bg-editor-sidebar border border-editor-border rounded-lg shadow-2xl overflow-hidden"
+      style={{ left: pos.x, top: pos.y }}
+    >
+      <div
+        className="flex items-center justify-between px-3 py-2 border-b border-editor-border bg-editor-bg cursor-grab"
+        onMouseDown={handleMouseDown}
+      >
         <span className="text-xs font-semibold text-editor-text uppercase tracking-wider">
           💾 Disk Browser
         </span>
@@ -93,7 +147,7 @@ export function DiskBrowser() {
             Apri
           </button>
           <button
-            onClick={() => setCollapsed(true)}
+            onClick={() => { setCollapsed(true); }}
             className="text-gray-500 hover:text-editor-text text-xs px-1"
           >
             ✕
@@ -104,7 +158,7 @@ export function DiskBrowser() {
       <div className="p-3 space-y-3">
         {imagePath && (
           <div className="text-[11px] text-gray-400 truncate">
-            📀 {imagePath.split("/").pop()}
+            📀 {imagePath.split("/").pop() || imagePath.split("\\").pop()}
           </div>
         )}
 

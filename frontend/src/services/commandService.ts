@@ -1,532 +1,287 @@
-import { execPluginCommand } from "./pluginService";
+import { execPluginCommand, PluginExecResult } from "./pluginService";
 import { useIDEStore } from "../store/ideStore";
 
-function addLines(logs: string[]) {
+function log(lines: string[]) {
   const { addLog } = useIDEStore.getState();
-  logs.filter(Boolean).forEach((l) => addLog(l));
+  lines.filter(Boolean).forEach((l) => addLog(l));
 }
 
-function addError(msg: string) {
+function error(msg: string) {
   useIDEStore.getState().addLog(`[ERROR] ${msg}`);
 }
 
-// ── Compiler Plugin ──
+async function run(
+  plugin: string,
+  cmd: string,
+  args: string[],
+  successMsg?: string
+): Promise<PluginExecResult> {
+  const result = await execPluginCommand(plugin, cmd, undefined, undefined, [cmd, ...args]);
+  if (result.stdout) log(result.stdout.split("\n"));
+  if (result.stderr) log(result.stderr.split("\n"));
+  if (!result.success) {
+    error(result.error || `${cmd} fallito`);
+  } else if (successMsg) {
+    log([successMsg]);
+  }
+  return result;
+}
 
+// ── Compiler ──
 export async function runCompile(inputPath: string): Promise<void> {
-  const { addLog, setCompiling } = useIDEStore.getState();
+  const { setCompiling } = useIDEStore.getState();
   setCompiling(true);
-  addLog(`[BUILD] Compilazione ${inputPath.split("/").pop()}...`);
-
-  const result = await execPluginCommand("compiler", "compile", undefined, undefined, [
-    "compile", inputPath,
-  ]);
-
+  log([`[BUILD] Compilazione ${inputPath}...`]);
+  await run("compiler", "compile", [inputPath]);
   setCompiling(false);
-
-  if (result.stdout) addLines(result.stdout.split("\n"));
-  if (result.stderr && !result.success) addLines(result.stderr.split("\n"));
-  if (!result.success) addError(result.error || "Compilazione fallita");
 }
 
 export async function runBasicOnly(inputPath: string): Promise<void> {
-  const { addLog } = useIDEStore.getState();
-  addLog(`[BUILD] Generazione BASIC da ${inputPath.split("/").pop()}...`);
-
-  const result = await execPluginCommand("compiler", "basic", undefined, undefined, [
-    "basic", inputPath,
-  ]);
-
-  if (result.stdout) addLines(result.stdout.split("\n"));
-  if (result.stderr && !result.success) addLines(result.stderr.split("\n"));
-  if (!result.success) addError(result.error || "Generazione BASIC fallita");
+  log([`[BUILD] BASIC da ${inputPath}...`]);
+  await run("compiler", "basic", [inputPath]);
 }
 
-// ── Editor Plugin ──
-
+// ── Editor ──
 export async function runTokenize(inputPath: string, outputPath: string): Promise<void> {
-  const { addLog } = useIDEStore.getState();
-  addLog(`[EDITOR] Tokenizzazione ${inputPath.split("/").pop()}...`);
-
-  const result = await execPluginCommand("editor", "tokenize", undefined, undefined, [
-    "tokenize", inputPath, "-o", outputPath,
-  ]);
-
-  if (result.stdout) addLines(result.stdout.split("\n"));
-  if (result.stderr) addLines(result.stderr.split("\n"));
-  if (!result.success) addError(result.error || "Tokenizzazione fallita");
+  log([`[EDITOR] Tokenizzazione ${inputPath}...`]);
+  await run("editor", "tokenize", [inputPath, "-o", outputPath]);
 }
 
 export async function runDetokenize(inputPath: string, outputPath: string): Promise<void> {
-  const { addLog } = useIDEStore.getState();
-  addLog(`[EDITOR] Detokenizzazione ${inputPath.split("/").pop()}...`);
-
-  const result = await execPluginCommand("editor", "detokenize", undefined, undefined, [
-    "detokenize", inputPath, "-o", outputPath,
-  ]);
-
-  if (result.stdout) addLines(result.stdout.split("\n"));
-  if (result.stderr) addLines(result.stderr.split("\n"));
-  if (!result.success) addError(result.error || "Detokenizzazione fallita");
+  log([`[EDITOR] Detokenizzazione ${inputPath}...`]);
+  await run("editor", "detokenize", [inputPath, "-o", outputPath]);
 }
 
 export async function runMinify(inputPath: string, outputPath: string): Promise<void> {
-  const { addLog } = useIDEStore.getState();
-  addLog(`[EDITOR] Minificazione ${inputPath.split("/").pop()}...`);
-
-  const result = await execPluginCommand("editor", "minify", undefined, undefined, [
-    "minify", inputPath, "-o", outputPath,
-  ]);
-
-  if (result.stdout) addLines(result.stdout.split("\n"));
-  if (result.stderr) addLines(result.stderr.split("\n"));
-  if (!result.success) addError(result.error || "Minificazione fallita");
+  log([`[EDITOR] Minificazione ${inputPath}...`]);
+  await run("editor", "minify", [inputPath, "-o", outputPath]);
 }
 
 export async function runPrettify(inputPath: string, outputPath: string): Promise<void> {
-  const { addLog } = useIDEStore.getState();
-  addLog(`[EDITOR] Formattazione ${inputPath.split("/").pop()}...`);
-
-  const result = await execPluginCommand("editor", "prettify", undefined, undefined, [
-    "prettify", inputPath, "-o", outputPath,
-  ]);
-
-  if (result.stdout) addLines(result.stdout.split("\n"));
-  if (result.stderr) addLines(result.stderr.split("\n"));
-  if (!result.success) addError(result.error || "Formattazione fallita");
+  log([`[EDITOR] Formattazione ${inputPath}...`]);
+  await run("editor", "prettify", [inputPath, "-o", outputPath]);
 }
 
-// ── Disk Plugin ──
-
+// ── Disk Tools ──
 export async function runDiskList(imagePath: string): Promise<void> {
-  const { addLog } = useIDEStore.getState();
-  addLog(`[DISK] Lettura ${imagePath.split("/").pop()}...`);
-
-  const result = await execPluginCommand("disk-tools", "list", undefined, undefined, [
-    "list", imagePath,
-  ]);
-
-  if (result.stdout) addLines(result.stdout.split("\n"));
-  if (result.stderr) addLines(result.stderr.split("\n"));
-  if (!result.success) addError(result.error || "Lettura disco fallita");
+  log([`[DISK] Lettura ${imagePath}...`]);
+  await run("disk-tools", "list", [imagePath]);
 }
 
 export async function runDiskExtract(
-  imagePath: string,
-  fileName: string,
-  outputPath?: string
+  imagePath: string, fileName: string, outputPath?: string
 ): Promise<void> {
-  const { addLog } = useIDEStore.getState();
-  addLog(`[DISK] Estrazione ${fileName} da ${imagePath.split("/").pop()}...`);
-
-  const cliArgs = ["extract", imagePath, fileName];
-  if (outputPath) cliArgs.push("-o", outputPath);
-
-  const result = await execPluginCommand("disk-tools", "extract", undefined, undefined, cliArgs);
-
-  if (result.stdout) addLines(result.stdout.split("\n"));
-  if (result.stderr) addLines(result.stderr.split("\n"));
-  if (!result.success) addError(result.error || "Estrazione fallita");
+  const args = [imagePath, fileName];
+  if (outputPath) args.push("-o", outputPath);
+  log([`[DISK] Estrazione ${fileName}...`]);
+  await run("disk-tools", "extract", args);
 }
 
 export async function runDiskInject(imagePath: string, filePath: string): Promise<void> {
-  const { addLog } = useIDEStore.getState();
-  addLog(`[DISK] Inserimento ${filePath.split("/").pop()} in ${imagePath.split("/").pop()}...`);
-
-  const result = await execPluginCommand("disk-tools", "inject", undefined, undefined, [
-    "inject", imagePath, filePath,
-  ]);
-
-  if (result.stdout) addLines(result.stdout.split("\n"));
-  if (result.stderr) addLines(result.stderr.split("\n"));
-  if (!result.success) addError(result.error || "Inserimento fallito");
+  log([`[DISK] Iniezione ${filePath}...`]);
+  await run("disk-tools", "inject", [imagePath, filePath]);
 }
 
 export async function runDiskCreate(
-  outputPath: string,
-  format: "d64" | "d81" = "d64",
-  label?: string
+  outputPath: string, format: "d64" | "d81" = "d64", label?: string
 ): Promise<void> {
-  const { addLog } = useIDEStore.getState();
-  addLog(`[DISK] Creazione disco ${format.toUpperCase()}...`);
-
-  const cliArgs = ["create", label || "UNTITLED"];
-  cliArgs.push("-o", outputPath);
-  cliArgs.push("--format", format);
-
-  const result = await execPluginCommand("disk-tools", "create", undefined, undefined, cliArgs);
-
-  if (result.stdout) addLines(result.stdout.split("\n"));
-  if (result.stderr) addLines(result.stderr.split("\n"));
-  if (!result.success) addError(result.error || "Creazione disco fallita");
+  log([`[DISK] Creazione ${format.toUpperCase()}...`]);
+  const args = ["-o", outputPath, "--format", format];
+  if (label) args.push("--label", label);
+  await run("disk-tools", "create", args);
 }
 
-// ── Emulator Plugin ──
+export async function runDiskFormat(imagePath: string, label?: string): Promise<void> {
+  const args = [imagePath];
+  if (label) args.push("--label", label);
+  log([`[DISK] Formattazione ${imagePath}...`]);
+  await run("disk-tools", "format", args);
+}
 
+export async function runDiskPrgToDisk(
+  outputImage: string, files: string[], label?: string
+): Promise<void> {
+  const args = [outputImage, "--files", files.join(",")];
+  if (label) args.push("--label", label);
+  log([`[DISK] Disco da ${files.length} PRG...`]);
+  await run("disk-tools", "prg-to-disk", args);
+}
+
+export async function runPetSCIIConvert(
+  inputPath: string, direction: "to-petscii" | "to-ascii", outputPath?: string
+): Promise<void> {
+  const args = [inputPath, direction];
+  if (outputPath) args.push("-o", outputPath);
+  log([`[DISK] PETSCII ${inputPath}...`]);
+  await run("disk-tools", "petscii-convert", args);
+}
+
+// ── Emulator ──
 export async function runEmulator(
-  inputPath: string,
-  options?: { sid?: boolean; resid?: boolean; timeout?: number }
+  inputPath: string, options?: { sid?: boolean; resid?: boolean; timeout?: number }
 ): Promise<void> {
-  const { addLog, setCompiling } = useIDEStore.getState();
+  const { setCompiling } = useIDEStore.getState();
   setCompiling(true);
-  addLog(`[EMU] Avvio ${inputPath.split("/").pop()}...`);
-
-  const cliArgs = ["run", inputPath];
-  if (options?.sid) cliArgs.push("--sid");
-  if (options?.resid) cliArgs.push("--resid");
-  if (options?.timeout) cliArgs.push("--timeout", String(options.timeout));
-
-  const result = await execPluginCommand("emulator", "run", undefined, undefined, cliArgs);
-
+  const args = [inputPath];
+  if (options?.sid) args.push("--sid");
+  if (options?.resid) args.push("--resid");
+  if (options?.timeout) args.push("--timeout", String(options.timeout));
+  log([`[EMU] Avvio ${inputPath}...`]);
+  await run("emulator", "run", args);
   setCompiling(false);
-
-  if (result.stdout) addLines(result.stdout.split("\n"));
-  if (result.stderr) addLines(result.stderr.split("\n"));
 }
 
-// ── Project Manager Plugin ──
+export async function runViceRun(prgPath: string, headless?: boolean): Promise<void> {
+  const args = [prgPath];
+  if (headless) args.push("--headless");
+  log([`[VICE] Esecuzione ${prgPath}...`]);
+  await run("emulator", "vice-run", args);
+}
 
+export async function runViceAttach(): Promise<void> {
+  log([`[VICE] Connessione...`]);
+  await run("emulator", "vice-attach", []);
+}
+
+export async function runViceStep(): Promise<void> {
+  log([`[VICE] Step...`]);
+  await run("emulator", "vice-step", []);
+}
+
+export async function runViceRegisters(): Promise<void> {
+  log([`[VICE] Registri...`]);
+  await run("emulator", "vice-registers", []);
+}
+
+export async function runViceMemory(address: string, size?: number): Promise<void> {
+  const args = [address];
+  if (size) args.push("--size", String(size));
+  log([`[VICE] Memoria ${address}...`]);
+  await run("emulator", "vice-memory", args);
+}
+
+// ── Project Manager ──
 export async function runProjectLoad(projectPath: string): Promise<void> {
-  const { addLog, setActiveProject } = useIDEStore.getState();
-  addLog(`[PROJECT] Caricamento ${projectPath.split("/").pop()}...`);
-
-  const result = await execPluginCommand("project-manager", "load", undefined, undefined, [
-    "load", projectPath,
-  ]);
-
-  if (result.stdout) addLines(result.stdout.split("\n"));
-  if (result.stderr) addLines(result.stderr.split("\n"));
-
+  const { setActiveProject } = useIDEStore.getState();
+  log([`[PROJECT] Caricamento ${projectPath}...`]);
+  const result = await run("project-manager", "load", [projectPath]);
   if (result.success) {
     setActiveProject(projectPath);
-    addLog(`[OK] Progetto caricato`);
-  } else {
-    addError(result.error || "Caricamento progetto fallito");
+    log([`[OK] Progetto caricato`]);
   }
 }
 
 export async function runProjectBuild(projectPath: string): Promise<void> {
-  const { addLog, setCompiling } = useIDEStore.getState();
+  const { setCompiling } = useIDEStore.getState();
   setCompiling(true);
-  addLog(`[PROJECT] Build ${projectPath.split("/").pop()}...`);
-
-  const result = await execPluginCommand("project-manager", "build", undefined, undefined, [
-    "build", projectPath,
-  ]);
-
+  log([`[PROJECT] Build ${projectPath}...`]);
+  await run("project-manager", "build", [projectPath]);
   setCompiling(false);
-
-  if (result.stdout) addLines(result.stdout.split("\n"));
-  if (result.stderr) addLines(result.stderr.split("\n"));
-
-  if (result.success) {
-    addLog(`[OK] Build completato`);
-  } else {
-    addError(result.error || "Build progetto fallito");
-  }
 }
 
-// ── AI Agent Plugin ──
-
+// ── AI Agent ──
 export async function runAIAgentGenerate(
-  prompt: string,
-  options?: { mode?: string; output?: string }
+  prompt: string, options?: { mode?: string; output?: string }
 ): Promise<void> {
-  const { addLog } = useIDEStore.getState();
-  addLog(`[AI] Generazione codice da prompt...`);
-
-  const cliArgs = ["generate", prompt];
-  if (options?.mode) cliArgs.push("--mode", options.mode);
-  if (options?.output) cliArgs.push("-o", options.output);
-
-  const result = await execPluginCommand("ai-agent", "generate", undefined, undefined, cliArgs);
-  if (result.stdout) addLines(result.stdout.split("\n"));
-  if (result.stderr) addLines(result.stderr.split("\n"));
-  if (!result.success) addError(result.error || "Generazione fallita");
+  const args = [prompt];
+  if (options?.mode) args.push("--mode", options.mode);
+  if (options?.output) args.push("-o", options.output);
+  log([`[AI] Generazione da prompt...`]);
+  await run("ai-agent", "generate", args);
 }
 
 export async function runAIAgentExplain(inputPath: string): Promise<void> {
-  const { addLog } = useIDEStore.getState();
-  addLog(`[AI] Spiegazione ${inputPath.split("/").pop()}...`);
-
-  const result = await execPluginCommand("ai-agent", "explain", undefined, undefined, [
-    "explain", inputPath,
-  ]);
-  if (result.stdout) addLines(result.stdout.split("\n"));
-  if (result.stderr) addLines(result.stderr.split("\n"));
-  if (!result.success) addError(result.error || "Spiegazione fallita");
+  log([`[AI] Spiegazione ${inputPath}...`]);
+  await run("ai-agent", "explain", [inputPath]);
 }
 
 export async function runAIAgentDebug(inputPath: string, crashPath?: string): Promise<void> {
-  const { addLog } = useIDEStore.getState();
-  addLog(`[AI] Debug ${inputPath.split("/").pop()}...`);
-
-  const cliArgs = ["debug", inputPath];
-  if (crashPath) cliArgs.push("--crash", crashPath);
-
-  const result = await execPluginCommand("ai-agent", "debug", undefined, undefined, cliArgs);
-  if (result.stdout) addLines(result.stdout.split("\n"));
-  if (result.stderr) addLines(result.stderr.split("\n"));
-  if (!result.success) addError(result.error || "Debug AI fallito");
+  const args = [inputPath];
+  if (crashPath) args.push("--crash", crashPath);
+  log([`[AI] Debug ${inputPath}...`]);
+  await run("ai-agent", "debug", args);
 }
 
 export async function runAIAgentSearch(query: string): Promise<void> {
-  const { addLog } = useIDEStore.getState();
-  addLog(`[AI] Ricerca KB: ${query}`);
-
-  const result = await execPluginCommand("ai-agent", "search", undefined, undefined, [
-    "search", query,
-  ]);
-  if (result.stdout) addLines(result.stdout.split("\n"));
-  if (result.stderr) addLines(result.stderr.split("\n"));
+  log([`[AI] Ricerca: ${query}`]);
+  await run("ai-agent", "search", [query]);
 }
 
-// ── Debugger Plugin ──
-
+// ── Debugger ──
 export async function runDebuggerRun(prgPath: string): Promise<void> {
-  const { addLog } = useIDEStore.getState();
-  addLog(`[DEBUG] Avvio ${prgPath.split("/").pop()} in VICE...`);
-
-  const result = await execPluginCommand("debugger", "run", undefined, undefined, [
-    "run", prgPath,
-  ]);
-  if (result.stdout) addLines(result.stdout.split("\n"));
-  if (result.stderr) addLines(result.stderr.split("\n"));
-  if (!result.success) addError(result.error || "Avvio debugger fallito");
+  log([`[DEBUG] Avvio ${prgPath}...`]);
+  await run("debugger", "run", [prgPath]);
 }
 
 export async function runDebuggerStep(): Promise<void> {
-  const { addLog } = useIDEStore.getState();
-  addLog(`[DEBUG] Step...`);
-
-  const result = await execPluginCommand("debugger", "step");
-  if (result.stdout) addLines(result.stdout.split("\n"));
-  if (result.stderr) addLines(result.stderr.split("\n"));
+  log([`[DEBUG] Step...`]);
+  await run("debugger", "step", []);
 }
 
 export async function runDebuggerRegisters(): Promise<void> {
-  const { addLog } = useIDEStore.getState();
-  addLog(`[DEBUG] Lettura registri...`);
-
-  const result = await execPluginCommand("debugger", "registers");
-  if (result.stdout) addLines(result.stdout.split("\n"));
-  if (result.stderr) addLines(result.stderr.split("\n"));
+  log([`[DEBUG] Registri...`]);
+  await run("debugger", "registers", []);
 }
 
 export async function runDebuggerMemory(address: string, size?: number): Promise<void> {
-  const { addLog } = useIDEStore.getState();
-  addLog(`[DEBUG] Lettura memoria ${address}...`);
-
-  const cliArgs = ["memory", address];
-  if (size) cliArgs.push("--size", String(size));
-
-  const result = await execPluginCommand("debugger", "memory", undefined, undefined, cliArgs);
-  if (result.stdout) addLines(result.stdout.split("\n"));
-  if (result.stderr) addLines(result.stderr.split("\n"));
+  const args = [address];
+  if (size) args.push("--size", String(size));
+  log([`[DEBUG] Memoria ${address}...`]);
+  await run("debugger", "memory", args);
 }
 
 export async function runDebuggerBreakpoint(address: string, remove?: boolean): Promise<void> {
-  const { addLog } = useIDEStore.getState();
-  addLog(`[DEBUG] Breakpoint ${remove ? "rimuovi" : "imposta"} ${address}...`);
-
-  const cliArgs = ["breakpoint", address];
-  if (remove) cliArgs.push("--remove");
-
-  const result = await execPluginCommand("debugger", "breakpoint", undefined, undefined, cliArgs);
-  if (result.stdout) addLines(result.stdout.split("\n"));
-  if (result.stderr) addLines(result.stderr.split("\n"));
+  const args = [address];
+  if (remove) args.push("--remove");
+  log([`[DEBUG] Breakpoint ${address}...`]);
+  await run("debugger", "breakpoint", args);
 }
 
 export async function runDebuggerCrashAnalyze(dumpPath: string): Promise<void> {
-  const { addLog } = useIDEStore.getState();
-  addLog(`[DEBUG] Analisi crash dump...`);
-
-  const result = await execPluginCommand("debugger", "crash-analyze", undefined, undefined, [
-    "crash-analyze", dumpPath,
-  ]);
-  if (result.stdout) addLines(result.stdout.split("\n"));
-  if (result.stderr) addLines(result.stderr.split("\n"));
+  log([`[DEBUG] Crash dump ${dumpPath}...`]);
+  await run("debugger", "crash-analyze", [dumpPath]);
 }
 
 export async function runDebuggerReset(): Promise<void> {
-  const { addLog } = useIDEStore.getState();
-  addLog(`[DEBUG] Reset VICE...`);
-
-  const result = await execPluginCommand("debugger", "reset");
-  if (result.stdout) addLines(result.stdout.split("\n"));
-  if (result.stderr) addLines(result.stderr.split("\n"));
+  log([`[DEBUG] Reset...`]);
+  await run("debugger", "reset", []);
 }
 
-// ── Knowledge Plugin ──
-
+// ── Knowledge ──
 export async function runKnowledgeSearch(query: string): Promise<void> {
-  const { addLog } = useIDEStore.getState();
-  addLog(`[KB] Ricerca: ${query}`);
-
-  const result = await execPluginCommand("knowledge", "search", undefined, undefined, [
-    "search", query,
-  ]);
-  if (result.stdout) addLines(result.stdout.split("\n"));
-  if (result.stderr) addLines(result.stderr.split("\n"));
+  log([`[KB] Ricerca: ${query}`]);
+  await run("knowledge", "search", [query]);
 }
 
 export async function runKnowledgeDocs(topic: string): Promise<void> {
-  const { addLog } = useIDEStore.getState();
-  addLog(`[KB] Documentazione: ${topic}`);
-
-  const result = await execPluginCommand("knowledge", "docs", undefined, undefined, [
-    "docs", topic,
-  ]);
-  if (result.stdout) addLines(result.stdout.split("\n"));
-  if (result.stderr) addLines(result.stderr.split("\n"));
+  log([`[KB] Docs: ${topic}`]);
+  await run("knowledge", "docs", [topic]);
 }
 
-// ── Tutorial Plugin ──
-
+// ── Tutorial ──
 export async function runTutorialList(part?: number): Promise<void> {
-  const { addLog } = useIDEStore.getState();
-  addLog(`[TUTORIAL] Elenco capitoli${part ? ` (parte ${part})` : ""}...`);
-
-  const cliArgs: string[] = ["list"];
-  if (part) cliArgs.push("--part", String(part));
-
-  const result = await execPluginCommand("tutorial", "list", undefined, undefined, cliArgs);
-  if (result.stdout) addLines(result.stdout.split("\n"));
-  if (result.stderr) addLines(result.stderr.split("\n"));
+  const args: string[] = [];
+  if (part) args.push("--part", String(part));
+  log([`[TUTORIAL] Elenco${part ? ` parte ${part}` : ""}...`]);
+  await run("tutorial", "list", args);
 }
 
 export async function runTutorialShow(chapter: string, lang?: string): Promise<void> {
-  const { addLog } = useIDEStore.getState();
-  addLog(`[TUTORIAL] Capitolo ${chapter}...`);
-
-  const cliArgs = ["show", chapter];
-  if (lang) cliArgs.push("--lang", lang);
-
-  const result = await execPluginCommand("tutorial", "show", undefined, undefined, cliArgs);
-  if (result.stdout) addLines(result.stdout.split("\n"));
-  if (result.stderr) addLines(result.stderr.split("\n"));
+  const args = [chapter];
+  if (lang) args.push("--lang", lang);
+  log([`[TUTORIAL] Capitolo ${chapter}...`]);
+  await run("tutorial", "show", args);
 }
 
-// ── GeckOS Plugin ──
-
+// ── GeckOS ──
 export async function runGeckosBuild(clean?: boolean): Promise<void> {
-  const { addLog } = useIDEStore.getState();
-  addLog(`[GECKOS] Build GeckOS-NG${clean ? " (clean)" : ""}...`);
-
-  const cliArgs: string[] = ["build"];
-  if (clean) cliArgs.push("--clean");
-
-  const result = await execPluginCommand("geckos", "build", undefined, undefined, cliArgs);
-  if (result.stdout) addLines(result.stdout.split("\n"));
-  if (result.stderr) addLines(result.stderr.split("\n"));
-  if (!result.success) addError(result.error || "Build GeckOS fallita");
+  const args: string[] = [];
+  if (clean) args.push("--clean");
+  log([`[GECKOS] Build${clean ? " (clean)" : ""}...`]);
+  await run("geckos", "build", args);
 }
 
 export async function runGeckosDeploy(outputPath: string): Promise<void> {
-  const { addLog } = useIDEStore.getState();
-  addLog(`[GECKOS] Deploy su ${outputPath}...`);
-
-  const result = await execPluginCommand("geckos", "deploy", undefined, undefined, [
-    "deploy", outputPath,
-  ]);
-  if (result.stdout) addLines(result.stdout.split("\n"));
-  if (result.stderr) addLines(result.stderr.split("\n"));
-}
-
-// ── VICE Emulator (extended) ──
-
-export async function runViceRun(prgPath: string, headless?: boolean): Promise<void> {
-  const { addLog } = useIDEStore.getState();
-  addLog(`[VICE] Esecuzione ${prgPath.split("/").pop()}...`);
-
-  const cliArgs = ["vice-run", prgPath];
-  if (headless) cliArgs.push("--headless");
-
-  const result = await execPluginCommand("emulator", "vice-run", undefined, undefined, cliArgs);
-  if (result.stdout) addLines(result.stdout.split("\n"));
-  if (result.stderr) addLines(result.stderr.split("\n"));
-}
-
-export async function runViceAttach(): Promise<void> {
-  const { addLog } = useIDEStore.getState();
-  addLog(`[VICE] Connessione al monitor...`);
-
-  const result = await execPluginCommand("emulator", "vice-attach");
-  if (result.stdout) addLines(result.stdout.split("\n"));
-  if (result.stderr) addLines(result.stderr.split("\n"));
-}
-
-export async function runViceStep(): Promise<void> {
-  const { addLog } = useIDEStore.getState();
-  addLog(`[VICE] Step...`);
-
-  const result = await execPluginCommand("emulator", "vice-step");
-  if (result.stdout) addLines(result.stdout.split("\n"));
-  if (result.stderr) addLines(result.stderr.split("\n"));
-}
-
-export async function runViceRegisters(): Promise<void> {
-  const { addLog } = useIDEStore.getState();
-  addLog(`[VICE] Lettura registri...`);
-
-  const result = await execPluginCommand("emulator", "vice-registers");
-  if (result.stdout) addLines(result.stdout.split("\n"));
-  if (result.stderr) addLines(result.stderr.split("\n"));
-}
-
-export async function runViceMemory(address: string, size?: number): Promise<void> {
-  const { addLog } = useIDEStore.getState();
-  addLog(`[VICE] Lettura memoria ${address}...`);
-
-  const cliArgs = ["vice-memory", address];
-  if (size) cliArgs.push("--size", String(size));
-
-  const result = await execPluginCommand("emulator", "vice-memory", undefined, undefined, cliArgs);
-  if (result.stdout) addLines(result.stdout.split("\n"));
-  if (result.stderr) addLines(result.stderr.split("\n"));
-}
-
-// ── Disk Tools (extended) ──
-
-export async function runDiskFormat(imagePath: string, label?: string): Promise<void> {
-  const { addLog } = useIDEStore.getState();
-  addLog(`[DISK] Formattazione ${imagePath.split("/").pop()}...`);
-
-  const cliArgs = ["format", imagePath];
-  if (label) cliArgs.push("--label", label);
-
-  const result = await execPluginCommand("disk-tools", "format", undefined, undefined, cliArgs);
-  if (result.stdout) addLines(result.stdout.split("\n"));
-  if (result.stderr) addLines(result.stderr.split("\n"));
-}
-
-export async function runDiskPrgToDisk(
-  outputImage: string,
-  files: string[],
-  label?: string
-): Promise<void> {
-  const { addLog } = useIDEStore.getState();
-  addLog(`[DISK] Creazione disco da ${files.length} PRG...`);
-
-  const cliArgs = ["prg-to-disk", outputImage, "--files", files.join(",")];
-  if (label) cliArgs.push("--label", label);
-
-  const result = await execPluginCommand("disk-tools", "prg-to-disk", undefined, undefined, cliArgs);
-  if (result.stdout) addLines(result.stdout.split("\n"));
-  if (result.stderr) addLines(result.stderr.split("\n"));
-}
-
-export async function runPetSCIIConvert(
-  inputPath: string,
-  direction: "to-petscii" | "to-ascii",
-  outputPath?: string
-): Promise<void> {
-  const { addLog } = useIDEStore.getState();
-  addLog(`[DISK] Conversione PETSCII ${inputPath.split("/").pop()}...`);
-
-  const cliArgs = ["petscii-convert", inputPath, direction];
-  if (outputPath) cliArgs.push("-o", outputPath);
-
-  const result = await execPluginCommand("disk-tools", "petscii-convert", undefined, undefined, cliArgs);
-  if (result.stdout) addLines(result.stdout.split("\n"));
-  if (result.stderr) addLines(result.stderr.split("\n"));
+  log([`[GECKOS] Deploy ${outputPath}...`]);
+  await run("geckos", "deploy", [outputPath]);
 }

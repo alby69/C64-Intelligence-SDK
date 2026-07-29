@@ -9,10 +9,11 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
-# Aggiunge la root del progetto al PYTHONPATH per import relativi
 _project_root = str(Path(__file__).resolve().parent.parent.parent)
-if _project_root not in sys.path:
-    sys.path.insert(0, _project_root)
+_core_service = str(Path(__file__).resolve().parent)
+for p in [_project_root, _core_service]:
+    if p not in sys.path:
+        sys.path.insert(0, p)
 
 from pyc64c.compiler import compile_to_prg
 from plugin_loader import get_loader, reload as reload_plugins
@@ -410,6 +411,14 @@ def exec_plugin_command(plugin_name: str, req: PluginExecRequest):
     result = loader.exec_command(
         plugin_name, req.command, req.args, req.options, cli_args=req.cli_args
     )
-    if not result["success"] and "not found" in result.get("error", ""):
-        raise HTTPException(status_code=404, detail=result["error"])
+    if not result["success"]:
+        if "not found" in result.get("error", "") or "not found" in result.get(
+            "stderr", ""
+        ):
+            raise HTTPException(
+                status_code=404,
+                detail=result.get("error", result.get("stderr", "Not found")),
+            )
+        if result.get("returncode") is not None:
+            return result
     return result

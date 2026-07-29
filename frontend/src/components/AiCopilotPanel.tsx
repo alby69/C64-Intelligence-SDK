@@ -10,6 +10,9 @@ export function AiCopilotPanel() {
   const [collapsed, setCollapsed] = useState(true);
   const [history, setHistory] = useState<{ prompt: string; result: string }[]>([]);
   const clientRef = useRef<AICopilotClient | null>(null);
+  const [pos, setPos] = useState({ x: window.innerWidth - 400, y: window.innerHeight - 400 });
+  const dragging = useRef(false);
+  const dragStart = useRef({ x: 0, y: 0, left: 0, top: 0 });
 
   useEffect(() => {
     return () => {
@@ -32,7 +35,6 @@ export function AiCopilotPanel() {
       },
       onDone: () => {
         setLoading(false);
-        setHistory((prev) => [...prev.slice(-10), { prompt: p, result: suggestion + "\n" }]);
       },
       onError: (err) => {
         addLog(`[AI] Errore: ${err}`);
@@ -40,7 +42,9 @@ export function AiCopilotPanel() {
       },
     });
 
-    clientRef.current.complete(p, context);
+    clientRef.current.complete(p, context).then(() => {
+      setHistory((prev) => [...prev.slice(-9), { prompt: p, result: suggestion }]);
+    });
   };
 
   const insertSuggestion = () => {
@@ -50,6 +54,37 @@ export function AiCopilotPanel() {
     addLog("[AI] Suggerimento inserito nell'editor");
     setSuggestion("");
   };
+
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if ((e.target as HTMLElement).tagName === "INPUT" || (e.target as HTMLElement).tagName === "PRE") return;
+    dragging.current = true;
+    dragStart.current = { x: e.clientX, y: e.clientY, left: pos.x, top: pos.y };
+    document.body.style.cursor = "grabbing";
+    document.body.style.userSelect = "none";
+  };
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!dragging.current) return;
+      setPos({
+        x: Math.max(0, dragStart.current.left + (e.clientX - dragStart.current.x)),
+        y: Math.max(0, dragStart.current.top + (e.clientY - dragStart.current.y)),
+      });
+    };
+    const handleMouseUp = () => {
+      if (dragging.current) {
+        dragging.current = false;
+        document.body.style.cursor = "";
+        document.body.style.userSelect = "";
+      }
+    };
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [pos]);
 
   if (collapsed) {
     return (
@@ -64,8 +99,14 @@ export function AiCopilotPanel() {
   }
 
   return (
-    <div className="fixed bottom-16 right-4 z-50 w-96 bg-editor-sidebar border border-editor-border rounded-lg shadow-2xl overflow-hidden">
-      <div className="flex items-center justify-between px-3 py-2 border-b border-editor-border bg-editor-bg">
+    <div
+      className="fixed z-50 w-96 bg-editor-sidebar border border-editor-border rounded-lg shadow-2xl overflow-hidden"
+      style={{ left: pos.x, top: pos.y }}
+    >
+      <div
+        className="flex items-center justify-between px-3 py-2 border-b border-editor-border bg-editor-bg cursor-grab"
+        onMouseDown={handleMouseDown}
+      >
         <span className="text-xs font-semibold text-editor-text uppercase tracking-wider">
           🤖 AI Copilot
         </span>
@@ -115,6 +156,12 @@ export function AiCopilotPanel() {
                 Ignora
               </button>
             </div>
+          </div>
+        )}
+
+        {loading && !suggestion && (
+          <div className="text-xs text-gray-500 italic text-center py-2">
+            Connessione al server AI...
           </div>
         )}
 

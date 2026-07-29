@@ -187,19 +187,14 @@ def cmd_search(args):
 
 
 def cmd_distill(args):
-    backend = "opencode"
-    max_chunks = 50
-    for i, a in enumerate(args):
-        if a == "--backend" and i + 1 < len(args):
-            backend = args[i + 1]
-        if a == "--max-chunks" and i + 1 < len(args):
-            max_chunks = int(args[i + 1])
-    print(f"[OK] Avvio distillazione con backend: {backend}, max chunks: {max_chunks}")
+    print(
+        f"[OK] Avvio distillazione (usa core/config/teacher_config.yaml per configurazione)"
+    )
     try:
-        from pipeline.knowledge_distiller import run_distillation
+        from pipeline.knowledge_distiller import main as distill_main
 
-        run_distillation(backend=backend, max_chunks=max_chunks)
-        print("[OK] Dataset distillato generato in data/output/distill_dataset.jsonl")
+        distill_main()
+        print("[OK] Dataset distillato generato")
     except ImportError:
         print("[ERROR] Modulo distillazione non disponibile. Esegui da core/")
     return 0

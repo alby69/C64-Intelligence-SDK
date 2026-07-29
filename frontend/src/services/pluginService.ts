@@ -1,6 +1,6 @@
 import { Plugin } from "../store/pluginStore";
 
-const API_BASE = "http://localhost:8000/api/v1";
+const API_BASE = (import.meta as any).env?.VITE_API_BASE || "http://localhost:8000/api/v1";
 
 export interface PluginExecResult {
   success: boolean;
@@ -47,11 +47,18 @@ export async function execPluginCommand(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     });
+
+    const result: PluginExecResult = await res.json();
+
     if (!res.ok) {
-      const err = await res.json().catch(() => ({ detail: `HTTP ${res.status}` }));
-      return { success: false, stdout: "", stderr: "", error: err.detail || `HTTP ${res.status}` };
+      result.success = false;
+      result.error = result.error || result.stderr || `HTTP ${res.status}`;
+      return result;
     }
-    return await res.json();
+    if (!result.success && !result.error) {
+      result.error = result.stderr || "Command failed";
+    }
+    return result;
   } catch (e) {
     return { success: false, stdout: "", stderr: "", error: String(e) };
   }

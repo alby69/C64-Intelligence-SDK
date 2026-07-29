@@ -31,6 +31,10 @@ def ensure_connection(args=None):
         from c64debugger.debugger_core import C64DebuggerCore
 
         bridge = VICERemoteMonitorBridge(host, port)
+        ok, msg = bridge.connect()
+        if not ok:
+            print(f"[ERROR] Connessione a VICE monitor su {host}:{port} fallita: {msg}")
+            sys.exit(1)
         core = C64DebuggerCore()
         _connection = (bridge, core)
         print(f"[OK] Connesso a VICE monitor su {host}:{port}")
