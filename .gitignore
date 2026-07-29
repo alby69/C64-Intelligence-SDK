@@ -6,6 +6,8 @@ output/
 *.prg
 *.bas
 *.asm
+*.d64
+*.log
 
 # PYC64 è un submodule (tools/), non duplicare qui
 pyc64c/
