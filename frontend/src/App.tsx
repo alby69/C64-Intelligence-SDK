@@ -12,10 +12,10 @@ import { FirstRunWizard } from "./components/FirstRunWizard";
 import { useIDEStore } from "./store/ideStore";
 import { writeFile } from "./services/tauriBridge";
 import { runCompile, runEmulator } from "./services/commandService";
+import type { UserPreferences } from "./services/preferencesTypes";
 import {
   loadPreferences,
   savePreferences,
-  UserPreferences,
 } from "./services/preferencesService";
 
 export default function App() {

@@ -1,10 +1,9 @@
 import { useState, useEffect } from "react";
+import type { UserPreferences } from "../services/preferencesTypes";
 import {
-  loadPreferences,
   savePreferences,
   detectVice,
   detectPython,
-  UserPreferences,
 } from "../services/preferencesService";
 
 interface FirstRunWizardProps {
@@ -186,7 +185,24 @@ export function FirstRunWizard({ onComplete }: FirstRunWizardProps) {
         </div>
 
         {/* Footer */}
-        <div className="px-6 py-4 border-t border-editor-border flex justify-end">
+        <div className="px-6 py-4 border-t border-editor-border flex justify-between">
+          <button
+            onClick={() => {
+              savePreferences({
+                last_project: null, last_directory: null, theme: "dark",
+                font_size: 13, window_width: 1280, window_height: 800,
+                VICE_path: null, auto_save: true,
+              });
+              onComplete({
+                last_project: null, last_directory: null, theme: "dark",
+                font_size: 13, window_width: 1280, window_height: 800,
+                VICE_path: null, auto_save: true,
+              });
+            }}
+            className="px-4 py-2 text-gray-500 text-sm hover:text-gray-300 transition-colors"
+          >
+            Salta setup →
+          </button>
           <button
             onClick={handleNext}
             className="px-6 py-2 bg-editor-accent text-white text-sm font-medium rounded-lg hover:bg-editor-accent/80 transition-colors"

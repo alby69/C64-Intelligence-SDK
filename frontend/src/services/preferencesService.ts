@@ -1,14 +1,17 @@
-import { invoke } from "@tauri-apps/api/tauri";
+import type { UserPreferences } from "./preferencesTypes";
 
-export interface UserPreferences {
-  last_project: string | null;
-  last_directory: string | null;
-  theme: string | null;
-  font_size: number | null;
-  window_width: number | null;
-  window_height: number | null;
-  VICE_path: string | null;
-  auto_save: boolean | null;
+function isTauri(): boolean {
+  return typeof window !== "undefined" && "__TAURI__" in window;
+}
+
+async function tauriInvoke<T>(cmd: string, args?: Record<string, unknown>): Promise<T | null> {
+  if (!isTauri()) return null;
+  try {
+    const { invoke } = await import("@tauri-apps/api/tauri");
+    return await invoke<T>(cmd, args);
+  } catch {
+    return null;
+  }
 }
 
 const DEFAULT_PREFS: UserPreferences = {
@@ -23,34 +26,26 @@ const DEFAULT_PREFS: UserPreferences = {
 };
 
 export async function loadPreferences(): Promise<UserPreferences> {
-  try {
-    const prefs = await invoke<UserPreferences>("load_preferences");
-    return { ...DEFAULT_PREFS, ...prefs };
-  } catch {
-    return DEFAULT_PREFS;
-  }
+  const prefs = await tauriInvoke<UserPreferences>("load_preferences");
+  return { ...DEFAULT_PREFS, ...(prefs || {}) };
 }
 
 export async function savePreferences(prefs: UserPreferences): Promise<void> {
+  if (!isTauri()) return;
   try {
+    const { invoke } = await import("@tauri-apps/api/tauri");
     await invoke("save_preferences", { prefs });
   } catch (e) {
     console.error("Failed to save preferences:", e);
   }
 }
 
-export async function detectVice(): Promise<string | null> {
-  try {
-    return await invoke<string | null>("detect_vice");
-  } catch {
-    return null;
-  }
+export async function detectPython(): Promise<string | null> {
+  const tauriResult = await tauriInvoke<string>("detect_python");
+  if (tauriResult) return tauriResult;
+  return navigator.platform.includes("Win") ? "python" : "python3";
 }
 
-export async function detectPython(): Promise<string | null> {
-  try {
-    return await invoke<string | null>("detect_python");
-  } catch {
-    return null;
-  }
+export async function detectVice(): Promise<string | null> {
+  return tauriInvoke<string>("detect_vice");
 }
