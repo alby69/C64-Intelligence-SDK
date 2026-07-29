@@ -29,6 +29,7 @@ def ensure_connection(args=None):
     try:
         from c64debugger.vice_bridge import VICERemoteMonitorBridge
         from c64debugger.debugger_core import C64DebuggerCore
+
         bridge = VICERemoteMonitorBridge(host, port)
         core = C64DebuggerCore()
         _connection = (bridge, core)
@@ -56,6 +57,7 @@ def cmd_run(args):
 
     try:
         from c64debugger.vice_bridge import VICERemoteMonitorBridge
+
         bridge = VICERemoteMonitorBridge()
         if bridge.start_vice_headless(prg_path, limit_cycles=timeout * 1000000):
             print(f"[OK] VICE avviato con {prg_path}")
@@ -64,6 +66,7 @@ def cmd_run(args):
                 print("[OK] Connesso al monitor VICE")
                 global _connection
                 from c64debugger.debugger_core import C64DebuggerCore
+
                 _connection = (bridge, C64DebuggerCore())
                 print(f"[C64] Esecuzione di {os.path.basename(prg_path)}")
             else:
@@ -187,7 +190,7 @@ def cmd_memory(args):
         if data:
             print(f"[OK] Memoria da ${addr_int:04X} ({size} byte):")
             for offset in range(0, len(data), 16):
-                chunk = data[offset:offset + 16]
+                chunk = data[offset : offset + 16]
                 hex_part = " ".join(f"{b:02x}" for b in chunk)
                 ascii_part = "".join(chr(b) if 32 <= b < 127 else "." for b in chunk)
                 addr_line = addr_int + offset
@@ -209,6 +212,7 @@ def cmd_crash_analyze(args):
         return 1
     try:
         from c64debugger.debugger_core import C64DebuggerCore
+
         core = C64DebuggerCore()
         with open(dump_path) as f:
             dump = f.read()
@@ -250,11 +254,29 @@ def cmd_disassemble(args):
     return 0
 
 
+def cmd_status(args):
+    global _connection
+    if _connection is None:
+        print("[WARN] Debugger non connesso. Usa 'attach' per connetterti a VICE.")
+        return 1
+    bridge, core = _connection
+    try:
+        regs = bridge.get_registers()
+        if regs:
+            pc = regs.get("PC", "????")
+            print(f"[OK] Connesso a VICE monitor. PC=${pc}")
+        else:
+            print("[WARN] Connesso ma nessun registro leggibile")
+    except Exception as e:
+        print(f"[ERROR] Status: {e}")
+    return 0
+
+
 def cmd_reset(args):
     bridge, core = ensure_connection()
     try:
-        bridge.reset()
-        print("[OK] Emulatore resettato")
+        bridge.kill_vice()
+        print("[OK] Emulatore arrestato (kill)")
     except Exception as e:
         print(f"[ERROR] Reset: {e}")
     return 0
@@ -262,7 +284,9 @@ def cmd_reset(args):
 
 def main():
     if len(sys.argv) < 2:
-        print("[ERROR] Comando richiesto: attach|run|step|continue|breakpoint|registers|memory|crash-analyze|disassemble|reset")
+        print(
+            "[ERROR] Comando richiesto: attach|run|step|continue|breakpoint|registers|memory|crash-analyze|disassemble|status|reset"
+        )
         return 1
 
     command = sys.argv[1]
@@ -278,6 +302,7 @@ def main():
         "memory": cmd_memory,
         "crash-analyze": cmd_crash_analyze,
         "disassemble": cmd_disassemble,
+        "status": cmd_status,
         "reset": cmd_reset,
     }
 

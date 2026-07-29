@@ -18,6 +18,12 @@ os/bin/
 # Virtual environment
 .venv/
 
+# User-specific config (auto-generated with absolute paths)
+config/
+
+# Windows helper file
+nul
+
 # Frontend
 frontend/node_modules/
 frontend/package-lock.json

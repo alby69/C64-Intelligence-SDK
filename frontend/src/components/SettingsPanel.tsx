@@ -1,9 +1,7 @@
 import { useState, useEffect } from "react";
-import type { UserPreferences } from "../services/preferencesTypes";
 import {
   loadPreferences,
   savePreferences,
-  detectVice,
 } from "../services/preferencesService";
 
 interface SettingsPanelProps {

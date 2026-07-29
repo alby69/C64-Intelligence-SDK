@@ -13,7 +13,6 @@ import { SettingsPanel } from "./components/SettingsPanel";
 import { useIDEStore } from "./store/ideStore";
 import { writeFile } from "./services/tauriBridge";
 import { runCompile, runEmulator } from "./services/commandService";
-import type { UserPreferences } from "./services/preferencesTypes";
 import {
   loadPreferences,
   savePreferences,
@@ -63,7 +62,6 @@ export default function App() {
       if (mod && e.key === "s") {
         e.preventDefault();
         if (activeFile) {
-          const content = fileContents[activeFile] || "";
           saveActiveFile((path, cont) => writeFile(path, cont));
         }
       }

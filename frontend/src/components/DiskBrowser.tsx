@@ -1,6 +1,6 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useIDEStore } from "../store/ideStore";
-import { openFileDialog, readFile, writeFile } from "../services/tauriBridge";
+import { openFileDialog } from "../services/tauriBridge";
 import { runDiskList, runDiskExtract, runDiskCreate } from "../services/commandService";
 
 interface DiskEntry {
@@ -34,8 +34,7 @@ export function DiskBrowser() {
     setLoading(true);
     setEntries([]);
     try {
-      const result = await runDiskList(path);
-      // Parse entries from stdout
+      await runDiskList(path);
     } catch {
       addLog("[DISK] Errore nel caricamento disco");
     }

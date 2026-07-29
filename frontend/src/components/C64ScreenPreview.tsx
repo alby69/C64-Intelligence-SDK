@@ -1,24 +1,11 @@
 import { useEffect, useRef, useState } from "react";
 
-const C64_COLORS = [
-  "#000000", "#ffffff", "#880000", "#aaffee",
-  "#cc44cc", "#00cc55", "#0000aa", "#eeee77",
-  "#dd8855", "#664400", "#ff7777", "#333333",
-  "#777777", "#aaff66", "#0088ff", "#bbbbbb",
-];
-
-const PETSCII_BLOCKS: Record<string, string> = {
-  "█": "█", "▓": "▓", "▒": "▒", "░": "░",
-  "┌": "┌", "┐": "┐", "└": "└", "┘": "┘",
-  "├": "├", "┤": "┤", "┬": "┬", "┴": "┴", "┼": "┼",
-};
-
 export function C64ScreenPreview() {
   const [collapsed, setCollapsed] = useState(true);
   const [output, setOutput] = useState<string[]>([]);
   const [borderColor, setBorderColor] = useState("#0000aa");
-  const [bgColor, setBgColor] = useState("#0000aa");
-  const [textColor, setTextColor] = useState("#ffffff");
+  const [bgColor] = useState("#0000aa");
+  const [textColor] = useState("#ffffff");
   const screenRef = useRef<HTMLDivElement>(null);
   const [cursorVisible, setCursorVisible] = useState(true);
 

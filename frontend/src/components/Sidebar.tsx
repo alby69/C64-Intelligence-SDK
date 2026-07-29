@@ -2,7 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { usePluginStore } from "../store/pluginStore";
 import { useIDEStore } from "../store/ideStore";
 import { PluginCard } from "./PluginCard";
-import { listDirectory, openFileDialog, readFile, DirEntry } from "../services/tauriBridge";
+import { listDirectory, openFileDialog, readFile } from "../services/tauriBridge";
 
 interface FileNode {
   name: string;

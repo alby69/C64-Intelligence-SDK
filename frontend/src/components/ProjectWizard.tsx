@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { useIDEStore } from "../store/ideStore";
 import { saveFileDialog, writeFile } from "../services/tauriBridge";
-import { addLog } from "../store/ideStore";
 
 interface ProjectTemplate {
   name: string;
