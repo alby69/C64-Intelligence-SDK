@@ -317,3 +317,53 @@ def resolve_register(address: str):
                 "description": f"No detailed documentation found for address ${addr_val:04X} in the standard register profile."
             }
         }
+
+
+def load_extracted_memory_map():
+    import os
+    import json
+
+    base_dir = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+    json_path = os.path.join(base_dir, "tools", "kb_extractor", "c64_memory_map.json")
+    if os.path.exists(json_path):
+        try:
+            with open(json_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+
+            total_loaded = 0
+            for category, entries in data.items():
+                for entry in entries:
+                    name = entry.get("name")
+                    desc = entry.get("desc")
+                    dec_str = entry.get("addr_dec", "")
+                    hex_str = entry.get("addr_hex", "")
+
+                    m = re.search(r'([0-9a-fA-F]+)', hex_str)
+                    if m:
+                        try:
+                            addr_val = int(m.group(1), 16)
+                            if addr_val not in REGISTERS_DB:
+                                REGISTERS_DB[addr_val] = {
+                                    "name": name,
+                                    "hex": f"{addr_val:04X}",
+                                    "decimal": addr_val,
+                                    "group": category.replace("_", " ").title(),
+                                    "description": desc
+                                }
+                        except ValueError:
+                            pass
+
+                    new_id = len(documents_db) + 1
+                    documents_db.append({
+                        "id": new_id,
+                        "title": f"{name} ({hex_str} / {dec_str})",
+                        "content": desc,
+                        "category": category
+                    })
+                    total_loaded += 1
+            logger.info(f"Dynamically loaded {total_loaded} entries from memory map JSON into KB Agent.")
+        except Exception as e:
+            logger.error(f"Error loading extracted memory map: {e}")
+
+# Load extracted memory map on startup
+load_extracted_memory_map()

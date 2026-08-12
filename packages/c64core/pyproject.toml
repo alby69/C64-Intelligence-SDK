@@ -1,0 +1,16 @@
+[build-system]
+requires = ["setuptools>=61.0.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "c64core"
+version = "1.0.0"
+description = "Shared constants, PETSCII, and parser utilities for C64 Intelligence"
+readme = "README.md"
+requires-python = ">=3.11"
+authors = [
+    { name = "Alberto Abate" }
+]
+
+[tool.setuptools]
+packages = ["c64core"]
