@@ -52,3 +52,14 @@ services:
       "
     profiles:
       - dont-start
+
+  # ── C64 GameDev MCP Server ──
+  c64-mcp-server:
+    build: .
+    container_name: c64-mcp-server
+    stdin_open: true
+    tty: true
+    working_dir: /app
+    volumes:
+      - .:/app
+    command: python3 /app/submodules/c64-gamedev/c64kit/mcp_server/server.py

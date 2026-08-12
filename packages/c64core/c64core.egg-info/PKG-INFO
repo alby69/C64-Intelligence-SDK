@@ -1,0 +1,10 @@
+Metadata-Version: 2.4
+Name: c64core
+Version: 1.0.0
+Summary: Shared constants, PETSCII, and parser utilities for C64 Intelligence
+Author: Alberto Abate
+Requires-Python: >=3.11
+Description-Content-Type: text/markdown
+
+# c64core
+Shared C64 constants and PETSCII utilities.

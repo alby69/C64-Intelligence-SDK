@@ -1,0 +1,7 @@
+README.md
+pyproject.toml
+c64core/__init__.py
+c64core.egg-info/PKG-INFO
+c64core.egg-info/SOURCES.txt
+c64core.egg-info/dependency_links.txt
+c64core.egg-info/top_level.txt
