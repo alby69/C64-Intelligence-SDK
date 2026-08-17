@@ -1,0 +1,29 @@
+name: Nuova funzionalità
+description: Proponi una nuova funzionalità o miglioramento
+labels: [enhancement]
+body:
+  - type: textarea
+    id: motivation
+    attributes:
+      label: Motivazione
+      description: Quale problema risolve questa funzionalità?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposta
+      description: Descrizione della soluzione proposta
+    validations:
+      required: true
+  - type: dropdown
+    id: scope
+    attributes:
+      label: Ambito
+      options:
+        - Wrapper SDK (orchestrazione/CI/docs)
+        - Plugin system
+        - Submodule (indicare quale nel titolo)
+        - Altro
+    validations:
+      required: true

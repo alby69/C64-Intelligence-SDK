@@ -1,0 +1,56 @@
+{
+  "name": "game-dev",
+  "version": "1.0.0",
+  "description": "C64 Game Development Kit — framework c64kit + libreria assembly c64lib (sprite, collisioni, state machine, HUD)",
+  "category": "game",
+  "icon": "🎮",
+  "entry_point": "plugins/game-dev/wrapper.py",
+  "commands": [
+    {
+      "name": "list",
+      "label": "Elenca giochi e moduli",
+      "description": "Mostra i giochi disponibili e i moduli del framework (c64kit/c64lib)",
+      "args": []
+    },
+    {
+      "name": "build",
+      "label": "Compila gioco",
+      "description": "Compila un gioco con la pipeline c64kit.build (genera .prg/.d64/.crt)",
+      "args": [],
+      "options": {
+        "config": { "type": "string", "default": "c64project.yaml", "description": "Percorso del file c64project.yaml" },
+        "force": { "type": "flag", "description": "Forza rebuild ignorando i timestamp" }
+      }
+    },
+    {
+      "name": "new",
+      "label": "Nuovo gioco",
+      "description": "Bootstrap di un nuovo gioco dal template c64lib",
+      "args": ["game_name"]
+    },
+    {
+      "name": "test",
+      "label": "Testa gioco",
+      "description": "Esegue la suite pytest e/o il test headless VICE del progetto",
+      "args": [],
+      "options": {
+        "config": { "type": "string", "default": "c64project.yaml", "description": "Percorso del file c64project.yaml" }
+      }
+    },
+    {
+      "name": "run",
+      "label": "Esegui in VICE",
+      "description": "Avvia il gioco compilato nell'emulatore x64sc",
+      "args": ["prg_path"],
+      "options": {
+        "disk": { "type": "string", "description": "Avvia l'immagine disco .d64" }
+      }
+    },
+    {
+      "name": "status",
+      "label": "Stato",
+      "description": "Mostra stato del kit, giochi disponibili e tool installati (xa, c1541, cartconv, x64sc)",
+      "args": []
+    }
+  ]
+}

@@ -1,0 +1,34 @@
+site_name: C64 Intelligence SDK
+site_description: IDE e toolkit per sviluppo Commodore 64 assistito da AI
+repo_url: https://github.com/alby69/C64-Intelligence-SDK
+docs_dir: site-docs
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.expand
+
+nav:
+  - Home: index.md
+  - Architettura: ../ARCHITECTURE.md
+  - Changelog: ../CHANGELOG.md
+  - Contributing: ../CONTRIBUTING.md
+  - Licenze terze parti: ../THIRD_PARTY_LICENSES.md
+  - Security: ../SECURITY.md
+  - Decisioni (ADR):
+      - ADR-0001: ../docs/adr/0001-pinning-e-manifest-plugin.md
+      - ADR-0002: ../docs/adr/0002-contratto-dati.md
+  - Moduli:
+      - C64-LLM (core): modules/core/index.md
+      - PYC64 (tools): modules/tools/index.md
+      - C64GameTutorial (tutorial): modules/tutorial/index.md
+      - C64-Scrapy (scraper): modules/scraper/index.md
+      - C64-KB-Agent (kb-agent): modules/kb-agent/index.md
+      - C64-Debugger (debugger): modules/debugger/index.md
+      - C64-Code (editor): modules/editor/index.md
+      - C64-OS (geckos): modules/geckos/index.md
+      - C64-GameDev (gamedev): modules/gamedev/index.md
+
+plugins:
+  - search

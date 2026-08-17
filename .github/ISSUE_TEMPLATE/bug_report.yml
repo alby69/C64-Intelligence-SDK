@@ -1,0 +1,33 @@
+name: Segnalazione bug
+description: Segnala un problema nel wrapper SDK o nell'integrazione dei submodule
+labels: [bug]
+body:
+  - type: textarea
+    id: description
+    attributes:
+      label: Descrizione
+      description: Cosa succede e cosa ti aspettavi?
+    validations:
+      required: true
+  - type: input
+    id: submodule
+    attributes:
+      label: Componente coinvolto
+      description: Quale submodule/plugin è interessato? (core, tools, scraper, kb-agent, debugger, editor, geckos, gamedev, tutorial, wrapper)
+  - type: input
+    id: version
+    attributes:
+      label: SHA/versione
+      description: SHA pinnato del submodule (vedi README → Compatibility Matrix)
+  - type: textarea
+    id: repro
+    attributes:
+      label: Passi per riprodurre
+      description: Passo-passo per riprodurre il problema
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Output / log
+      render: shell

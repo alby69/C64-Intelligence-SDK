@@ -1,0 +1,55 @@
+name: SDK CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  submodules:
+    name: Verifica integrità submodule
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout con submodule ricorsivi
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Verifica corrispondenza .gitmodules ↔ albero
+        run: |
+          declared=$(grep -c "path = " .gitmodules)
+          mounted=$(for p in $(grep "path = " .gitmodules | awk '{print $3}'); do test -d "$p" && echo "$p"; done | wc -l)
+          echo "Submodule dichiarati: $declared"
+          echo "Cartelle montate: $mounted"
+          test "$declared" -eq "$mounted" || { echo "::error::Submodule dichiarati ($declared) != cartelle ($mounted)"; exit 1; }
+          git submodule status | grep -E "^-|^\+" && { echo "::error::Submodule non inizializzati o fuori pin"; exit 1; } || true
+
+  plugins:
+    name: Plugin system + wrapper
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout con submodule ricorsivi
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+
+      - name: Dipendenze backend
+        run: |
+          pip install -r services/core_service/requirements.txt || pip install fastapi uvicorn pydantic pytest
+
+      - name: Test plugin system
+        run: python -m pytest test_plugin_system.py -v
+
+      - name: Test di integrazione (Epic F)
+        run: python -m pytest tests/integration/ -v
+
+      - name: Discovery plugin + smoke test
+        run: |
+          python -c "import sys; sys.path.insert(0,'services/core_service'); from plugin_loader import PluginLoader; l=PluginLoader().discover(); print(f'{len(l)} plugin'); assert len(l) >= 11; [print(' -', n) for n in sorted(l)]"
+          python scripts/list_plugins.py

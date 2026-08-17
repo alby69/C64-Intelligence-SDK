@@ -33,3 +33,4 @@
 [submodule "submodules/c64-gamedev"]
 	path = submodules/c64-gamedev
 	url = https://github.com/alby69/C64-GameDev.git
+	branch = main

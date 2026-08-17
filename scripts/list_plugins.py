@@ -6,7 +6,7 @@ from plugin_loader import PluginLoader
 
 loader = PluginLoader()
 plugins = loader.discover()
-print('╔══ 10 Plugin disponibili ══╗')
+print('╔══ 11 Plugin disponibili ══╗')
 for name, p in sorted(plugins.items()):
     cmds = ', '.join(c.name for c in p.commands)
     print(f'║ {name:20s}  {cmds}')

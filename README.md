@@ -14,8 +14,11 @@ C64-Intelligence-SDK/
 ├── scraper/          → C64-Scrapy      — Scraping documentazione C64
 ├── kb-agent/         → C64-KB-Agent    — Knowledge base (FAISS + SQLite FTS5)
 ├── debugger/         → C64-Debugger    — Debugger VICE remoto
-└── geckos/           → GeckOS-NG       — Sistema operativo multitasking 6502
+├── geckos/           → GeckOS-NG       — Sistema operativo multitasking 6502
+└── submodules/c64-gamedev/ → C64-GameDev     — Kit sviluppo giochi (c64kit + c64lib)
 ```
+
+Per l'architettura (principio "Standalone-first, Integrated-second", mappa moduli, definizione plugin) vedere [ARCHITECTURE.md](ARCHITECTURE.md). Per licenze e sicurezza: [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md) e [SECURITY.md](SECURITY.md).
 
 ## Quick Start
 
@@ -57,7 +60,7 @@ Poi apri **http://localhost:5173** nel browser. Per l'app desktop nativa:
 make tauri-dev     # Richiede Rust + Cargo + Tauri CLI
 ```
 
-## Plugin System (10 plugin)
+## Plugin System (11 plugin)
 
 I plugin sono attivabili da tre interfacce:
 
@@ -76,6 +79,8 @@ python3 plugins/knowledge/wrapper.py search sprite # Cerca documentazione
 python3 plugins/disk-tools/wrapper.py create -o /tmp/test.d64 --label MIOGIOCO
 python3 plugins/geckos/wrapper.py status          # Stato build GeckOS
 python3 plugins/geckos/wrapper.py build           # Compila GeckOS-NG
+python3 plugins/game-dev/wrapper.py list          # Elenco giochi e moduli
+python3 plugins/game-dev/wrapper.py build --config games/invaders/c64project.yaml
 python3 plugins/debugger/wrapper.py attach        # Connetti a VICE
 python3 plugins/ai-agent/wrapper.py status        # Stato agente AI
 ```
@@ -100,6 +105,7 @@ curl -X POST http://localhost:8000/api/v1/plugins/tutorial/exec \
 | **editor** | tools/ | tokenize, detokenize, minify, prettify |
 | **emulator** | editor/ | run, vice-run, vice-attach, vice-step, vice-reset, vice-memory, vice-registers, vice-info, vice-upload |
 | **geckos** | geckos/ | build, deploy, run, status |
+| **game-dev** | submodules/c64-gamedev/ | list, build, new, test, run, status |
 | **knowledge** | kb-agent/ | search, docs, status, list-api, list-files |
 | **project-manager** | tools/ | load, build |
 | **tutorial** | tutorial/ | list, show, example, template, search, references |
@@ -136,6 +142,23 @@ make docker-run     # Avvia TUI terminale (pyc64_ui)
 | `kb-agent/` | [C64-KB-Agent](https://github.com/alby69/C64-KB-Agent) | knowledge |
 | `debugger/` | [C64-Debugger](https://github.com/alby69/C64-Debugger) | debugger |
 | `geckos/` | [C64-OS](https://github.com/alby69/C64-OS) | geckos |
+| `submodules/c64-gamedev/` | [C64-GameDev](https://github.com/alby69/C64-GameDev) | game-dev |
+
+## Compatibility Matrix
+
+Versioni dei submodule effettivamente pinnate sul ramo `main` dell'SDK. I bump passano dalla CI (`sdk-ci.yml`) prima del merge e sono proposti automaticamente da Renovate.
+
+| Mount point | Repository | SHA pinnato | Branch |
+|---|---|---|---|
+| `core/` | C64-LLM | `c40c0ef` | main |
+| `tools/` | PYC64 | `b4a2095` | main |
+| `tutorial/` | C64GameTutorial | `c349791` | main |
+| `scraper/` | C64-Scrapy | `758486f` | main |
+| `kb-agent/` | C64-KB-Agent | `b97908b` | main |
+| `debugger/` | C64-Debugger | `9426418` | main |
+| `editor/` | C64-Code | `d422cad` | main |
+| `geckos/` | C64-OS | `e424d81` | master |
+| `submodules/c64-gamedev/` | C64-GameDev | `b9c5dcb` | main |
 
 ## Autore
 

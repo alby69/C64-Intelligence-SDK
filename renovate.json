@@ -1,0 +1,17 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["config:recommended"],
+  "git-submodules": {
+    "enabled": true,
+    "branchTopic": "submodule-{{{depName}}}"
+  },
+  "packageRules": [
+    {
+      "matchManagers": ["git-submodules"],
+      "groupName": "submodules",
+      "automerge": false
+    }
+  ],
+  "semanticCommits": "enabled",
+  "labels": ["submodule", "dependencies"]
+}
