@@ -22,7 +22,7 @@ declare -A CUSTOM=(
 cd "$SDK_ROOT"
 
 for d in core tools tutorial scraper kb-agent debugger editor geckos submodules/c64-gamedev; do
-  if [ ! -d "$d/.git" ]; then
+  if [ ! -e "$d/.git" ]; then
     echo "[SKIP] $d: non è un submodule inizializzato"
     continue
   fi
