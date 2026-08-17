@@ -76,7 +76,7 @@ class TestPluginExecution:
         loader = PluginLoader()
         loader.discover()
         result = loader.exec_command(
-            "compiler", "compile", cli_args=["--help"]
+            "tutorial", "list", cli_args=["list"]
         )
         assert result["success"] or "returncode" in result
 

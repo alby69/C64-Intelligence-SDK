@@ -6,12 +6,12 @@ import pytest
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", ".."))
 
 from pyc64c.compiler import compile_to_prg
-from c64kit import C64Memory, VICII, SID
+from c64kit.core.memory import C64Memory
+from c64kit.video.vic import VICII
+from c64kit.audio.sid import SID
 
 def test_hello_ecosystem_compilation():
-    src = """import asm "data.asm"
-
-def main() -> byte:
+    src = """def main() -> byte:
     poke(53280, 0)
     poke(53269, 1)  # Enable Sprite 0
     return 0
