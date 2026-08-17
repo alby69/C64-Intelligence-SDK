@@ -20,6 +20,6 @@ IDE moderna per lo sviluppo su Commodore 64. Compila, debugga, emula e sviluppa 
 | `debugger/` | C64-Debugger | debugger |
 | `editor/` | C64-Code | disk-tools, emulator |
 | `geckos/` | C64-OS | geckos |
-| `submodules/c64-gamedev/` | C64-GameDev | game-dev |
+| `gamedev/` | C64-GameDev | game-dev |
 
 Ogni modulo resta autonomo: documentazione e sorgenti vivono nei rispettivi sub-repo e sono aggregati qui per riferimento (vedi `scripts/sync_docs.py`).

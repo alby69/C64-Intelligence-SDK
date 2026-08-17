@@ -62,4 +62,4 @@ services:
     working_dir: /app
     volumes:
       - .:/app
-    command: python3 /app/submodules/c64-gamedev/c64kit/mcp_server/server.py
+    command: python3 /app/gamedev/c64kit/mcp_server/server.py

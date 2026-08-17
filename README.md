@@ -15,7 +15,7 @@ C64-Intelligence-SDK/
 ├── kb-agent/         → C64-KB-Agent    — Knowledge base (FAISS + SQLite FTS5)
 ├── debugger/         → C64-Debugger    — Debugger VICE remoto
 ├── geckos/           → GeckOS-NG       — Sistema operativo multitasking 6502
-└── submodules/c64-gamedev/ → C64-GameDev     — Kit sviluppo giochi (c64kit + c64lib)
+└── gamedev/           → C64-GameDev     — Kit sviluppo giochi (c64kit + c64lib)
 ```
 
 Per l'architettura (principio "Standalone-first, Integrated-second", mappa moduli, definizione plugin) vedere [ARCHITECTURE.md](ARCHITECTURE.md). Per licenze e sicurezza: [THIRD_PARTY_LICENSES.md](THIRD_PARTY_LICENSES.md) e [SECURITY.md](SECURITY.md).
@@ -105,7 +105,7 @@ curl -X POST http://localhost:8000/api/v1/plugins/tutorial/exec \
 | **editor** | tools/ | tokenize, detokenize, minify, prettify |
 | **emulator** | editor/ | run, vice-run, vice-attach, vice-step, vice-reset, vice-memory, vice-registers, vice-info, vice-upload |
 | **geckos** | geckos/ | build, deploy, run, status |
-| **game-dev** | submodules/c64-gamedev/ | list, build, new, test, run, status |
+| **game-dev** | gamedev/ | list, build, new, test, run, status |
 | **knowledge** | kb-agent/ | search, docs, status, list-api, list-files |
 | **project-manager** | tools/ | load, build |
 | **tutorial** | tutorial/ | list, show, example, template, search, references |
@@ -142,7 +142,7 @@ make docker-run     # Avvia TUI terminale (pyc64_ui)
 | `kb-agent/` | [C64-KB-Agent](https://github.com/alby69/C64-KB-Agent) | knowledge |
 | `debugger/` | [C64-Debugger](https://github.com/alby69/C64-Debugger) | debugger |
 | `geckos/` | [C64-OS](https://github.com/alby69/C64-OS) | geckos |
-| `submodules/c64-gamedev/` | [C64-GameDev](https://github.com/alby69/C64-GameDev) | game-dev |
+| `gamedev/` | [C64-GameDev](https://github.com/alby69/C64-GameDev) | game-dev |
 
 ## Compatibility Matrix
 
@@ -158,7 +158,7 @@ Versioni dei submodule effettivamente pinnate sul ramo `main` dell'SDK. I bump p
 | `debugger/` | C64-Debugger | `9426418` | main |
 | `editor/` | C64-Code | `d422cad` | main |
 | `geckos/` | C64-OS | `e424d81` | master |
-| `submodules/c64-gamedev/` | C64-GameDev | `b9c5dcb` | main |
+| `gamedev/` | C64-GameDev | `f84b248` | main |
 
 ## Autore
 

@@ -6,7 +6,7 @@ Formato basato su [Keep a Changelog](https://keepachangelog.com/it/1.1.0/) e [Se
 ## [Unreleased]
 
 ### Aggiunto
-- Submodule `submodules/c64-gamedev/` (C64-GameDev) con plugin `game-dev`.
+- Submodule `gamedev/` (C64-GameDev) con plugin `game-dev`.
 - Schema contratto dati (Epic B): `kb-agent/schemas/*.json` + test di validazione su produttore e consumatore.
 - Manifest `plugin.yaml` nei sub-repo e `pyproject.toml` per core/tools/scraper/kb-agent (Epic C).
 - CI SDK (`sdk-ci.yml`): verifica integrità submodule, test plugin system (Epic A).

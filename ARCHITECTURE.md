@@ -26,9 +26,9 @@ Conseguenze operative:
 | `debugger/` | [C64-Debugger](https://github.com/alby69/C64-Debugger) | Bridge verso VICE, analisi crash dump, breakpoint | main | `setup.py` | ✅ |
 | `editor/` | [C64-Code](https://github.com/alby69/C64-Code) | Tokenizer, diskimage, bridge VICE/Ultimate | main | `pyproject.toml` | ✅ |
 | `geckos/` | [C64-OS](https://github.com/alby69/C64-OS) | GeckOS-NG — OS multitasking 6502 | master | ❌ assente | ✅ |
-| `submodules/c64-gamedev/` | [C64-GameDev](https://github.com/alby69/C64-GameDev) | Kit sviluppo giochi (c64kit + c64lib) | main | `setup.py` | ✅ |
+| `gamedev/` | [C64-GameDev](https://github.com/alby69/C64-GameDev) | Kit sviluppo giochi (c64kit + c64lib) | main | `setup.py` | ✅ |
 
-Nota: gli 8 submodule originali più `submodules/c64-gamedev/` risultano tutti presenti nell'albero e il file `.gitmodules` è in corrispondenza 1:1 con le cartelle (Problema #1 del piano di miglioramento già sanato).
+Nota: i 9 submodule risultano tutti presenti in root e il file `.gitmodules` è in corrispondenza 1:1 con le cartelle (Problema #1 del piano di miglioramento già sanato).
 
 ## Flusso dati
 
@@ -42,7 +42,7 @@ Scrapy (scraper/) ──file JSONL/Markdown──▶ GitHub Actions (cron) ─�
 
 Il flusso `Scrapy → GitHub Actions → KB-Agent → LLM` è l'architettura decoupled di riferimento dell'ecosistema: comunica tramite file con ID deterministici SHA256 e deduplicazione esplicita, **senza import di codice Python tra i repository**. Il contratto dati deve essere formalizzato come schema versionato (vedi §5).
 
-Gli altri moduli (`tools/`, `debugger/`, `editor/`, `submodules/c64-gamedev/`) sono orchestrati dall'SDK come plugin via CLI/API (vedi §4) e non dipendono l'uno dall'altro a runtime.
+Gli altri moduli (`tools/`, `debugger/`, `editor/`, `gamedev/`) sono orchestrati dall'SDK come plugin via CLI/API (vedi §4) e non dipendono l'uno dall'altro a runtime.
 
 ## Definizione di plugin
 

@@ -42,7 +42,7 @@ jobs:
       - name: Dipendenze backend
         run: |
           pip install -r services/core_service/requirements.txt || pip install fastapi uvicorn pydantic pytest
-          pip install -e submodules/c64-gamedev
+          pip install -e gamedev
 
       - name: Test plugin system
         run: python -m pytest test_plugin_system.py -v

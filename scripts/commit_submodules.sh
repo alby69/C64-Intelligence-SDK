@@ -21,7 +21,7 @@ declare -A CUSTOM=(
 
 cd "$SDK_ROOT"
 
-for d in core tools tutorial scraper kb-agent debugger editor geckos submodules/c64-gamedev; do
+for d in core tools tutorial scraper kb-agent debugger editor geckos gamedev; do
   if [ ! -e "$d/.git" ]; then
     echo "[SKIP] $d: non è un submodule inizializzato"
     continue
@@ -43,6 +43,6 @@ done
 
 if [ "$PUSH" = "--push" ]; then
   echo "[...] wrapper: aggiorna puntatori submodule"
-  git add core tools tutorial scraper kb-agent debugger editor geckos submodules/c64-gamedev
+  git add core tools tutorial scraper kb-agent debugger editor geckos gamedev
   echo "[OK] Puntatori aggiornati. Verifica con: git status, poi commit nel wrapper."
 fi

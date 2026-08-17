@@ -13,7 +13,7 @@ Questo repository (C64-Intelligence-SDK) è un meta-repository GPLv3 che aggrega
 | `debugger/` | [C64-Debugger](https://github.com/alby69/C64-Debugger) | **GPLv3** | `debugger/LICENSE` |
 | `editor/` | [C64-Code](https://github.com/alby69/C64-Code) | **MIT** | `editor/LICENSE`; © Moonspace Labs, LLC |
 | `geckos/` | [C64-OS](https://github.com/alby69/C64-OS) | **GPLv2** | `geckos/COPYING` |
-| `submodules/c64-gamedev/` | [C64-GameDev](https://github.com/alby69/C64-GameDev) | **da definire** | nessun file LICENSE presente — aggiungere prima del rilascio |
+| `gamedev/` | [C64-GameDev](https://github.com/alby69/C64-GameDev) | **da definire** | nessun file LICENSE presente — aggiungere prima del rilascio |
 
 ## Obblighi di redistribuzione
 
@@ -21,7 +21,7 @@ Questo repository (C64-Intelligence-SDK) è un meta-repository GPLv3 che aggrega
 - **MIT**: consente l'uso con attribuzione; nessun obbligo copyleft.
 - **CC BY 4.0** (manuale `tutorial/`): richiede l'attribuzione dell'autore originale (`@alby69`) quando si redistribuisce il materiale didattico; non si applica al codice.
 
-I componenti non ancora licenziati (`submodules/c64-gamedev/`) o con licenza mista (`tutorial/`) vanno chiariti prima di pubblicare release distributive dell'SDK.
+I componenti non ancora licenziati (`gamedev/`) o con licenza mista (`tutorial/`) vanno chiariti prima di pubblicare release distributive dell'SDK.
 
 ## Dipendenze di terze parti
 

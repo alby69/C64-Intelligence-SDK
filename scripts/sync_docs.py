@@ -20,7 +20,7 @@ MODULES = {
     "debugger": "C64-Debugger",
     "editor": "C64-Code",
     "geckos": "C64-OS",
-    "gamedev": "C64-GameDev",  # mount point: submodules/c64-gamedev
+    "gamedev": "C64-GameDev",
 }
 
 
@@ -28,8 +28,6 @@ def sync():
     os.makedirs(STAGING, exist_ok=True)
     for name, label in MODULES.items():
         src = os.path.join(SDK_ROOT, name, "docs")
-        if name == "gamedev":
-            src = os.path.join(SDK_ROOT, "submodules", "c64-gamedev", "docs")
         dst = os.path.join(STAGING, name)
         if os.path.islink(dst) or os.path.isdir(dst):
             os.unlink(dst)

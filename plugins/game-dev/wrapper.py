@@ -7,7 +7,7 @@ import subprocess
 import shutil
 
 SDK_ROOT = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-GAMEDEV_DIR = os.path.join(SDK_ROOT, "submodules", "c64-gamedev")
+GAMEDEV_DIR = os.path.join(SDK_ROOT, "gamedev")
 GAMES_DIR = os.path.join(GAMEDEV_DIR, "games")
 
 
@@ -68,7 +68,7 @@ def cmd_build(args):
             config = args[i + 1]
 
     if not os.path.isdir(GAMEDEV_DIR):
-        print("[ERROR] Submodulo submodules/c64-gamedev/ non inizializzato (git submodule update --init)")
+        print("[ERROR] Submodulo gamedev/ non inizializzato (git submodule update --init)")
         return 1
     if not os.path.isfile(os.path.join(GAMEDEV_DIR, config)):
         print(f"[ERROR] Config non trovata: {config} (usa --config per selezionare un gioco)")
@@ -96,7 +96,7 @@ def cmd_new(args):
 
     script = os.path.join(GAMEDEV_DIR, "new_game.sh")
     if not os.path.isfile(script):
-        print("[ERROR] new_game.sh non trovato nel submodulo submodules/c64-gamedev/")
+        print("[ERROR] new_game.sh non trovato nel submodulo gamedev/")
         return 1
 
     print(f"[OK] Bootstrap nuovo gioco: {name}")
@@ -169,7 +169,7 @@ def cmd_status(args):
     print("[OK] Stato C64 Game Development Kit")
 
     if not os.path.isdir(GAMEDEV_DIR):
-        print("[ERROR] Submodulo submodules/c64-gamedev/ non inizializzato (git submodule update --init)")
+        print("[ERROR] Submodulo gamedev/ non inizializzato (git submodule update --init)")
         return 1
 
     games = _list_games()
