@@ -28,7 +28,7 @@ nav:
       - C64-Debugger (debugger): modules/debugger/index.md
       - C64-Code (editor): modules/editor/index.md
       - C64-OS (geckos): modules/geckos/index.md
-      - C64-GameDev (gamedev): modules/gamedev/index.md
+      - C64-GameDev (submodules/c64-gamedev): modules/gamedev/index.md
 
 plugins:
   - search

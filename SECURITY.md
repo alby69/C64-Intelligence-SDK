@@ -2,7 +2,7 @@
 
 ## Versioni supportate
 
-Le correzioni di sicurezza vengono applicate al ramo `main` del repository wrapper. I submodule (`core/`, `tools/`, `tutorial/`, `scraper/`, `kb-agent/`, `debugger/`, `editor/`, `geckos/`, `gamedev/`) sono repository indipendenti: ogni vulnerabilità in essi va segnalata al rispettivo repository e verificata al momento del bump del puntatore submodule.
+Le correzioni di sicurezza vengono applicate al ramo `main` del repository wrapper. I submodule (`core/`, `tools/`, `tutorial/`, `scraper/`, `kb-agent/`, `debugger/`, `editor/`, `geckos/`, `submodules/c64-gamedev/`) sono repository indipendenti: ogni vulnerabilità in essi va segnalata al rispettivo repository e verificata al momento del bump del puntatore submodule.
 
 ## Segnalazione di una vulnerabilità
 
