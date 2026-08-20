@@ -1,0 +1,21 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "c64-schemas"
+version = "1.0.0"
+description = "Unified JSON schemas and validation utilities for C64 Intelligence Ecosystem"
+authors = [{ name = "C64 Intelligence SDK Team" }]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "jsonschema>=4.0.0"
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=7.0.0"]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["c64_schemas*"]

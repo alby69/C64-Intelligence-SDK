@@ -1,0 +1,47 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "C64Document",
+  "type": "object",
+  "required": ["id", "content_type", "language", "content", "metadata", "validation_status"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Deterministic SHA256 hash or unique ID"
+    },
+    "source_url": {
+      "type": "string"
+    },
+    "source_repo": {
+      "type": "string"
+    },
+    "spider_name": {
+      "type": "string"
+    },
+    "content_type": {
+      "type": "string",
+      "enum": ["manual", "source_code", "tutorial", "api_doc", "scraped", "general"]
+    },
+    "language": {
+      "type": "string",
+      "enum": ["basic_v2", "acme", "kickassembler", "ca65", "dasm", "turbo_assembler", "markdown", "text", "python", "assembly"]
+    },
+    "content": {
+      "type": "string"
+    },
+    "metadata": {
+      "type": "object",
+      "properties": {
+        "title": {"type": "string"},
+        "tags": {"type": "array", "items": {"type": "string"}},
+        "author": {"type": "string"},
+        "date_crawled": {"type": "string"},
+        "date_validated": {"type": "string"},
+        "quality_score": {"type": "number", "minimum": 0, "maximum": 100}
+      }
+    },
+    "validation_status": {
+      "type": "string",
+      "enum": ["pending", "syntax_ok", "syntax_warn", "rejected"]
+    }
+  }
+}
