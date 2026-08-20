@@ -7,7 +7,7 @@ name = "c64core"
 version = "1.0.0"
 description = "Shared constants, PETSCII, and parser utilities for C64 Intelligence"
 readme = "README.md"
-requires-python = ">=3.11"
+requires-python = ">=3.10"
 authors = [
     { name = "Alberto Abate" }
 ]
