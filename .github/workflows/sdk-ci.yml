@@ -41,7 +41,7 @@ jobs:
 
       - name: Dipendenze backend
         run: |
-          pip install -r services/core_service/requirements.txt || pip install fastapi uvicorn pydantic pytest
+          pip install -r services/core_service/requirements.txt
           pip install -e sdk/schemas/
           pip install -e gamedev
 
