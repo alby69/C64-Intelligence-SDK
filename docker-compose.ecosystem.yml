@@ -1,0 +1,52 @@
+version: '3.8'
+
+networks:
+  c64-intelligence:
+    driver: bridge
+
+volumes:
+  c64-kb-data:
+  c64-scrapy-data:
+
+services:
+  scrapy:
+    build:
+      context: ./scraper
+    ports:
+      - "8001:8001"
+    environment:
+      - SCRAPY_WEBHOOK_URL=http://kb-agent:8002/documents/ingest
+    networks:
+      - c64-intelligence
+    volumes:
+      - c64-scrapy-data:/app/docs_c64
+    command: ["python", "main.py", "serve", "--host", "0.0.0.0", "--port", "8001"]
+
+  kb-agent:
+    build:
+      context: ./kb-agent
+    ports:
+      - "8002:8002"
+    environment:
+      - LLM_EVENT_ENDPOINT=http://llm-core:7860/api/v1/events
+    networks:
+      - c64-intelligence
+    volumes:
+      - c64-kb-data:/app/data
+    command: ["uvicorn", "c64_kb_agent.api:app", "--host", "0.0.0.0", "--port", "8002"]
+
+  core-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+    environment:
+      - SCRAPY_API_URL=http://scrapy:8001
+      - KB_AGENT_URL=http://kb-agent:8002
+    networks:
+      - c64-intelligence
+    depends_on:
+      - scrapy
+      - kb-agent
+    command: ["uvicorn", "services.core_service.main:app", "--host", "0.0.0.0", "--port", "8000"]

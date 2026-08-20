@@ -66,7 +66,6 @@ def read_root():
 @app.post("/api/v1/compile", response_model=CompileResponse)
 def compile_code(req: CompileRequest):
     try:
-        # Parse load address
         try:
             load_addr = (
                 int(req.load_address, 16)
@@ -76,7 +75,6 @@ def compile_code(req: CompileRequest):
         except ValueError:
             load_addr = 0x0801
 
-        # Run compilation
         prg_bytes, result = compile_to_prg(req.source_code)
 
         if result.success:
@@ -128,22 +126,18 @@ async def websocket_lsp(websocket: WebSocket):
                     text_document = params.get("textDocument", {})
                     uri = text_document.get("uri", "file:///src/main.c64")
 
-                    # Grab content
                     content = ""
                     if "contentChanges" in params and len(params["contentChanges"]) > 0:
                         content = params["contentChanges"][0].get("text", "")
                     else:
                         content = text_document.get("text", "")
 
-                    # Run compiler to get diagnostics
                     diagnostics = []
                     if content:
                         _, result = compile_to_prg(content)
                         if not result.success:
                             for err in result.lex_errors + result.parse_errors:
-                                line = (
-                                    err.get("line", 1) - 1
-                                )  # 0-based index for Monaco/LSP
+                                line = err.get("line", 1) - 1
                                 if line < 0:
                                     line = 0
                                 diagnostics.append(
@@ -152,12 +146,11 @@ async def websocket_lsp(websocket: WebSocket):
                                             "start": {"line": line, "character": 0},
                                             "end": {"line": line, "character": 80},
                                         },
-                                        "severity": 1,  # Error
+                                        "severity": 1,
                                         "message": err.get("msg", "Syntax error"),
                                     }
                                 )
 
-                    # Publish diagnostics response
                     resp = {
                         "jsonrpc": "2.0",
                         "method": "textDocument/publishDiagnostics",
@@ -166,7 +159,6 @@ async def websocket_lsp(websocket: WebSocket):
                     await websocket.send_text(json.dumps(resp))
 
                 elif msg_id is not None:
-                    # Echo standard jsonrpc response
                     resp = {"jsonrpc": "2.0", "id": msg_id, "result": "processed"}
                     await websocket.send_text(json.dumps(resp))
             except json.JSONDecodeError:
@@ -195,12 +187,8 @@ async def websocket_ai_copilot(websocket: WebSocket):
             data = await websocket.receive_text()
             try:
                 msg = json.loads(data)
-                action = msg.get("action")
                 prompt = msg.get("prompt", "")
-                context = msg.get("context", "")
                 prompt_lower = prompt.lower()
-
-                tokens = []
 
                 if any(w in prompt_lower for w in ["print", "10 print"]):
                     tokens = [
@@ -211,82 +199,12 @@ async def websocket_ai_copilot(websocket: WebSocket):
                         '    print("HELLO WORLD!")\n',
                         "    return 0\n",
                     ]
-                elif any(w in prompt_lower for w in ["for", "loop", "ciclo"]):
-                    tokens = [
-                        "# Ciclo FOR con contatore\n",
-                        "def main() -> byte:\n",
-                        "    for i = 0 to 255\n",
-                        "        poke(1024 + i, i)\n",
-                        "        poke(55296 + i, 1)\n",
-                        "    next i\n",
-                        "    return 0\n",
-                    ]
-                elif any(w in prompt_lower for w in ["poke", "color", "colore"]):
-                    tokens = [
-                        "# Cambio colori schermo\n",
-                        "def main() -> byte:\n",
-                        "    poke(53280, 0)  # bordo nero\n",
-                        "    poke(53281, 0)  # sfondo nero\n",
-                        "    for i = 0 to 999\n",
-                        "        poke(1024 + i, 81)  # blocco pieno\n",
-                        "        poke(55296 + i, i mod 16)\n",
-                        "    next i\n",
-                        "    return 0\n",
-                    ]
-                elif any(w in prompt_lower for w in ["sprite"]):
-                    tokens = [
-                        "# Mostra sprite\n",
-                        "byte sprite[64] = [\n",
-                        "    $00,$7E,$FF,$FF,$FF,$FF,$7E,$00,\n",
-                        "    $3C,$7E,$FF,$DB,$FF,$DB,$7E,$3C,\n",
-                        "    $7E,$FF,$FF,$FF,$FF,$FF,$FF,$7E,\n",
-                        "    $7E,$FF,$FF,$FF,$FF,$FF,$FF,$7E,\n",
-                        "    $3C,$7E,$FF,$DB,$FF,$DB,$7E,$3C,\n",
-                        "    $00,$7E,$FF,$FF,$FF,$FF,$7E,$00,\n",
-                        "    $00,$3C,$7E,$7E,$7E,$7E,$3C,$00\n",
-                        "]\n",
-                        "\n",
-                        "def main() -> byte:\n",
-                        "    poke(53269, 1)      # abilita sprite\n",
-                        "    poke(2040, 13)      # puntatore a $0340\n",
-                        "    for i = 0 to 63\n",
-                        "        poke(832 + i, sprite[i])\n",
-                        "    next i\n",
-                        "    poke(53248, 100)    # X\n",
-                        "    poke(53249, 100)    # Y\n",
-                        "    return 0\n",
-                    ]
-                elif any(w in prompt_lower for w in ["sound", "sid", "suono"]):
-                    tokens = [
-                        "# Suono SID\n",
-                        "def main() -> byte:\n",
-                        "    poke(54296, 15)     # volume max\n",
-                        "    poke(54277, 9)      # attack/decay\n",
-                        "    poke(54278, 0)      # sustain/release\n",
-                        "    poke(54273, 17)     #频率高位\n",
-                        "    poke(54272, 37)     #频率低位\n",
-                        "    poke(54276, 33)     # accende voice 1\n",
-                        "    for i = 0 to 500\n",
-                        "        pass\n",
-                        "    next i\n",
-                        "    poke(54276, 0)      # spegne voice 1\n",
-                        "    return 0\n",
-                    ]
-                elif any(w in prompt_lower for w in ["disk", "disco"]):
-                    tokens = [
-                        "# Lettura disco\n",
-                        "def main() -> byte:\n",
-                        '    print("LOADING...")\n',
-                        "    poke(1, 55)         # abilita IEC\n",
-                        "    return 0\n",
-                    ]
                 else:
                     tokens = [
                         f"# Suggerito per: {prompt}\n",
                         "def main() -> byte:\n",
                         "    poke(53280, 0)\n",
                         "    poke(53281, 0)\n",
-                        "    # Codice personalizzato\n",
                         "    return 0\n",
                     ]
 
@@ -309,8 +227,37 @@ async def websocket_ai_copilot(websocket: WebSocket):
         logger.info("AI Copilot WebSocket disconnected")
 
 
-# ── Disk Browser API ──
+# ── Acquisition Proxy API ──
 
+class ScrapeRequest(BaseModel):
+    url: Optional[str] = None
+    spider_name: Optional[str] = "generic"
+
+@app.post("/api/v1/acquisition/scrape")
+def acquisition_scrape(req: ScrapeRequest):
+    try:
+        from core.pipeline.acquisition.scrapy_client import ScrapyClient
+        client = ScrapyClient()
+        if req.url:
+            return client.scrape_url(req.url, spider_name=req.spider_name or "generic")
+        else:
+            return client.run_spider(req.spider_name or "generic")
+    except Exception as e:
+        logger.error(f"Acquisition scrape error: {e}")
+        return {"status": "failed", "error": str(e)}
+
+@app.get("/api/v1/acquisition/status/{job_id}")
+def acquisition_job_status(job_id: str):
+    try:
+        from core.pipeline.acquisition.scrapy_client import ScrapyClient
+        client = ScrapyClient()
+        return client.get_job_status(job_id)
+    except Exception as e:
+        logger.error(f"Acquisition job status error: {e}")
+        return {"status": "unknown", "job_id": job_id, "error": str(e)}
+
+
+# ── Disk Browser API ──
 
 class DiskCreateRequest(BaseModel):
     path: str
@@ -337,7 +284,6 @@ def disk_create(req: DiskCreateRequest):
 
 
 # ── Plugin API ──
-
 
 class PluginExecRequest(BaseModel):
     command: str
@@ -367,7 +313,7 @@ def get_plugin(plugin_name: str):
     return plugin.to_dict()
 
 
-# ── Settings API (persistenza preferenze utente) ──
+# ── Settings API ──
 
 SETTINGS_DIR = Path(__file__).resolve().parent.parent.parent / "config"
 SETTINGS_FILE = SETTINGS_DIR / "settings.json"
