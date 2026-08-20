@@ -1,0 +1,21 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "C64EcosystemEvent",
+  "type": "object",
+  "required": ["event_type", "timestamp", "sender"],
+  "properties": {
+    "event_type": {
+      "type": "string",
+      "enum": ["kb.document.ingested", "kb.index.rebuilt", "llm.training.completed", "scrapy.spider.finished", "llm.validation.failed"]
+    },
+    "timestamp": {
+      "type": "string"
+    },
+    "sender": {
+      "type": "string"
+    },
+    "payload": {
+      "type": "object"
+    }
+  }
+}
