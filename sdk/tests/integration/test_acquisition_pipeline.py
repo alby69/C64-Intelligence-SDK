@@ -1,3 +1,11 @@
+import sys
+from pathlib import Path
+
+root_dir = Path(__file__).resolve().parent.parent.parent.parent
+for p in [str(root_dir), str(root_dir / "scraper"), str(root_dir / "kb-agent"), str(root_dir / "core"), str(root_dir / "sdk" / "schemas")]:
+    if p not in sys.path:
+        sys.path.insert(0, p)
+
 import pytest
 from fastapi.testclient import TestClient
 from c64_scraper.api import app as scrapy_app
@@ -7,18 +15,15 @@ scrapy_client = TestClient(scrapy_app)
 kb_client = TestClient(kb_app)
 
 def test_acquisition_pipeline_e2e():
-    # 1. Trigger spider run on Scrapy API
     run_resp = scrapy_client.post("/spiders/c64wiki/run")
     assert run_resp.status_code == 200
     job_data = run_resp.json()
     job_id = job_data["job_id"]
     assert job_data["status"] in ["pending", "running", "completed"]
 
-    # 2. Check job status
     status_resp = scrapy_client.get(f"/jobs/{job_id}/status")
     assert status_resp.status_code == 200
 
-    # 3. Direct document ingestion test into KB Agent
     sample_docs = [
         {
             "id": "test_e2e_doc_1",
@@ -40,7 +45,6 @@ def test_acquisition_pipeline_e2e():
     assert ingest_resp.status_code == 200
     assert ingest_resp.json()["ingested"] == 1
 
-    # 4. Search and retrieve via KB Agent API
     search_resp = kb_client.get("/search?q=CIA")
     assert search_resp.status_code == 200
     results = search_resp.json()["results"]
