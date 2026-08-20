@@ -1,0 +1,14 @@
+{
+  "version": "1.0.0",
+  "release_notes": "Initial Knowledge Base release",
+  "documents_count": 5,
+  "dataset_hash": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "last_sync": "2026-08-20 11:59:15",
+  "releases": [
+    {
+      "version": "1.0.0",
+      "release_notes": "Initial Knowledge Base release",
+      "timestamp": "2026-08-20 11:59:15"
+    }
+  ]
+}
