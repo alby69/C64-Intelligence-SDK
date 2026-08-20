@@ -37,18 +37,19 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: "3.10"
+          python-version: "3.11"
 
       - name: Dipendenze backend
         run: |
           pip install -r services/core_service/requirements.txt || pip install fastapi uvicorn pydantic pytest
+          pip install -e sdk/schemas/
           pip install -e gamedev
 
       - name: Test plugin system
         run: python -m pytest test_plugin_system.py -v
 
-      - name: Test di integrazione (Epic F)
-        run: python -m pytest tests/integration/ -v
+      - name: Test di integrazione
+        run: python -m pytest sdk/tests/integration/ -v
 
       - name: Discovery plugin + smoke test
         run: |
