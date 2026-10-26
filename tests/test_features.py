@@ -39,6 +39,7 @@ def main():
         src = """
 def main():
     x: byte = 2 + 2 * 3
+    print(x)
     if 10 > 5 and 3 < 4:
         print("ok")
 """
