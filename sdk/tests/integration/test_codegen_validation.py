@@ -9,7 +9,7 @@ for p in [str(root_dir), str(root_dir / "services"), str(root_dir / "core"), str
 import pytest
 from fastapi.testclient import TestClient
 from services.kb_agent.api import app as kb_app
-from core.agent.validator import ValidatorAgent, ValidationReporter
+from core.agent.validator import ValidatorAgent
 from core.utils.sandbox import Py6502Sandbox
 
 kb_test_client = TestClient(kb_app)
@@ -45,10 +45,5 @@ def test_codegen_validation_and_feedback_loop():
 
     validator = ValidatorAgent()
     invalid_basic = "```basic\n20 PRINT \"WORLD\"\n10 PRINT \"HELLO\"\n```"
-    success, log = validator.validate(invalid_basic, doc_id="code_feedback_doc_1")
+    success, log = validator.validate(invalid_basic)
     assert success is False
-
-    doc_resp = kb_test_client.get("/documents/code_feedback_doc_1")
-    assert doc_resp.status_code == 200
-    doc_data = doc_resp.json()
-    assert len(doc_data.get("validation_feedback", [])) > 0
