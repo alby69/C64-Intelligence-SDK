@@ -35,3 +35,4 @@ frontend/src-tauri/target/
 # Sito docs: symlink generati da scripts/sync_docs.py + build MkDocs
 site-docs/modules/
 site/
+_site/

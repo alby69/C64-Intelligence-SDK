@@ -1,3 +1,8 @@
+# Workflow for building MkDocs documentation and deploying it to GitHub Pages.
+# NOTE: To prevent "HttpError: Not Found (404) - Failed to create deployment",
+# make sure GitHub Pages is enabled in Repository Settings:
+# Settings -> Pages -> Build and deployment -> Source: "GitHub Actions".
+
 name: Deploy Docs
 
 on:
