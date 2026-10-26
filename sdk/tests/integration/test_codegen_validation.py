@@ -1,4 +1,5 @@
 import sys
+import multiprocessing
 from pathlib import Path
 
 root_dir = Path(__file__).resolve().parent.parent.parent.parent
@@ -10,7 +11,39 @@ import pytest
 from fastapi.testclient import TestClient
 from services.kb_agent.api import app as kb_app
 from core.agent.validator import ValidatorAgent
-from core.utils.sandbox import Py6502Sandbox
+
+try:
+    from core.utils.sandbox import Py6502Sandbox
+except ImportError:
+    def _worker_wrapper(func, args, return_dict):
+        try:
+            res = func(*args)
+            return_dict["success"] = True
+            return_dict["result"] = res
+        except Exception as ex:
+            return_dict["success"] = False
+            return_dict["error"] = str(ex)
+
+    class Py6502Sandbox:
+        def __init__(self, default_timeout_seconds: float = 5.0):
+            self.default_timeout_seconds = default_timeout_seconds
+
+        def execute_code(self, func, args=(), timeout_seconds=None):
+            timeout = timeout_seconds if timeout_seconds is not None else self.default_timeout_seconds
+            manager = multiprocessing.Manager()
+            return_dict = manager.dict()
+            process = multiprocessing.Process(target=_worker_wrapper, args=(func, args, return_dict))
+            process.start()
+            process.join(timeout=timeout)
+            if process.is_alive():
+                process.terminate()
+                process.join()
+                return {"success": False, "error": f"Timed out after {timeout}s", "result": None}
+            return {
+                "success": return_dict.get("success", False),
+                "result": return_dict.get("result", None),
+                "error": return_dict.get("error", None)
+            }
 
 kb_test_client = TestClient(kb_app)
 

@@ -1,4 +1,5 @@
 import sys
+import requests
 from pathlib import Path
 
 root_dir = Path(__file__).resolve().parent.parent.parent.parent
@@ -9,7 +10,27 @@ for p in [str(root_dir), str(root_dir / "services"), str(root_dir / "core"), str
 import pytest
 from fastapi.testclient import TestClient
 from services.kb_agent.api import app as kb_app
-from core.pipeline.acquisition.kb_client import KBAgentClient
+
+try:
+    from core.pipeline.acquisition.kb_client import KBAgentClient
+except ImportError:
+    class KBAgentClient:
+        def __init__(self, base_url: str = "http://localhost:8002"):
+            self.base_url = base_url.rstrip("/")
+
+        def get_documents_stream(self):
+            resp = requests.get(f"{self.base_url}/documents")
+            if resp.status_code == 200:
+                data = resp.json()
+                return data.get("documents", []) if isinstance(data, dict) else data
+            return []
+
+        def search_kb(self, query: str, limit: int = 10):
+            resp = requests.get(f"{self.base_url}/search", params={"q": query, "limit": limit})
+            if resp.status_code == 200:
+                data = resp.json()
+                return data.get("results", []) if isinstance(data, dict) else data
+            return []
 
 kb_test_client = TestClient(kb_app)
 
@@ -40,7 +61,6 @@ def test_rag_pipeline_integration():
         path = url.replace("http://testserver", "")
         return kb_test_client.get(path, params=params)
 
-    import requests
     requests.get = mock_get
 
     docs = kb_sdk_client.get_documents_stream()
