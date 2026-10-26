@@ -45,11 +45,13 @@ class VICERemoteMonitorBridge:
 
         try:
             logger.info(f"Avvio di VICE con comando: {' '.join(args)}")
+            # Avviamo il processo in background
             self.vice_process = subprocess.Popen(
                 args,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE
             )
+            # Diamo all'emulatore un attimo per avviarsi e bindare la porta socket
             time.sleep(1.5)
             return True
         except FileNotFoundError:
@@ -68,6 +70,7 @@ class VICERemoteMonitorBridge:
             self.socket.settimeout(timeout)
             self.socket.connect((self.host, self.port))
 
+            # Legge il banner iniziale inviato da VICE (se presente)
             try:
                 banner = self.socket.recv(1024).decode("utf-8", errors="ignore")
                 logger.info(f"Ricevuto banner di benvenuto da VICE: {banner.strip()}")
@@ -86,12 +89,14 @@ class VICERemoteMonitorBridge:
         """
         Invia un comando testuale al monitor (es. 'r' per visualizzare i registri,
         'm 0400 0410' per visualizzare una porzione di memoria).
+        Ritorna la risposta testuale inviata dall'emulatore.
         """
         if not self.socket:
             logger.warning("Nessuna connessione attiva con VICE.")
             return "Nessuna connessione attiva."
 
         try:
+            # Pulisce i buffer di input rimasti
             self.socket.settimeout(0.1)
             try:
                 while True:
@@ -99,19 +104,25 @@ class VICERemoteMonitorBridge:
             except socket.timeout:
                 pass
 
+            # Ripristina il timeout originale
             self.socket.settimeout(2.0)
 
+            # Invia il comando testuale seguito da a capo
             if not cmd.endswith("\n"):
                 cmd += "\n"
 
             self.socket.sendall(cmd.encode("utf-8"))
 
+            # Ricezione risposta
             response = ""
+            # Continua a leggere finché non incontra il prompt del monitor "(C64)" o simile,
+            # oppure finché non va in timeout (se il comando non restituisce output)
             while True:
                 data = self.socket.recv(2048).decode("utf-8", errors="ignore")
                 if not data:
                     break
                 response += data
+                # Il prompt tipico del monitor VICE è '(CBRK)' o '(C64)' o 'sys' o '.'
                 if any(prompt in response for prompt in ["(C64)", "(CBRK)", "(C64 debugger)", "(C64 monitor)"]):
                     break
 
@@ -126,10 +137,15 @@ class VICERemoteMonitorBridge:
     def get_registers(self) -> dict:
         """
         Esegue il comando 'r' sul monitor e decodifica i registri del processore 6502.
+        Ritorna un dizionario con PC, A, X, Y, SP e i flag.
         """
         response = self.send_command("r")
         registers = {"PC": 0, "A": 0, "X": 0, "Y": 0, "SP": 0, "Flags": ""}
 
+        # Esempio di riga tipica del comando 'r' di VICE:
+        # ADDR A  X  Y  SP 00 01 NV-BDIZC
+        # .c000 00 00 00 f6 2f 37 00101010
+        # Cerchiamo di fare il parsing con regex
         import re
         match = re.search(r'\.([0-9a-fA-F]{4})\s+([0-9a-fA-F]{2})\s+([0-9a-fA-F]{2})\s+([0-9a-fA-F]{2})\s+([0-9a-fA-F]{2})', response)
         if match:
@@ -139,6 +155,7 @@ class VICERemoteMonitorBridge:
             registers["Y"] = int(match.group(4), 16)
             registers["SP"] = int(match.group(5), 16)
         else:
+            # Alternativo: parsing riga per riga per chiavi esplicite
             for line in response.splitlines():
                 if "PC=" in line or "A=" in line:
                     for part in line.split():
@@ -153,17 +170,22 @@ class VICERemoteMonitorBridge:
     def read_memory(self, start_addr: int, end_addr: int) -> bytes:
         """
         Legge una porzione di memoria usando il comando 'm'.
+        Ritorna l'array di byte letti.
         """
         cmd = f"m {start_addr:04x} {end_addr:04x}"
         response = self.send_command(cmd)
 
+        # Esempio di riga di output:
+        # .c000 00 01 02 03 04 05 06 07  ........
         byte_list = []
         for line in response.splitlines():
             line = line.strip()
             if line.startswith(".") or line.startswith(">"):
+                # Rimuove l'indirizzo iniziale (es. .c000)
                 parts = line.split()
                 if len(parts) > 1:
                     for part in parts[1:]:
+                        # Se incontriamo la rappresentazione ASCII (es. "........") o la fine dei byte
                         if len(part) != 2 or not all(c in "0123456789abcdefABCDEF" for c in part):
                             break
                         byte_list.append(int(part, 16))
@@ -191,7 +213,7 @@ class VICERemoteMonitorBridge:
         """
         Esegue un singolo step (istruzione successiva) e ritorna lo stato dei registri.
         """
-        self.send_command("z")
+        self.send_command("z")  # Comando 'z' in VICE esegue il single step (oppure 'step')
         return self.get_registers()
 
     def stop_execution(self):
@@ -231,6 +253,7 @@ class VICERemoteMonitorBridge:
                 pass
             self.vice_process = None
         else:
+            # Fallback generico per killare istanze orfane
             try:
                 os.system("killall -9 x64sc 2>/dev/null || true")
             except:

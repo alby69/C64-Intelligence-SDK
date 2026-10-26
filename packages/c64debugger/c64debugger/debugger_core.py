@@ -48,6 +48,9 @@ class C64DebuggerCore:
         try:
             from c64validator.py6502_adapter import C64Py6502Adapter
             self.simulation_adapter = C64Py6502Adapter()
+            # Prepariamo la memoria simulata con il nostro codice
+            # Inseriamo il codice in un dizionario/lista simboli se necessario
+            # Per retrocompatibilità, assembliamo o carichiamo direttamente i byte
             self.registers["PC"] = start_addr
             logger.info(f"Simulatore inizializzato all'indirizzo ${start_addr:04X}")
         except ImportError:
@@ -58,7 +61,10 @@ class C64DebuggerCore:
         if not self.simulation_adapter:
             return False, "Simulatore non inizializzato."
 
+        # Esegue un passo della simulazione
         pc_before = self.registers["PC"]
+        # In un vero scenario, aggiorneremmo l'adapter py6502 ed eseguiremo un'istruzione
+        # Qui simuliamo lo step aggiornando lo stato
         self.execution_history.append({
             "PC": pc_before,
             "registers": self.registers.copy()
@@ -70,6 +76,7 @@ class C64DebuggerCore:
     def connect_to_vice(self, host: str = "127.0.0.1", port: int = 6510):
         """
         Connette il debugger all'emulatore VICE usando la porta monitor binaria.
+        VICE deve essere avviato con l'argomento: -binarymonitor o abilitando l'opzione remota.
         """
         try:
             self.vice_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -89,6 +96,7 @@ class C64DebuggerCore:
             return False, "Nessuna connessione a VICE attiva."
         try:
             self.vice_socket.sendall(cmd_bytes)
+            # Ricezione risposta (struttura variabile a seconda della risposta del monitor VICE)
             response = self.vice_socket.recv(1024)
             return True, response
         except Exception as e:
@@ -106,9 +114,13 @@ class C64DebuggerCore:
 class C64DebuggerAgentHelper:
     """
     Helper Agentico per l'analisi intelligente dei crash o dei log di esecuzione.
+    Funge da ponte con l'LLM per spiegare l'errore e auto-curare il codice.
     """
     @staticmethod
     def analyze_crash_dump(registers: dict, history: list, stack_trace: list = None) -> dict:
+        """
+        Analizza un dump di crash e identifica la causa probabile del fallimento (RTS sbilanciato, ciclo infinito, etc).
+        """
         report = {
             "error_type": "Unknown",
             "explanation": "",
@@ -116,15 +128,20 @@ class C64DebuggerAgentHelper:
             "probable_fix": ""
         }
 
+        # Analisi degli errori comuni del 6502
         pc = registers.get("PC", 0)
         sp = registers.get("SP", 0xFF)
 
+        # 1. Stack sbilanciato (SP è andato oltre i limiti della pagina 1 $0100-$01FF)
         if sp < 0x00 or sp > 0xFF:
             report["error_type"] = "Stack Overflow/Underflow"
-            report["explanation"] = f"Lo Stack Pointer (${sp:02X}) è fuori dall'area riservata alla pagina 1 ($0100-$01FF)."
+            report["explanation"] = f"Lo Stack Pointer (${sp:02X}) è fuori dall'area riservata alla pagina 1 ($0100-$01FF). " \
+                                    f"Ciò accade solitamente quando ci sono istruzioni PHA/PHP non bilanciate con PLA/PLP, " \
+                                    f"oppure quando una subroutine chiama RTS senza che l'indirizzo di ritorno sia presente sullo stack."
             report["probable_fix"] = "Verifica che per ogni PHA ci sia un PLA corrispondente e che tutti i salti alle subroutine usino JSR e terminino con RTS."
             return report
 
+        # 2. Ciclo infinito su riga singola (es. JMP * o BEQ *)
         if len(history) >= 2:
             last_steps = history[-5:]
             if len(set(step.get("PC") for step in last_steps if "PC" in step)) == 1:
@@ -133,6 +150,15 @@ class C64DebuggerAgentHelper:
                 report["probable_fix"] = "Verifica le condizioni dei salti condizionali (BNE, BEQ, etc) o rimuovi il salto incondizionato ricorsivo su se stesso."
                 return report
 
-        report["explanation"] = f"Crash rilevato a PC=${pc:04X} con registri A={registers.get('A', 0):02X}, X={registers.get('X', 0):02X}, Y={registers.get('Y', 0):02X}."
+        # 3. Chiamata RTS sospetta
+        if stack_trace and len(stack_trace) == 0:
+            report["error_type"] = "Invalid RTS execution"
+            report["explanation"] = "È stata eseguita un'istruzione RTS (Return from Subroutine) ma la traccia dello stack risulta vuota. " \
+                                    "Il PC salterà a una locazione casuale della memoria, causando un crash o un congelamento."
+            report["probable_fix"] = "Assicurati che la subroutine sia stata chiamata tramite JSR e non tramite JMP."
+            return report
+
+        # Default fall-back
+        report["explanation"] = f"Crash rilevato a PC=${pc:04X} con registri A={registers.get('A'):02X}, X={registers.get('X'):02X}, Y={registers.get('Y'):02X}."
         report["probable_fix"] = "Ispeziona l'ultima riga di codice eseguita per verificare la corretta manipolazione di memoria e registri."
         return report
